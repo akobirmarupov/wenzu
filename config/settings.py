@@ -393,8 +393,8 @@ UNFOLD = {
                 "separator": True,
                 "collapsible": True,
                 "items": [
-                    {"title": "Menyu (taomlar)", "icon": "restaurant_menu", "link": "/admin/catalog/menuitem/"},
-                    {"title": "Paketlar", "icon": "inventory_2", "link": "/admin/catalog/package/"},
+                    {"title": "Restoran menyusi", "icon": "restaurant_menu", "link": "/admin/catalog/restaurantmenuitem/"},
+                    {"title": "To'yxona menyusi", "icon": "restaurant", "link": "/admin/catalog/venuemenuitem/"},
                 ],
             },
             {
@@ -405,7 +405,6 @@ UNFOLD = {
                 "items": [
                     {"title": "Bo'sh vaqtlar", "icon": "event_available", "link": "/admin/reservations/availability/"},
                     {"title": "Bronlar", "icon": "event", "link": "/admin/reservations/reservation/"},
-                    {"title": "Depozit tranzaksiyalari", "icon": "payments", "link": "/admin/reservations/deposittransaction/"},
                 ],
             },
             {

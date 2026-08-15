@@ -54,7 +54,7 @@ class RoomAdmin(ModelAdmin):
 
 @admin.register(Hall)
 class HallAdmin(ModelAdmin):
-    list_display = ("business", "name", "people", "all_price", "deposit_price")
+    list_display = ("business", "name", "people", "package", "all_price", "deposit_price")
     list_filter = ("business__business_type",)
     search_fields = ("name", "business__name")
     actions_detail = ["quick_add_hall"]

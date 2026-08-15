@@ -36,7 +36,7 @@ class HasRole(BasePermission):
 class IsBusinessOwner(BasePermission):
     """
     Vazifasi: business rolidagi foydalanuvchi faqat O'ZIGA tegishli
-    Business (va unga bog'liq Room, MenuItem, Package, Subscription)
+    Business (va unga bog'liq Room, Hall, RestaurantMenuItem, VenueMenuItem, Subscription)
     obyektlarini tahrirlay olishini ta'minlaydi.
     Object-level permission — get_object() chaqirilganda ishlaydi.
     """

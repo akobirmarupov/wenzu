@@ -30,6 +30,7 @@ class BusinessApplication(BaseModel):
         verbose_name_plural = "Business Applications"
 
 
+
 class Business(BaseModel):
     TYPE_RESTAURANT = "restaurant"
     TYPE_VENUE = "venue"
@@ -58,11 +59,6 @@ class Business(BaseModel):
     def __str__(self):
         return self.name
 
-    @property
-    def deposit_amount(self) -> Decimal:
-        if self.business_type == self.TYPE_VENUE:
-            return self.VENUE_DEPOSIT_AMOUNT
-        return Decimal("0")
 
 
 class Room(BaseModel):
@@ -114,6 +110,7 @@ class Room(BaseModel):
         )
 
 
+
 class Hall(BaseModel):
     DEPOSIT_TIER_PRO = "deposit"
     DEPOSIT_TIER_CHOICES = (
@@ -126,6 +123,7 @@ class Hall(BaseModel):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="halls")
     name = models.CharField(max_length=100)
     people = models.PositiveIntegerField(help_text="Zaldagi odamlar soni (masalan: 200, 500)")
+    package = models.CharField(max_length=255, null=True, blank=True)
     all_price = models.DecimalField(max_digits=12, decimal_places=2, help_text="Umumiy summa (masalan: 9 000 000 so'm)")
     deposit_price = models.DecimalField(
         max_digits=12, decimal_places=2, default=DEPOSIT_TIER_AMOUNTS[DEPOSIT_TIER_PRO],

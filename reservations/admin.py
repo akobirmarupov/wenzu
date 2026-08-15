@@ -1,14 +1,7 @@
 from django.contrib import admin
-from django.utils import timezone
-from unfold.admin import ModelAdmin, StackedInline
+from unfold.admin import ModelAdmin
 
-from .models import Availability, DepositTransaction, Reservation
-
-
-class DepositTransactionInline(StackedInline):
-    model = DepositTransaction
-    extra = 0
-    readonly_fields = ("refunded_at",)
+from .models import Availability, Reservation
 
 
 @admin.register(Availability)
@@ -28,7 +21,6 @@ class ReservationAdmin(ModelAdmin):
     list_filter_submit = True
     search_fields = ("user__username", "user__phone_number", "business__name", "room__name")
     autocomplete_fields = ("user", "business", "room", "availability")
-    inlines = [DepositTransactionInline]
 
     actions = ["mark_confirmed", "mark_cancelled", "mark_completed"]
 
@@ -39,32 +31,15 @@ class ReservationAdmin(ModelAdmin):
 
     @admin.action(description="Tanlanganlarni bekor qilish (cancelled)")
     def mark_cancelled(self, request, queryset):
-        updated = queryset.update(status="cancelled")
-        self.message_user(request, f"{updated} ta bron bekor qilindi.")
+        for reservation in queryset:
+            reservation.status = "cancelled"
+            reservation.save(update_fields=["status"])
+            if reservation.availability_id:
+                reservation.availability.is_booked = False
+                reservation.availability.save(update_fields=["is_booked"])
+        self.message_user(request, f"{queryset.count()} ta bron bekor qilindi va bo'sh vaqt qayta ochildi.")
 
     @admin.action(description="Tanlanganlarni yakunlash (completed)")
     def mark_completed(self, request, queryset):
         updated = queryset.update(status="completed")
         self.message_user(request, f"{updated} ta bron yakunlandi.")
-
-
-@admin.register(DepositTransaction)
-class DepositTransactionAdmin(ModelAdmin):
-    list_display = ("reservation", "amount", "status", "refund_deadline", "refunded_at", "confirmed_by")
-    list_filter = ("status",)
-    list_filter_submit = True
-    search_fields = ("reservation__user__username", "reservation__business__name", "note")
-    autocomplete_fields = ("reservation", "confirmed_by")
-    readonly_fields = ("refunded_at",)
-
-    actions = ["mark_refunded", "mark_forfeited"]
-
-    @admin.action(description="Tanlanganlarni qaytarilgan deb belgilash (refunded)")
-    def mark_refunded(self, request, queryset):
-        updated = queryset.update(status=DepositTransaction.STATUS_REFUNDED, refunded_at=timezone.now())
-        self.message_user(request, f"{updated} ta depozit qaytarildi.")
-
-    @admin.action(description="Tanlanganlarni qaytarilmaydi deb belgilash (forfeited)")
-    def mark_forfeited(self, request, queryset):
-        updated = queryset.update(status=DepositTransaction.STATUS_FORFEITED)
-        self.message_user(request, f"{updated} ta depozit qaytarilmaydigan deb belgilandi.")
