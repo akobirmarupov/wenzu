@@ -38,8 +38,6 @@ class Business(BaseModel):
         (TYPE_VENUE, "To'yxona"),
     )
 
-    VENUE_DEPOSIT_AMOUNT = Decimal("699000")
-
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="businesses")
     application = models.OneToOneField(BusinessApplication, on_delete=models.CASCADE, related_name="business")
     name = models.CharField(max_length=200)
@@ -72,7 +70,6 @@ class Room(BaseModel):
         ("vip", "VIP xona"),
         ("standard", "Oddiy zal"),
         ("outdoor", "Tashqi terrasa"),
-        ("hall", "Katta zal (to'yxona)"),
     )
 
     DEPOSIT_TIER_PREMIUM = "premium"
@@ -90,7 +87,6 @@ class Room(BaseModel):
     name = models.CharField(max_length=100)
     room_type = models.CharField(max_length=15, choices=ROOM_TYPE_CHOICES)
     capacity = models.PositiveIntegerField()
-    price_per_slot = models.DecimalField(max_digits=12, decimal_places=2)
     deposit_tier = models.CharField(
         max_length=10, choices=DEPOSIT_TIER_CHOICES, null=True, blank=True,
         help_text="Faqat restoranlar uchun. To'yxona xonalarida bo'sh qoldiring.",
@@ -116,3 +112,29 @@ class Room(BaseModel):
         return self.DEPOSIT_TIER_AMOUNTS.get(
             self.deposit_tier, self.DEPOSIT_TIER_AMOUNTS[self.DEPOSIT_TIER_PRO]
         )
+
+
+class Hall(BaseModel):
+    DEPOSIT_TIER_PRO = "deposit"
+    DEPOSIT_TIER_CHOICES = (
+        (DEPOSIT_TIER_PRO, "Deposit — 599 000 so'm"),
+    )
+    DEPOSIT_TIER_AMOUNTS = {
+        DEPOSIT_TIER_PRO: Decimal("599000"),
+    }
+
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="halls")
+    name = models.CharField(max_length=100)
+    people = models.PositiveIntegerField(help_text="Zaldagi odamlar soni (masalan: 200, 500)")
+    all_price = models.DecimalField(max_digits=12, decimal_places=2, help_text="Umumiy summa (masalan: 9 000 000 so'm)")
+    deposit_price = models.DecimalField(
+        max_digits=12, decimal_places=2, default=DEPOSIT_TIER_AMOUNTS[DEPOSIT_TIER_PRO],
+        help_text="Bron qilishda oldindan to'lov (599 000 so'm)",
+    )
+
+    def __str__(self):
+        return f"{self.business.name} — {self.name} ({self.people} kishilik)"
+
+    @property
+    def deposit_amount(self) -> Decimal:
+        return self.deposit_price
