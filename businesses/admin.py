@@ -10,7 +10,7 @@ from .models import Business, BusinessApplication, Hall, Room
 class RoomInline(TabularInline):
     model = Room
     extra = 1
-    fields = ("name", "room_type", "capacity", "price_per_slot", "deposit_tier")
+    fields = ("name", "room_type", "capacity", "deposit_tier")
 
 
 class HallInline(TabularInline):
