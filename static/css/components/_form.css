@@ -1,0 +1,54 @@
+/* Formalar */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label {
+  font-size: var(--fs-sm); font-weight: 700; color: var(--ink-soft);
+}
+.field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-4); }
+
+.input, .select, .textarea {
+  width: 100%; padding: 11px 14px;
+  background: var(--white); color: var(--ink);
+  border: 1.5px solid var(--line); border-radius: var(--radius-s);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+.input::placeholder, .textarea::placeholder { color: var(--ink-faint); }
+.input:focus, .select:focus, .textarea:focus {
+  outline: none;
+  border-color: var(--theme-accent);
+  box-shadow: 0 0 0 3px var(--theme-accent-dim);
+}
+.input[aria-invalid="true"], .textarea[aria-invalid="true"] { border-color: var(--danger); }
+
+.field-error { font-size: var(--fs-xs); color: var(--danger); font-weight: 600; }
+.field-hint  { font-size: var(--fs-xs); color: var(--ink-faint); }
+
+.checkbox { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-sm); cursor: pointer; }
+
+/* Qidiruv qatori */
+.search {
+  display: flex; align-items: center; gap: var(--sp-2);
+  background: var(--white); border: 1.5px solid var(--line);
+  border-radius: var(--radius-pill); padding: 8px 16px;
+  flex: 1 1 240px; min-width: 0;
+}
+.search input { flex: 1; border: 0; outline: none; background: none; min-width: 0; }
+
+/* Filtr chipi */
+.chip {
+  padding: 8px 16px; border-radius: var(--radius-pill);
+  border: 1.5px solid var(--line); background: var(--white);
+  font-size: var(--fs-sm); font-weight: 700; color: var(--ink-soft);
+  transition: all var(--transition);
+}
+.chip:hover { border-color: var(--theme-accent); color: var(--theme-accent); }
+.chip.active { background: var(--theme-accent); border-color: var(--theme-accent); color: var(--white); }
+
+.filter-bar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+
+/* Formaning umumiy xato bloki */
+.form-alert {
+  padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-s);
+  background: var(--danger-dim); color: var(--danger);
+  font-size: var(--fs-sm); font-weight: 600;
+}
+.form-alert-ok { background: var(--ok-dim); color: var(--ok); }

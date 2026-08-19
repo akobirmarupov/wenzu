@@ -1,0 +1,17 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Menyu</h2>
+    <button class="btn btn-primary btn-sm" id="add-item" type="button">+ Taom qo'shish</button>
+  </div>
+  <p class="muted small" id="menu-hint" style="margin-bottom:var(--sp-4)"></p>
+  <div class="menu-grid" id="list"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/owner/menu.js' %}"></script>
+{% endblock %}

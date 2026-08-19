@@ -1,0 +1,21 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="panel">
+  <div class="panel-head"><h2 class="display h3">Platforma sozlamalari</h2></div>
+  <p class="muted small" style="margin-bottom:var(--sp-5)">
+    Bu qiymatlar butun platformaga tegishli va darhol kuchga kiradi — kodga tegish shart emas.
+  </p>
+  <form class="stack stack-5" id="settings-form"></form>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2 class="display h3">Tarif rejalari</h2></div>
+  <div id="plans"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/admin/settings.js' %}"></script>
+{% endblock %}

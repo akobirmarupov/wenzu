@@ -1,0 +1,18 @@
+/* Restoranlar / to'yxonalar ro'yxati */
+.catalog-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; margin-bottom: var(--sp-6); }
+.biz-card .card-body { gap: var(--sp-1); }
+.biz-card .name { font-family: var(--font-display); font-size: var(--fs-md); font-weight: 600; }
+.biz-card .meta { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; font-size: var(--fs-sm); color: var(--ink-soft); }
+.biz-card .foot { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); margin-top: var(--sp-2); }
+.biz-card-media { position: relative; }
+.biz-card-media .rating-badge {
+  position: absolute; top: var(--sp-3); right: var(--sp-3);
+  background: rgba(255,255,255,.94); border-radius: var(--radius-pill);
+  padding: 3px 10px; font-size: var(--fs-xs); font-weight: 800;
+}
+.biz-card-media .distance-badge {
+  position: absolute; bottom: var(--sp-3); left: var(--sp-3);
+  background: rgba(11,59,46,.85); color: var(--white);
+  border-radius: var(--radius-pill); padding: 3px 10px;
+  font-size: var(--fs-xs); font-weight: 700;
+}

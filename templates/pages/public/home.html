@@ -1,0 +1,135 @@
+{% extends "layouts/public.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+
+  {# --- qidiruv va tur tanlash --- #}
+  <section class="home-head">
+    <span class="eyebrow" data-i18n="home.heroEyebrow">Toshkent</span>
+    <h1 class="display">
+      <span data-i18n="home.heroTitle">Joyni oldindan band qiling</span>,
+      <em data-i18n="home.heroTitleAccent">navbatda turmang</em>
+    </h1>
+    <p class="lede" data-i18n="home.heroLead"></p>
+
+    <div class="home-tabs" role="tablist">
+      <button class="home-tab active" data-type="restaurant" role="tab"
+              aria-selected="true" data-i18n="nav.restaurants">Restoranlar</button>
+      <button class="home-tab" data-type="venue" role="tab"
+              aria-selected="false" data-i18n="nav.venues">To'yxonalar</button>
+    </div>
+
+    <form class="home-search" id="home-search">
+      <label class="search">
+        <span aria-hidden="true">🔍</span>
+        <input id="home-q" data-i18n-placeholder="home.searchPlaceholder"
+               data-i18n-label="home.search">
+      </label>
+      <button class="btn btn-primary" type="submit" data-i18n="home.search">Qidirish</button>
+      <button class="btn btn-outline" type="button" id="near-me" data-i18n="home.nearMe">Yaqinimda</button>
+    </form>
+
+    <div class="home-stats" id="home-stats"></div>
+  </section>
+
+  {# --- reklama / e'lon banneri (admin panelda boshqariladi) --- #}
+  <section class="section-sm" id="banner-slot"></section>
+
+  {# --- yangi qo'shilgan joylar karuseli + yangiliklar lentasi --- #}
+  <section class="section-sm home-split">
+    <div class="stack stack-4">
+      <div class="section-title">
+        <div>
+          <span class="eyebrow" data-i18n="home.newPlaces">Yangi qo'shilganlar</span>
+          <h2 class="display h2" data-i18n="home.newPlacesLead"></h2>
+        </div>
+      </div>
+      <div id="spotlight"></div>
+    </div>
+
+    <div class="panel stack stack-3">
+      <div class="section-title" style="margin-bottom:0">
+        <div>
+          <span class="eyebrow" data-i18n="home.newsEyebrow">Bilib qo'ying</span>
+          <h2 class="display h3" data-i18n="home.newsTitle"></h2>
+        </div>
+      </div>
+      <div class="news-strip" id="news-strip"></div>
+    </div>
+  </section>
+
+  {# --- mashhur restoranlar --- #}
+  <section class="section-sm">
+    <div class="section-title">
+      <div>
+        <span class="eyebrow" data-i18n="home.topRestaurantsEyebrow"></span>
+        <h2 class="display h2" data-i18n="home.topRestaurants"></h2>
+      </div>
+      <a class="btn btn-ghost" href="/restoranlar/"><span data-i18n="home.viewAll"></span> →</a>
+    </div>
+    <div class="grid grid-auto" id="top-restaurants"></div>
+  </section>
+
+  {# --- to'yxonalar --- #}
+  <section class="section-sm">
+    <div class="section-title">
+      <div>
+        <span class="eyebrow" data-i18n="home.topVenuesEyebrow"></span>
+        <h2 class="display h2" data-i18n="home.topVenues"></h2>
+      </div>
+      <a class="btn btn-ghost" href="/toyxonalar/"><span data-i18n="home.viewAll"></span> →</a>
+    </div>
+    <div class="grid grid-auto" id="top-venues"></div>
+  </section>
+
+  {# --- yangiliklar kartochkalari --- #}
+  <section class="section-sm" id="news-section" hidden>
+    <div class="section-title">
+      <div>
+        <span class="eyebrow" data-i18n="home.newsEyebrow"></span>
+        <h2 class="display h2" data-i18n="home.newsTitle"></h2>
+      </div>
+    </div>
+    <div class="news-grid" id="news-grid"></div>
+  </section>
+
+  {# --- qanday ishlaydi --- #}
+  <section class="section-sm">
+    <div class="section-title">
+      <div>
+        <span class="eyebrow" data-i18n="home.howEyebrow"></span>
+        <h2 class="display h2" data-i18n="home.howTitle"></h2>
+      </div>
+    </div>
+    <div class="how-grid">
+      <div class="how-step"><span class="n">1</span>
+        <h3 class="h4 display" data-i18n="home.step1"></h3>
+        <p class="muted small" data-i18n="home.step1Text"></p></div>
+      <div class="how-step"><span class="n">2</span>
+        <h3 class="h4 display" data-i18n="home.step2"></h3>
+        <p class="muted small" data-i18n="home.step2Text"></p></div>
+      <div class="how-step"><span class="n">3</span>
+        <h3 class="h4 display" data-i18n="home.step3"></h3>
+        <p class="muted small" data-i18n="home.step3Text"></p></div>
+    </div>
+  </section>
+
+  {# --- biznes ochish --- #}
+  <section class="section-sm" style="padding-bottom:var(--sp-16)">
+    <div class="cta-band">
+      <div style="flex:1;min-width:270px">
+        <span class="eyebrow" style="color:var(--gold-400)" data-i18n="home.ctaEyebrow"></span>
+        <h2 class="display" data-i18n="home.ctaTitle"></h2>
+        <p data-i18n="home.ctaText"></p>
+      </div>
+      <a class="btn btn-gold btn-lg" href="/biznes-ochish/" data-i18n="home.ctaButton"></a>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/public/home.js' %}"></script>
+{% endblock %}

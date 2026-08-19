@@ -1,0 +1,14 @@
+/* Jadvallar (admin va panel ro'yxatlari) */
+.table-wrap { overflow-x: auto; border-radius: var(--radius-m); border: 1px solid var(--line); background: var(--white); }
+.table { width: 100%; font-size: var(--fs-sm); }
+.table th {
+  text-align: left; padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-xs); font-weight: 800; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--ink-soft);
+  background: var(--paper-dim); border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.table td { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:hover { background: var(--paper); }
+.table .nums { font-variant-numeric: tabular-nums; white-space: nowrap; }

@@ -1,0 +1,24 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Bizneslar</h2>
+    <div class="filter-bar">
+      <label class="search"><span>🔍</span>
+        <input id="q" placeholder="Nomi yoki tuman" aria-label="Qidiruv"></label>
+      <div class="row row-2" id="type-filters"></div>
+    </div>
+  </div>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Nomi</th><th>Turi</th><th>Egasi</th><th>Obuna</th><th>Holat</th><th></th></tr></thead>
+    <tbody id="list"></tbody>
+  </table></div>
+  <div id="pager"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/admin/businesses.js' %}"></script>
+{% endblock %}

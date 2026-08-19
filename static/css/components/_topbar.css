@@ -1,0 +1,81 @@
+/* ===================================================================
+   Yuqori panel — til, tema va foydalanuvchi o'ng burchakda.
+   =================================================================== */
+.topbar {
+  position: sticky; top: 0; z-index: var(--z-sticky);
+  display: flex; align-items: center; gap: var(--sp-3);
+  min-height: 62px; padding: var(--sp-2) var(--sp-6);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(12px) saturate(1.4);
+  border-bottom: 1px solid var(--line);
+}
+.topbar-burger { display: none; }
+.topbar-brand { display: none; align-items: center; gap: var(--sp-2);
+  font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.topbar-brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--gold-shine); }
+
+.topbar-title {
+  font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: var(--sp-2); }
+
+/* --- til tanlagichi --- */
+.lang-menu { position: relative; }
+.lang-trigger {
+  display: flex; align-items: center; gap: 6px;
+  height: 34px; padding: 0 10px 0 8px; border-radius: var(--radius-pill);
+  background: var(--surface-2); border: 1px solid var(--line);
+  font-size: 12.5px; font-weight: 800; letter-spacing: .04em; color: var(--ink-soft);
+  transition: all var(--transition);
+}
+.lang-trigger:hover { border-color: var(--gold-500); color: var(--ink); }
+.lang-trigger .globe { font-size: 13px; }
+.lang-trigger .caret { font-size: 9px; opacity: .65; }
+
+.lang-dropdown {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: var(--z-overlay);
+  min-width: 186px; padding: 6px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-m); box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column; gap: 2px;
+  animation: drop .14s ease;
+}
+@keyframes drop { from { opacity: 0; transform: translateY(-6px); } }
+.lang-dropdown[hidden] { display: none; }
+.lang-dropdown button {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: 9px 10px; border-radius: var(--radius-s);
+  font-size: var(--fs-sm); font-weight: 600; color: var(--ink-soft); text-align: left;
+  transition: background var(--transition), color var(--transition);
+}
+.lang-dropdown button:hover { background: var(--surface-2); color: var(--ink); }
+.lang-dropdown button.active { color: var(--ink); font-weight: 700; }
+.lang-dropdown .short {
+  width: 30px; flex-shrink: 0; text-align: center;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 800;
+  padding: 2px 0; border-radius: 4px;
+  background: var(--surface-2); color: var(--ink-faint);
+}
+.lang-dropdown button.active .short { background: var(--gold-shine); color: #1A1405; }
+.lang-dropdown .tick { margin-left: auto; color: var(--gold-600); font-weight: 800; }
+
+/* --- foydalanuvchi --- */
+.topbar-user {
+  display: flex; align-items: center; gap: var(--sp-2);
+  height: 34px; padding: 0 12px 0 3px; border-radius: var(--radius-pill);
+  background: var(--surface-2); border: 1px solid var(--line);
+  font-size: var(--fs-sm); font-weight: 700; color: var(--ink);
+  transition: all var(--transition);
+}
+.topbar-user:hover { border-color: var(--gold-500); }
+.topbar-user .name { white-space: nowrap; }
+
+@media (max-width: 940px) {
+  .topbar-burger { display: grid; }
+  .topbar-brand { display: flex; }
+  .topbar-title { display: none; }
+  .topbar { padding-inline: var(--sp-4); }
+  .topbar-user .name { display: none; }
+}

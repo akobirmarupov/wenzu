@@ -1,0 +1,24 @@
+{% extends "layouts/public.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container section-sm">
+  <div class="page-head">
+    <div class="stack stack-2">
+      <span class="eyebrow" data-i18n="nav.profile">Profil</span>
+      <h1 class="display h1" data-i18n="profile.bookings">Mening bronlarim</h1>
+      <p class="lede small" data-i18n="bookingsPage.lead"></p>
+    </div>
+    <a class="btn btn-outline" href="/restoranlar/">
+      <span data-i18n="bookingsPage.newBooking"></span> →
+    </a>
+  </div>
+
+  <div class="grid grid-4" id="booking-stats"></div>
+  <div id="bookings-root" style="margin-top:var(--sp-5)"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/public/bookings.js' %}"></script>
+{% endblock %}

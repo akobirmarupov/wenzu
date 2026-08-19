@@ -2,7 +2,9 @@ from rest_framework.pagination import CursorPagination, PageNumberPagination
 from rest_framework.response import Response
 
 
-class DefaultPagination(PageNumberPagination):
+class StandardResultsPagination(PageNumberPagination):
+    """Loyihaning standart paginatsiyasi — barcha ro'yxat API'lari shuni ishlatadi."""
+
     page_size = 20
     page_size_query_param = "page_size"
     max_page_size = 100
@@ -18,17 +20,20 @@ class DefaultPagination(PageNumberPagination):
         })
 
 
+# Eski nom bilan yozilgan joylar buzilmasin uchun alias.
+DefaultPagination = StandardResultsPagination
+
+
 class BusinessFeedCursorPagination(CursorPagination):
     page_size = 15
     ordering = "-created_at"
     cursor_query_param = "cursor"
 
 
-class ReviewsPagination(PageNumberPagination):
+class ReviewsPagination(StandardResultsPagination):
     """
     Vazifasi: bitta biznesning sharhlar (Review) ro'yxati uchun,
     kichikroq page_size — mobil ekranda sharh kartochkalari katta joy egallaydi.
     """
     page_size = 10
-    page_size_query_param = "page_size"
     max_page_size = 50

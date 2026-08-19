@@ -1,0 +1,10 @@
+{# Yuqori panel — til, tema va foydalanuvchi o'ng burchakda #}
+<header class="topbar">
+  <button class="icon-btn topbar-burger" type="button" data-nav-toggle aria-label="Menyu">☰</button>
+
+  <a class="topbar-brand" href="/"><span class="dot"></span>WENZU</a>
+
+  {% if page_title %}<h1 class="topbar-title">{{ page_title }}</h1>{% endif %}
+
+  <div class="topbar-right" id="topbar-right"></div>
+</header>

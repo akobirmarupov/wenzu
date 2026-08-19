@@ -1,0 +1,31 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Bannerlar</h2>
+    <button class="btn btn-primary btn-sm" id="add-banner" type="button">+ Banner qo'shish</button>
+  </div>
+  <p class="muted small" style="margin-bottom:var(--sp-4)">
+    Bosh sahifadagi katta banner. Reklama kelmaguncha bu yerda loyiha haqidagi
+    ma'lumot turadi. Rasm yoki video qo'shsangiz, matn ularning ustida ko'rinadi.
+  </p>
+  <div id="banner-list"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Yangiliklar</h2>
+    <button class="btn btn-primary btn-sm" id="add-news" type="button">+ Yangilik qo'shish</button>
+  </div>
+  <p class="muted small" style="margin-bottom:var(--sp-4)">
+    Bosh sahifadagi lenta. Mahkamlangan yangilik (📌) doim birinchi turadi.
+  </p>
+  <div id="news-list"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/admin/content.js' %}"></script>
+{% endblock %}

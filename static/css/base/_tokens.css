@@ -1,0 +1,208 @@
+/* ===================================================================
+   Dizayn tokenlari.
+
+   Ikki tema: kunduzgi va tungi. Tungi rejim QOP-QORA emas — ko'k
+   aralash qorong'i (navy-black), chunki sof qora ekranda kontrast
+   keskin bo'lib ko'zni charchatadi va brend zumradiga yopishmaydi.
+
+   Tema uch holatda ishlaydi:
+     1. `:root`                          — kunduzgi (standart)
+     2. `prefers-color-scheme: dark`     — tizim sozlamasi
+     3. `[data-theme="dark|light"]`      — foydalanuvchi tanlovi (ustun)
+   =================================================================== */
+:root {
+  /* --- brend --- */
+  --emerald-900: #08322A;
+  --emerald-800: #0C4438;
+  --emerald-700: #0F5A48;
+  --emerald-600: #12775F;
+  --emerald-500: #189070;
+  --emerald-100: #DAEDE5;
+
+  --gold-600: #9C7B1E;
+  --gold-500: #C9A227;
+  --gold-400: #E0C05A;
+  --gold-100: #F6EFD6;
+
+  /* Yaltiroq oltin — sarlavha va nishonlarda ishlatiladi.
+     Tekis rang o'rniga gradient: metall yaltirashi shundan chiqadi. */
+  --gold-shine: linear-gradient(115deg, #B8912B 0%, #E9CE72 28%, #FFF3C4 45%,
+                                        #E0C05A 62%, #A8842A 100%);
+  --gold-glow: 0 0 22px rgba(201, 162, 39, .22);
+
+  /* --- yuzalar (kunduzgi) --- */
+  --ground:     #F1F4F2;   /* sal zumradga og'gan neytral fon */
+  --ground-alt: #E7EDE9;
+  --surface:    #FFFFFF;
+  --surface-2:  #F6F8F7;
+  --ink:        #12211C;
+  --ink-soft:   #4A5A53;
+  --ink-faint:  #7C8B84;
+  --line:       #DCE4DF;
+  --line-soft:  #E9EEEB;
+  --overlay-bg: rgba(8, 50, 42, .45);
+
+  /* --- holat ranglari --- */
+  --ok:     #1B7A52;  --ok-dim:     #DCF0E5;
+  --warn:   #96770F;  --warn-dim:   #FAF0CC;
+  --danger: #9A2F3A;  --danger-dim: #F7DFE1;
+  --info:   #1A6485;  --info-dim:   #DCEBF3;
+
+  /* --- panel aksentlari (rolga qarab almashadi) --- */
+  --theme-accent:      var(--emerald-600);
+  --theme-accent-dark: var(--emerald-900);
+  --theme-accent-dim:  var(--emerald-100);
+  --on-accent:         #FFFFFF;
+
+  /* --- soyalar --- */
+  --shadow-sm: 0 1px 3px rgba(18, 33, 28, .07);
+  --shadow:    0 4px 16px -6px rgba(18, 33, 28, .18);
+  --shadow-lg: 0 14px 38px -16px rgba(8, 50, 42, .30);
+
+  /* --- tipografiya --- */
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --fs-xs: 12px;  --fs-sm: 13.5px; --fs-base: 15px;
+  --fs-md: 17px;  --fs-lg: 20px;   --fs-xl: 26px;  --fs-2xl: 34px;
+
+  /* --- masofa (4px shkalasi) --- */
+  --sp-1: 4px;   --sp-2: 8px;   --sp-3: 12px;  --sp-4: 16px;
+  --sp-5: 20px;  --sp-6: 24px;  --sp-8: 32px;  --sp-10: 40px;
+  --sp-12: 48px; --sp-16: 64px; --sp-20: 80px;
+
+  /* --- shakl --- */
+  --radius-s: 8px;  --radius-m: 14px;  --radius-l: 22px;  --radius-pill: 999px;
+
+  /* --- qatlamlar --- */
+  --z-sticky: 40; --z-sidebar: 50; --z-overlay: 90; --z-toast: 100;
+
+  --sidebar-width: 244px;
+  --container: 1240px;
+  --transition: .18s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ---------- Tungi rejim: tizim sozlamasi ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:     #0A111C;   /* ko'k aralash qora */
+    --ground-alt: #0D1624;
+    --surface:    #111B2B;
+    --surface-2:  #172336;
+    --ink:        #E6EDF5;
+    --ink-soft:   #9CAEC2;
+    --ink-faint:  #6E8299;
+    --line:       #22314A;
+    --line-soft:  #1A2739;
+    --overlay-bg: rgba(4, 9, 17, .72);
+
+    --emerald-100: #10302A;
+    --emerald-600: #22A583;
+    --emerald-500: #2CBF97;
+
+    --gold-500: #E0BC55;
+    --gold-400: #F0D785;
+    --gold-600: #C9A227;
+    --gold-100: #2A2413;
+    --gold-shine: linear-gradient(115deg, #A8842A 0%, #E9CE72 26%, #FFF6D4 44%,
+                                          #E0C05A 60%, #8F6F1E 100%);
+    --gold-glow: 0 0 26px rgba(224, 188, 85, .30);
+
+    --ok:     #3FBE86;  --ok-dim:     #102E24;
+    --warn:   #E0BC55;  --warn-dim:   #2B2410;
+    --danger: #EA7A85;  --danger-dim: #351B21;
+    --info:   #62B3DA;  --info-dim:   #10263A;
+
+    --theme-accent:      #22A583;
+    --theme-accent-dark: #16775F;
+    --theme-accent-dim:  #10302A;
+    --on-accent:         #04140F;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, .40);
+    --shadow:    0 6px 20px -8px rgba(0, 0, 0, .60);
+    --shadow-lg: 0 18px 44px -18px rgba(0, 0, 0, .75);
+  }
+}
+
+/* ---------- Tungi rejim: foydalanuvchi tanlovi ---------- */
+:root[data-theme="dark"] {
+  --ground:     #0A111C;
+  --ground-alt: #0D1624;
+  --surface:    #111B2B;
+  --surface-2:  #172336;
+  --ink:        #E6EDF5;
+  --ink-soft:   #9CAEC2;
+  --ink-faint:  #6E8299;
+  --line:       #22314A;
+  --line-soft:  #1A2739;
+  --overlay-bg: rgba(4, 9, 17, .72);
+
+  --emerald-100: #10302A;
+  --emerald-600: #22A583;
+  --emerald-500: #2CBF97;
+
+  --gold-500: #E0BC55;
+  --gold-400: #F0D785;
+  --gold-600: #C9A227;
+  --gold-100: #2A2413;
+  --gold-shine: linear-gradient(115deg, #A8842A 0%, #E9CE72 26%, #FFF6D4 44%,
+                                        #E0C05A 60%, #8F6F1E 100%);
+  --gold-glow: 0 0 26px rgba(224, 188, 85, .30);
+
+  --ok:     #3FBE86;  --ok-dim:     #102E24;
+  --warn:   #E0BC55;  --warn-dim:   #2B2410;
+  --danger: #EA7A85;  --danger-dim: #351B21;
+  --info:   #62B3DA;  --info-dim:   #10263A;
+
+  --theme-accent:      #22A583;
+  --theme-accent-dark: #16775F;
+  --theme-accent-dim:  #10302A;
+  --on-accent:         #04140F;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, .40);
+  --shadow:    0 6px 20px -8px rgba(0, 0, 0, .60);
+  --shadow-lg: 0 18px 44px -18px rgba(0, 0, 0, .75);
+}
+
+/* ---------- Panel temalari (rolga qarab aksent) ---------- */
+[data-panel="restaurant"] {
+  --theme-accent: #C05A2E; --theme-accent-dark: #8A3D1B;
+  --theme-accent-dim: #F7E5DB; --on-accent: #FFFFFF;
+}
+[data-panel="venue"] {
+  --theme-accent: #6B4489; --theme-accent-dark: #48295F;
+  --theme-accent-dim: #EFE5F6; --on-accent: #FFFFFF;
+}
+[data-panel="admin"] {
+  --theme-accent: var(--emerald-700); --theme-accent-dark: var(--emerald-900);
+  --theme-accent-dim: var(--emerald-100); --on-accent: #FFFFFF;
+}
+:root[data-theme="dark"] [data-panel="restaurant"],
+:root[data-theme="dark"][data-panel="restaurant"] {
+  --theme-accent: #E0855A; --theme-accent-dark: #B0603A;
+  --theme-accent-dim: #2E1A11; --on-accent: #1A0C05;
+}
+:root[data-theme="dark"] [data-panel="venue"],
+:root[data-theme="dark"][data-panel="venue"] {
+  --theme-accent: #A985C7; --theme-accent-dark: #7B5C99;
+  --theme-accent-dim: #21172B; --on-accent: #14091C;
+}
+
+/* ---------- Yaltiroq oltin yordamchilari ---------- */
+.shine {
+  background: var(--gold-shine);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.shine-bg {
+  background: var(--gold-shine);
+  color: #1A1405;
+  box-shadow: var(--gold-glow);
+}
+.shine-line {
+  height: 2px; border: 0; border-radius: 2px;
+  background: var(--gold-shine);
+  box-shadow: var(--gold-glow);
+}

@@ -1,0 +1,17 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Bronlar</h2>
+    <div class="row row-2 row-wrap" id="status-filters"></div>
+  </div>
+  <div id="list"></div>
+  <div id="pager"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/owner/bookings.js' %}"></script>
+{% endblock %}

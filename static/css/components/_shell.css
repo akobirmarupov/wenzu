@@ -1,0 +1,113 @@
+/* ===================================================================
+   Ommaviy sahifalar qobig'i: CHAP yon menyu + asosiy maydon.
+
+   Yuqoridagi gorizontal menyu o'rniga yon menyu — chunki bo'limlar
+   soni o'sib boradi (restoran, to'yxona, yangiliklar, profil) va
+   gorizontal qatorda ular siqilib qoladi. Yon menyuda esa har bir
+   bo'lim o'z nomi bilan to'liq ko'rinadi.
+   =================================================================== */
+.shell { display: grid; grid-template-columns: var(--sidebar-width) minmax(0, 1fr); min-height: 100vh; }
+
+.side-nav {
+  position: sticky; top: 0; z-index: var(--z-sidebar);
+  height: 100vh; overflow-y: auto; overscroll-behavior: contain;
+  display: flex; flex-direction: column; gap: var(--sp-1);
+  padding: var(--sp-5) var(--sp-3);
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+}
+
+.side-nav .brand {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3) var(--sp-1);
+  font-family: var(--font-display); font-weight: 700; font-size: 24px;
+  color: var(--ink);
+}
+.side-nav .brand .dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--gold-shine); box-shadow: var(--gold-glow);
+}
+.side-nav .brand-sub {
+  padding: 0 var(--sp-3) var(--sp-5);
+  font-size: 11.5px; color: var(--ink-faint); line-height: 1.35;
+}
+
+.nav-group-label {
+  padding: var(--sp-4) var(--sp-3) var(--sp-2);
+  font-size: 10.5px; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: 10px var(--sp-3); border-radius: var(--radius-s);
+  font-size: 14.5px; font-weight: 600; color: var(--ink-soft);
+  transition: background var(--transition), color var(--transition);
+}
+.nav-item:hover { background: var(--surface-2); color: var(--ink); }
+.nav-item.active { background: var(--emerald-900); color: #FFFFFF; }
+:root[data-theme="dark"] .nav-item.active { background: var(--theme-accent); color: var(--on-accent); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .nav-item.active { background: var(--theme-accent); color: var(--on-accent); }
+}
+.nav-item .ic { width: 22px; text-align: center; font-size: 16px; }
+.nav-item .count-pill { margin-left: auto; }
+
+.side-nav-bottom {
+  margin-top: auto; padding-top: var(--sp-4);
+  border-top: 1px solid var(--line-soft);
+  display: flex; flex-direction: column; gap: var(--sp-2);
+}
+
+.icon-btn {
+  width: 34px; height: 34px; flex-shrink: 0;
+  display: grid; place-items: center; border-radius: 50%;
+  background: var(--surface-2); color: var(--ink-soft); font-size: 15px;
+  transition: all var(--transition);
+}
+.icon-btn:hover { background: var(--ink); color: var(--surface); }
+
+/* Foydalanuvchi bloki */
+.nav-user {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-s);
+  background: var(--surface-2);
+}
+.nav-user .meta { min-width: 0; display: flex; flex-direction: column; }
+.nav-user .name { font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.nav-user .role { font-size: 11px; color: var(--ink-faint); }
+
+/* Asosiy maydon */
+.shell-main { min-width: 0; display: flex; flex-direction: column; background: var(--ground); }
+.dash-content { padding: var(--sp-6) var(--sp-8) var(--sp-16); display: flex; flex-direction: column; gap: var(--sp-5); }
+
+/* --- mobil --- */
+@media (max-width: 940px) {
+  .shell { grid-template-columns: 1fr; }
+  .side-nav {
+    position: fixed; inset: 0 auto 0 0; width: 268px;
+    transform: translateX(-100%); transition: transform var(--transition);
+    box-shadow: none;
+  }
+  .side-nav.open { transform: none; box-shadow: var(--shadow-lg); }
+  .dash-content { padding: var(--sp-5) var(--sp-4) var(--sp-12); }
+  .nav-scrim {
+    position: fixed; inset: 0; z-index: calc(var(--z-sidebar) - 1);
+    background: var(--overlay-bg); backdrop-filter: blur(2px);
+  }
+  .nav-scrim[hidden] { display: none; }
+}
+
+/* ===================================================================
+   Brend logotipi — yon menyudan tashqarida ham ishlatiladi
+   (kirish sahifasi, poyloq). Avval navbar CSS'ida edi.
+   =================================================================== */
+.logo {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  font-family: var(--font-display); font-weight: 700; font-size: 23px;
+  color: var(--ink); letter-spacing: -.01em;
+}
+.logo .dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--gold-shine); box-shadow: var(--gold-glow);
+}

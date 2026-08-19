@@ -1,0 +1,24 @@
+/* Bo'sh holat, yuklanish skeleti va xato holati */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-12) var(--sp-6); text-align: center;
+  color: var(--ink-soft); grid-column: 1 / -1;
+}
+.empty-state .icon { font-size: 34px; opacity: .5; }
+.empty-state h3 { font-size: var(--fs-md); color: var(--ink); }
+
+/* Skeleton — ma'lumot kelguncha sahifa "sakramasligi" uchun */
+.skeleton {
+  background: linear-gradient(90deg, var(--paper-dim) 25%, var(--line-soft) 37%, var(--paper-dim) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+  border-radius: var(--radius-s);
+}
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+.skeleton-card { height: 250px; border-radius: var(--radius-m); }
+.skeleton-row  { height: 56px; margin-bottom: var(--sp-2); }
+.skeleton-text { height: 14px; }
+
+/* Sahifalash */
+.pagination { display: flex; align-items: center; justify-content: center; gap: var(--sp-2); padding-top: var(--sp-6); }
+.pagination .page-info { font-size: var(--fs-sm); color: var(--ink-soft); font-variant-numeric: tabular-nums; padding-inline: var(--sp-3); }

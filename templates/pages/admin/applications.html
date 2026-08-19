@@ -1,0 +1,21 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Biznes arizalari</h2>
+    <div class="row row-2 row-wrap" id="filters"></div>
+  </div>
+  <p class="muted small" style="margin-bottom:var(--sp-4)">
+    To'lov Telegram orqali kelganini tekshirib, «To'lovni tasdiqlash» tugmasini bosing —
+    obuna 30 kunga faollashadi va biznes ommaviy qidiruvda ko'rinadi.
+  </p>
+  <div id="list"></div>
+  <div id="pager"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/admin/applications.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,1408 @@
+<title>WENZU API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ground:#F4F4F0; --surface:#FFFFFF; --surface-2:#EDEEE8;
+  --ink:#15201B; --muted:#59655F; --line:#DEE0D8;
+  --accent:#0F5C42; --accent-soft:#E2EFE8; --gold:#8F6F1E;
+  --get:#1B6486; --post:#146B4A; --patch:#8A6407; --put:#6B4F86; --delete:#9B2C2C;
+  --chip-bg:#E9EBE4;
+  --shadow:0 1px 2px rgba(21,32,27,.05), 0 8px 24px -16px rgba(21,32,27,.25);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground:#101614; --surface:#18201D; --surface-2:#1E2724;
+    --ink:#E6EBE8; --muted:#93A09A; --line:#26302C;
+    --accent:#52C08E; --accent-soft:#183028; --gold:#D6B155;
+    --get:#6DB4D6; --post:#5FC195; --patch:#D5AC4E; --put:#B49AD0; --delete:#E08585;
+    --chip-bg:#232C29;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -16px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"] {
+  --ground:#101614; --surface:#18201D; --surface-2:#1E2724;
+  --ink:#E6EBE8; --muted:#93A09A; --line:#26302C;
+  --accent:#52C08E; --accent-soft:#183028; --gold:#D6B155;
+  --get:#6DB4D6; --post:#5FC195; --patch:#D5AC4E; --put:#B49AD0; --delete:#E08585;
+  --chip-bg:#232C29;
+  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px -16px rgba(0,0,0,.6);
+}
+
+* { box-sizing:border-box; }
+body {
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:'Public Sans', ui-sans-serif, system-ui, sans-serif;
+  font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3 { font-family:'Newsreader', Georgia, serif; font-weight:500; margin:0; text-wrap:balance; letter-spacing:-.01em; }
+h4 { margin:0; font-size:14.5px; font-weight:600; letter-spacing:-.005em; }
+code, pre, .path, .m { font-family:'JetBrains Mono', ui-monospace, SFMono-Regular, monospace; }
+a { color:inherit; }
+:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:3px; }
+
+.wrap { max-width:1280px; margin:0 auto; padding:0 28px; }
+
+/* ---------- masthead ---------- */
+.mast { border-bottom:1px solid var(--line); background:var(--surface); }
+.mast-in { display:flex; flex-wrap:wrap; align-items:flex-end; gap:28px; padding:44px 0 32px; }
+.mast h1 { font-size:clamp(34px,4.4vw,52px); line-height:1.02; }
+.mast h1 em { font-style:italic; color:var(--accent); }
+.lede { color:var(--muted); max-width:52ch; margin:12px 0 0; font-size:15.5px; }
+.stats { display:flex; gap:26px; margin-left:auto; }
+.stat { text-align:right; }
+.stat b { display:block; font-family:'Newsreader',serif; font-size:30px; font-weight:500; line-height:1; font-variant-numeric:tabular-nums; }
+.stat span { font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:600; }
+
+/* ---------- shell ---------- */
+.shell { display:grid; grid-template-columns:225px minmax(0,1fr); gap:40px; padding:32px 0 80px; align-items:start; }
+@media (max-width:900px) { .shell { grid-template-columns:1fr; gap:24px; } .rail { position:static !important; } }
+
+.rail { position:sticky; top:20px; display:flex; flex-direction:column; gap:2px; }
+.rail-lab { font-size:10.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--muted); font-weight:700; padding:0 10px 8px; }
+.rail a { display:grid; grid-template-columns:auto 1fr auto; gap:9px; align-items:center;
+  padding:8px 10px; border-radius:7px; text-decoration:none; font-size:13.5px; }
+.rail a:hover { background:var(--surface-2); }
+.rail .n { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted); font-weight:500; }
+.rail .c { font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+/* ---------- panels ---------- */
+.panel { background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:24px 26px; box-shadow:var(--shadow); }
+.panel + .panel { margin-top:20px; }
+.panel h2 { font-size:21px; margin-bottom:4px; }
+.panel .sub { color:var(--muted); font-size:14px; margin:0 0 18px; }
+
+.steps { counter-reset:s; display:grid; gap:11px; margin:0; padding:0; list-style:none; }
+.steps li { counter-increment:s; display:grid; grid-template-columns:24px 1fr; gap:12px; align-items:baseline; }
+.steps li::before { content:counter(s); font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700;
+  color:var(--accent); background:var(--accent-soft); border-radius:5px; text-align:center; padding:3px 0; }
+.steps code { background:var(--chip-bg); padding:1.5px 5px; border-radius:4px; font-size:12.5px; }
+
+table { width:100%; border-collapse:collapse; font-size:13.5px; }
+th { text-align:left; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted);
+  font-weight:700; padding:0 12px 8px 0; border-bottom:1px solid var(--line); }
+td { padding:10px 12px 10px 0; border-bottom:1px solid var(--line); vertical-align:top; }
+tr:last-child td { border-bottom:0; }
+td code { background:var(--chip-bg); padding:1.5px 5px; border-radius:4px; font-size:12px; white-space:nowrap; }
+.num { font-variant-numeric:tabular-nums; white-space:nowrap; }
+.scroll { overflow-x:auto; }
+
+pre { background:var(--surface-2); border:1px solid var(--line); border-radius:8px;
+  padding:13px 15px; overflow-x:auto; font-size:12.5px; line-height:1.55; margin:0; }
+pre code { background:none; padding:0; }
+
+/* ---------- filter ---------- */
+.filter { position:sticky; top:0; z-index:5; background:var(--ground);
+  padding:14px 0 12px; margin-bottom:4px; border-bottom:1px solid var(--line);
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.filter input { flex:1 1 240px; min-width:180px; font-family:inherit; font-size:14px;
+  padding:9px 13px; border-radius:8px; border:1px solid var(--line);
+  background:var(--surface); color:var(--ink); }
+.filter input::placeholder { color:var(--muted); }
+.toggles { display:flex; gap:5px; flex-wrap:wrap; }
+.tg { font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; letter-spacing:.04em;
+  padding:6px 10px; border-radius:7px; border:1px solid var(--line); background:var(--surface);
+  color:var(--muted); cursor:pointer; }
+.tg[aria-pressed="true"] { background:var(--accent); border-color:var(--accent); color:var(--surface); }
+:root[data-theme="dark"] .tg[aria-pressed="true"], @media (prefers-color-scheme:dark) { }
+.count-live { font-size:12.5px; color:var(--muted); font-variant-numeric:tabular-nums; margin-left:auto; }
+
+/* ---------- endpoints ---------- */
+.group { margin-top:34px; scroll-margin-top:76px; }
+.group-head { display:flex; align-items:baseline; gap:11px; padding-bottom:10px; margin-bottom:12px; border-bottom:2px solid var(--ink); }
+.gnum { font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:700; color:var(--accent); }
+.group-head h3 { font-size:20px; flex:1; }
+.gcount { font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; }
+
+.ep { background:var(--surface); border:1px solid var(--line); border-radius:10px;
+  padding:14px 16px; margin-bottom:9px; }
+.ep-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:6px; }
+.m { font-size:10px; font-weight:700; letter-spacing:.06em; padding:3px 7px; border-radius:5px;
+  background:var(--chip-bg); min-width:56px; text-align:center; }
+.m-GET { color:var(--get); } .m-POST { color:var(--post); }
+.m-PATCH { color:var(--patch); } .m-PUT { color:var(--put); } .m-DELETE { color:var(--delete); }
+.path { font-size:13px; font-weight:500; word-break:break-all; }
+.auth { font-size:10px; letter-spacing:.06em; text-transform:uppercase; font-weight:700;
+  padding:2.5px 7px; border-radius:20px; margin-left:auto; }
+.auth-public { color:var(--muted); border:1px solid var(--line); }
+.auth-token { color:var(--accent); background:var(--accent-soft); }
+.note { margin:5px 0 0; font-size:13.5px; color:var(--muted); }
+.qrow { display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-top:9px; }
+.qlab { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); font-weight:700; margin-right:2px; }
+.q { font-family:'JetBrains Mono',monospace; font-size:11px; padding:2px 6px; border-radius:4px;
+  background:var(--chip-bg); color:var(--ink); }
+.q-opt { opacity:.6; }
+.payload { margin-top:10px; }
+.payload summary { cursor:pointer; font-size:11px; letter-spacing:.07em; text-transform:uppercase;
+  font-weight:700; color:var(--accent); list-style:none; }
+.payload summary::-webkit-details-marker { display:none; }
+.payload summary::before { content:"▸ "; }
+.payload[open] summary::before { content:"▾ "; }
+.payload pre { margin-top:8px; }
+.payload-note { margin-top:8px; font-size:12px; color:var(--muted); font-style:italic; }
+.ep[hidden] { display:none; }
+.group.empty { display:none; }
+
+.foot { border-top:1px solid var(--line); margin-top:60px; padding:26px 0 50px; color:var(--muted); font-size:13px; }
+@media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
+</style>
+
+<header class="mast">
+  <div class="wrap mast-in">
+    <div>
+      <h1>WENZU <em>API</em></h1>
+      <p class="lede">Restoran va to'yxonalarni onlayn bron qilish platformasining backend interfeysi.
+      Quyidagi ro'yxat Postman kolleksiyasi bilan bir xil tartibda — papkalar va so'rov nomlari mos keladi.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>99</b><span>so'rov</span></div>
+      <div class="stat"><b>6</b><span>guruh</span></div>
+      <div class="stat"><b>4</b><span>huquq darajasi</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap shell">
+  <nav class="rail">
+    <div class="rail-lab">Bo'limlar</div>
+    <a href="#g00"><span class="n">00</span><span class="t">Tizim va sozlamalar</span><span class="c">4</span></a><a href="#g01"><span class="n">01</span><span class="t">Autentifikatsiya</span><span class="c">9</span></a><a href="#g02"><span class="n">02</span><span class="t">Ommaviy katalog (auth shart emas)</span><span class="c">12</span></a><a href="#g03"><span class="n">03</span><span class="t">Mijoz (oddiy foydalanuvchi)</span><span class="c">14</span></a><a href="#g04"><span class="n">04</span><span class="t">Biznes egasi paneli</span><span class="c">38</span></a><a href="#g05"><span class="n">05</span><span class="t">Super-admin paneli</span><span class="c">22</span></a>
+  </nav>
+
+  <main>
+    <section class="panel">
+      <h2>Postmanda ishga tushirish</h2>
+      <p class="sub">Ikkala faylni import qiling — token va ID'lar keyin o'zi saqlanadi.</p>
+      <ol class="steps">
+        <li><b>Import</b> → <code>postman/WENZU.postman_collection.json</code> va <code>postman/WENZU.postman_environment.json</code></li>
+        <li>O'ng yuqoridagi environment tanlagichdan <b>WENZU — Local</b> ni tanlang</li>
+        <li><code>base_url</code> to'g'riligini tekshiring — standart <code>http://127.0.0.1:8000</code></li>
+        <li><b>01 · Autentifikatsiya</b> papkasida <b>1 → 2 → 3 → 4</b> so'rovlarini shu tartibda yuboring</li>
+      </ol>
+      <p class="sub" style="margin:16px 0 0">Login javobidagi <code>access</code> avtomatik <code>{{access_token}}</code> ga yoziladi.
+      Xuddi shunday <code>business_id</code>, <code>room_id</code>, <code>reservation_id</code> ham javoblardan olinadi —
+      ularni qo'lda ko'chirish shart emas.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Kim nimani ko'radi</h2>
+      <p class="sub">Login javobidagi <code>user.business.type</code> frontend qaysi panelni ochishini belgilaydi.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Kim</th><th>Ochiq bo'limlar</th><th>Panel</th></tr></thead>
+        <tbody>
+          <tr><td>Mehmon</td><td><code>00</code> <code>02</code></td><td>Ommaviy katalog</td></tr>
+          <tr><td><code>role=user</code></td><td>+ <code>01</code> <code>03</code></td><td>Bron, sharh, biznes arizasi</td></tr>
+          <tr><td><code>role=business</code><br><code>business.type=restaurant</code></td><td>+ <code>04</code></td><td>Restoran paneli — <b>Xonalar</b></td></tr>
+          <tr><td><code>role=business</code><br><code>business.type=venue</code></td><td>+ <code>04</code></td><td>To'yxona paneli — <b>Zallar</b></td></tr>
+          <tr><td><code>is_staff=true</code></td><td>+ <code>05</code></td><td>Super-admin</td></tr>
+        </tbody>
+      </table></div>
+      <p class="sub" style="margin:16px 0 0">Restoran egasi <code>/api/owner/halls/</code> ga so'rov yuborsa <b>403</b> oladi, va aksincha.
+      Obuna tugasa o'qish ochiq qoladi, yozish <b>403</b> bo'ladi — shunda egasi to'lov ekranini ko'ra oladi.</p>
+    </section>
+
+    <section class="panel">
+      <h2>To'liq demo oqimi</h2>
+      <p class="sub">Bo'sh bazadan boshlab birinchi sharhgacha — namoyish uchun shu tartib.</p>
+      <pre><code>01 → 1,2,3,4        Ro'yxatdan o'tish + telefon tasdig'i + login
+03 → Biznes ochish arizasi      rol business bo'ladi, 7 kunlik trial ochiladi
+01 → 4              QAYTA LOGIN — token ichidagi rol yangilanishi uchun
+04 → Xona qo'shish
+04 → Taom qo'shish
+04 → Bo'sh vaqtlarni generatsiya qilish     ← busiz bron qilib bo'lmaydi
+02 → Bizneslar ro'yxati         business_id avtomatik saqlanadi
+02 → Xonaning band soatlari     soat gridi uchun
+03 → Restoran broni             boshqa foydalanuvchi bilan
+04 → Bron holati: confirmed → completed
+03 → Sharh qoldirish            faqat completed bron uchun
+05 → To'lovni tasdiqlash        obuna active, +30 kun</code></pre>
+    </section>
+
+    <section class="panel">
+      <h2>Kelishuvlar</h2>
+      <p class="sub">Barcha javoblar shu ikki shaklda keladi.</p>
+      <div class="scroll" style="display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(270px,1fr))">
+        <div>
+          <h4 style="margin-bottom:8px">Xato</h4>
+          <pre><code>{
+  "success": false,
+  "error": {
+    "code": "bad_request",
+    "message": "Parollar mos kelmadi.",
+    "details": { "password_confirm": [...] }
+  },
+  "request_id": "a1b2c3d4e5f6"
+}</code></pre>
+          <p class="note"><code>request_id</code> javob sarlavhasida ham keladi — log'dan aynan shu so'rovni topish uchun.</p>
+        </div>
+        <div>
+          <h4 style="margin-bottom:8px">Sahifalangan ro'yxat</h4>
+          <pre><code>{
+  "count": 128,
+  "total_pages": 7,
+  "current_page": 1,
+  "next": "...?page=2",
+  "previous": null,
+  "results": [ ... ]
+}</code></pre>
+          <p class="note"><code>?page=</code> va <code>?page_size=</code> (max 100) bilan boshqariladi.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>So'rov cheklovlari</h2>
+      <p class="sub">Chegaradan oshsa <b>429</b> qaytadi. SMS cheklovi IP emas, telefon raqami bo'yicha hisoblanadi.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Amal</th><th>Cheklov</th><th>Nima bo'yicha</th></tr></thead>
+        <tbody>
+          <tr><td>Ro'yxatdan o'tish</td><td class="num">5 / soat</td><td>IP</td></tr>
+          <tr><td>Login</td><td class="num">10 / daqiqa</td><td>IP + username</td></tr>
+          <tr><td>SMS kod so'rash</td><td class="num">3 / soat</td><td>telefon raqami</td></tr>
+          <tr><td>SMS tasdiqlash</td><td class="num">10 / soat</td><td>telefon raqami</td></tr>
+          <tr><td>Bron yaratish</td><td class="num">10 / soat</td><td>foydalanuvchi</td></tr>
+          <tr><td>Biznes arizasi</td><td class="num">3 / kun</td><td>foydalanuvchi</td></tr>
+          <tr><td>Sharh</td><td class="num">20 / kun</td><td>foydalanuvchi</td></tr>
+          <tr><td>Umumiy — tizimga kirgan</td><td class="num">120 / daqiqa · 5000 / kun</td><td>foydalanuvchi</td></tr>
+          <tr><td>Umumiy — mehmon</td><td class="num">40 / daqiqa · 1000 / kun</td><td>IP</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <div class="filter">
+      <input id="q" type="search" placeholder="Endpoint qidirish — masalan: bron, owner/rooms, obuna" aria-label="Endpoint qidirish">
+      <div class="toggles" id="tg">
+        <button class="tg" data-m="GET" aria-pressed="false">GET</button>
+        <button class="tg" data-m="POST" aria-pressed="false">POST</button>
+        <button class="tg" data-m="PATCH" aria-pressed="false">PATCH</button>
+        <button class="tg" data-m="PUT" aria-pressed="false">PUT</button>
+        <button class="tg" data-m="DELETE" aria-pressed="false">DEL</button>
+      </div>
+      <span class="count-live" id="live">99 ta so'rov</span>
+    </div>
+
+    <section class="group" id="g00">
+      <header class="group-head">
+        <span class="gnum">00</span>
+        <h3>Tizim va sozlamalar</h3>
+        <span class="gcount">4</span>
+      </header>
+      
+      <article class="ep" data-method="GET" data-search="health check /api/health/ baza va redis ishlayaptimi. load balancer shu javobga qarab serverga trafik yuboradi.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/health/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Health check</h4>
+        <p class="note">Baza va Redis ishlayaptimi. Load balancer shu javobga qarab serverga trafik yuboradi.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="ommaviy sozlamalar /api/settings/ admin telegram&#x27;i, bepul sinov muddati, depozit narxlari va tarif rejalari.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/settings/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Ommaviy sozlamalar</h4>
+        <p class="note">Admin Telegram&#x27;i, bepul sinov muddati, depozit narxlari va tarif rejalari.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="tarif rejalari /api/subscription-plans/ restoran va to&#x27;yxona uchun oylik obuna narxlari.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/subscription-plans/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Tarif rejalari</h4>
+        <p class="note">Restoran va to&#x27;yxona uchun oylik obuna narxlari.</p><div class="qrow"><span class="qlab">Query</span><span class="q q-opt">business_type</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="openapi schema (json) /api/schema/ to&#x27;liq openapi 3 spetsifikatsiyasi. brauzerda ko&#x27;rish uchun: /swagger/ yoki /redoc/">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/schema/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>OpenAPI schema (JSON)</h4>
+        <p class="note">To&#x27;liq OpenAPI 3 spetsifikatsiyasi. Brauzerda ko&#x27;rish uchun: /swagger/ yoki /redoc/</p>
+      </article>
+    </section>
+    <section class="group" id="g01">
+      <header class="group-head">
+        <span class="gnum">01</span>
+        <h3>Autentifikatsiya</h3>
+        <span class="gcount">9</span>
+      </header>
+      
+      <article class="ep" data-method="POST" data-search="1. ro&#x27;yxatdan o&#x27;tish /api/auth/register/ yangi foydalanuvchi. rol avtomatik user bo&#x27;ladi, telefon hali tasdiqlanmagan.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/auth/register/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>1. Ro&#x27;yxatdan o&#x27;tish</h4>
+        <p class="note">Yangi foydalanuvchi. Rol avtomatik user bo&#x27;ladi, telefon hali tasdiqlanmagan.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;full_name&quot;: &quot;Sardor Yusupov&quot;,
+  &quot;phone_number&quot;: &quot;+998901234567&quot;,
+  &quot;username&quot;: &quot;sardor_y&quot;,
+  &quot;password&quot;: &quot;StrongPass123!&quot;,
+  &quot;password_confirm&quot;: &quot;StrongPass123!&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="POST" data-search="2. sms kod so&#x27;rash /api/auth/send-code/ telefon raqamiga 6 xonali tasdiqlash kodi yuboriladi (eskiz.uz orqali).">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/auth/send-code/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>2. SMS kod so&#x27;rash</h4>
+        <p class="note">Telefon raqamiga 6 xonali tasdiqlash kodi yuboriladi (Eskiz.uz orqali).</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;phone_number&quot;: &quot;{{phone_number}}&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="POST" data-search="3. telefonni tasdiqlash /api/auth/verify-phone/ kodni tekshiradi va is_phone_verified=true qiladi.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/auth/verify-phone/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>3. Telefonni tasdiqlash</h4>
+        <p class="note">Kodni tekshiradi va is_phone_verified=True qiladi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;phone_number&quot;: &quot;{{phone_number}}&quot;,
+  &quot;code&quot;: &quot;{{sms_code}}&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="POST" data-search="4. kirish (login) /api/auth/login/ jwt token beradi va foydalanuvchi ma&#x27;lumotini qaytaradi.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/auth/login/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>4. Kirish (login)</h4>
+        <p class="note">JWT token beradi VA foydalanuvchi ma&#x27;lumotini qaytaradi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;username&quot;: &quot;{{username}}&quot;,
+  &quot;password&quot;: &quot;{{password}}&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="POST" data-search="tokenni yangilash /api/auth/refresh/ access token 1 soat yashaydi. tugagach shu endpoint bilan yangilanadi.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/auth/refresh/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Tokenni yangilash</h4>
+        <p class="note">Access token 1 soat yashaydi. Tugagach shu endpoint bilan yangilanadi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;refresh&quot;: &quot;{{refresh_token}}&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="mening profilim /api/auth/me/ joriy foydalanuvchi profili — biznes ma&#x27;lumoti bilan birga.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/auth/me/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Mening profilim</h4>
+        <p class="note">Joriy foydalanuvchi profili — biznes ma&#x27;lumoti bilan birga.</p>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="profilni tahrirlash /api/auth/me/ faqat full_name tahrirlanadi. username, phone_number, role o&#x27;zgartirilmaydi.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/auth/me/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Profilni tahrirlash</h4>
+        <p class="note">Faqat full_name tahrirlanadi. username, phone_number, role o&#x27;zgartirilmaydi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;full_name&quot;: &quot;Sardor Yusupov (yangilandi)&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="POST" data-search="chiqish (logout) /api/auth/logout/ refresh tokenni qora ro&#x27;yxatga qo&#x27;shadi.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/auth/logout/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Chiqish (logout)</h4>
+        <p class="note">Refresh tokenni qora ro&#x27;yxatga qo&#x27;shadi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;refresh&quot;: &quot;{{refresh_token}}&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="DELETE" data-search="hisobni o&#x27;chirish /api/auth/me/ ⚠️ hisobni faolsizlantiradi va shaxsiy ma&#x27;lumotlarni anonimlashtiradi.">
+        <div class="ep-head">
+          <span class="m m-DELETE">DELETE</span>
+          <code class="path">/api/auth/me/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Hisobni o&#x27;chirish</h4>
+        <p class="note">⚠️ Hisobni faolsizlantiradi va shaxsiy ma&#x27;lumotlarni anonimlashtiradi.</p>
+      </article>
+    </section>
+    <section class="group" id="g02">
+      <header class="group-head">
+        <span class="gnum">02</span>
+        <h3>Ommaviy katalog (auth shart emas)</h3>
+        <span class="gcount">12</span>
+      </header>
+      
+      <article class="ep" data-method="GET" data-search="bizneslar ro&#x27;yxati (qidiruv + filtr) /api/businesses/ bosh sahifadagi asosiy endpoint. barcha filtrlarni birga ishlatish mumkin.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/businesses/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Bizneslar ro&#x27;yxati (qidiruv + filtr)</h4>
+        <p class="note">Bosh sahifadagi asosiy endpoint. Barcha filtrlarni birga ishlatish mumkin.</p><div class="qrow"><span class="qlab">Query</span><span class="q">type</span><span class="q q-opt">search</span><span class="q q-opt">district</span><span class="q q-opt">cuisine</span><span class="q q-opt">min_rating</span><span class="q q-opt">guests</span><span class="q q-opt">lat</span><span class="q q-opt">lng</span><span class="q q-opt">radius_km</span><span class="q q-opt">date</span><span class="q q-opt">page</span><span class="q q-opt">page_size</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="biznes to&#x27;liq profili /api/businesses/{{business_id}}/ detal sahifasi bitta so&#x27;rovda: galereya, xona/zallar, menyu, taom paketi narxlari.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/businesses/{{business_id}}/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Biznes to&#x27;liq profili</h4>
+        <p class="note">Detal sahifasi bitta so&#x27;rovda: galereya, xona/zallar, menyu, taom paketi narxlari.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="xonalar (restoran) /api/businesses/{{business_id}}/rooms/ restoran xonalari/stollari. har birida deposit_amount — bron uchun oldindan to&#x27;lov.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/businesses/{{business_id}}/rooms/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Xonalar (restoran)</h4>
+        <p class="note">Restoran xonalari/stollari. Har birida deposit_amount — bron uchun oldindan to&#x27;lov.</p><div class="qrow"><span class="qlab">Query</span><span class="q q-opt">room_type</span><span class="q q-opt">min_capacity</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="zallar (to&#x27;yxona) /api/businesses/{{business_id}}/halls/ to&#x27;yxona zallari.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/businesses/{{business_id}}/halls/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Zallar (to&#x27;yxona)</h4>
+        <p class="note">To&#x27;yxona zallari.</p><div class="qrow"><span class="qlab">Query</span><span class="q q-opt">min_people</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="restoran menyusi /api/businesses/{{business_id}}/menu/ faqat is_available=true taomlar chiqadi.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/businesses/{{business_id}}/menu/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Restoran menyusi</h4>
+        <p class="note">Faqat is_available=true taomlar chiqadi.</p><div class="qrow"><span class="qlab">Query</span><span class="q q-opt">category</span><span class="q q-opt">search</span><span class="q q-opt">max_price</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="to&#x27;yxona menyusi /api/businesses/{{business_id}}/venue-menu/ to&#x27;yxona taomlari. narxi yo&#x27;q — to&#x27;yxonada narx alohida taomga emas, taom soniga (/pricing/) bog&#x27;lanadi.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/businesses/{{business_id}}/venue-menu/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>To&#x27;yxona menyusi</h4>
+        <p class="note">To&#x27;yxona taomlari. Narxi yo&#x27;q — to&#x27;yxonada narx alohida taomga emas, taom soniga (/pricing/) bog&#x27;lanadi.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="taom paketi narxlari (to&#x27;yxona) /api/businesses/{{business_id}}/pricing/ 1, 2 yoki 3 xil taom uchun kishi boshiga narx.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/businesses/{{business_id}}/pricing/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Taom paketi narxlari (to&#x27;yxona)</h4>
+        <p class="note">1, 2 yoki 3 xil taom uchun kishi boshiga narx.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="rasm galereyasi /api/businesses/{{business_id}}/photos/ detal sahifasidagi rasm karuseli.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/businesses/{{business_id}}/photos/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Rasm galereyasi</h4>
+        <p class="note">Detal sahifasidagi rasm karuseli.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="sharhlar /api/businesses/{{business_id}}/reviews/ biznes sharhlari (rasmlari bilan).">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/businesses/{{business_id}}/reviews/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Sharhlar</h4>
+        <p class="note">Biznes sharhlari (rasmlari bilan).</p><div class="qrow"><span class="qlab">Query</span><span class="q q-opt">min_rating</span><span class="q q-opt">page_size</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="bo&#x27;sh vaqtlar jadvali /api/businesses/{{business_id}}/availability/ biznesning ish jadvali. restoranda har bir xona uchun, to&#x27;yxonada butun kun uchun.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/businesses/{{business_id}}/availability/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Bo&#x27;sh vaqtlar jadvali</h4>
+        <p class="note">Biznesning ish jadvali. Restoranda har bir xona uchun, to&#x27;yxonada butun kun uchun.</p><div class="qrow"><span class="qlab">Query</span><span class="q">date</span><span class="q q-opt">date_from</span><span class="q q-opt">date_to</span><span class="q q-opt">room</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="xonaning band soatlari /api/rooms/{{room_id}}/busy-hours/ bron ekranidagi soat gridini bo&#x27;yash uchun.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/rooms/{{room_id}}/busy-hours/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Xonaning band soatlari</h4>
+        <p class="note">Bron ekranidagi soat gridini bo&#x27;yash uchun.</p><div class="qrow"><span class="qlab">Query</span><span class="q">date</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="zalning band kunlari /api/halls/{{hall_id}}/busy-dates/ to&#x27;yxonada bir kunda faqat bitta to&#x27;y bo&#x27;ladi — shuning uchun kalendarda band kunlarni ko&#x27;rsatish kifoya.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/halls/{{hall_id}}/busy-dates/</code>
+          <span class="auth auth-public">ochiq</span>
+        </div>
+        <h4>Zalning band kunlari</h4>
+        <p class="note">To&#x27;yxonada bir kunda faqat bitta to&#x27;y bo&#x27;ladi — shuning uchun kalendarda band kunlarni ko&#x27;rsatish kifoya.</p><div class="qrow"><span class="qlab">Query</span><span class="q q-opt">date_from</span><span class="q q-opt">date_to</span></div>
+      </article>
+    </section>
+    <section class="group" id="g03">
+      <header class="group-head">
+        <span class="gnum">03</span>
+        <h3>Mijoz (oddiy foydalanuvchi)</h3>
+        <span class="gcount">14</span>
+      </header>
+      
+      <article class="ep" data-method="POST" data-search="restoran broni /api/reservations/ restoran broni — sana + soat oralig&#x27;i.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/reservations/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Restoran broni</h4>
+        <p class="note">Restoran broni — sana + soat oralig&#x27;i.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;room&quot;: &quot;{{room_id}}&quot;,
+  &quot;date&quot;: &quot;2026-09-01&quot;,
+  &quot;start_time&quot;: &quot;19:00&quot;,
+  &quot;end_time&quot;: &quot;21:00&quot;,
+  &quot;guests_count&quot;: 4,
+  &quot;menu_items&quot;: [],
+  &quot;special_request&quot;: &quot;Deraza yonidagi stol bo&#x27;lsa&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="POST" data-search="to&#x27;yxona broni /api/reservations/ to&#x27;yxona broni — butun kunga, bitta zal.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/reservations/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>To&#x27;yxona broni</h4>
+        <p class="note">To&#x27;yxona broni — butun kunga, bitta zal.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;hall&quot;: &quot;{{hall_id}}&quot;,
+  &quot;date&quot;: &quot;2026-09-14&quot;,
+  &quot;guests_count&quot;: 250,
+  &quot;dish_count&quot;: 2,
+  &quot;menu_items&quot;: [],
+  &quot;special_request&quot;: &quot;&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="mening bronlarim /api/reservations/my/ foydalanuvchining bron tarixi.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/reservations/my/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Mening bronlarim</h4>
+        <p class="note">Foydalanuvchining bron tarixi.</p><div class="qrow"><span class="qlab">Query</span><span class="q q-opt">status</span><span class="q q-opt">date_from</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="bitta bron /api/reservations/{{reservation_id}}/ faqat bron egasi, biznes egasi yoki admin ko&#x27;ra oladi.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/reservations/{{reservation_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bitta bron</h4>
+        <p class="note">Faqat bron egasi, biznes egasi yoki admin ko&#x27;ra oladi.</p>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="bronni bekor qilish /api/reservations/{{reservation_id}}/cancel/ mijoz o&#x27;z bronini bekor qiladi. allaqachon bekor qilingan yoki yakunlangan bronni qayta bekor qilib bo&#x27;lmaydi.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/reservations/{{reservation_id}}/cancel/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bronni bekor qilish</h4>
+        <p class="note">Mijoz o&#x27;z bronini bekor qiladi. Allaqachon bekor qilingan yoki yakunlangan bronni qayta bekor qilib bo&#x27;lmaydi.</p>
+      </article>
+      <article class="ep" data-method="POST" data-search="sharh qoldirish /api/reviews/ ⚠️ faqat yakunlangan (completed) bron uchun.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/reviews/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Sharh qoldirish</h4>
+        <p class="note">⚠️ Faqat YAKUNLANGAN (completed) bron uchun.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;reservation&quot;: &quot;{{reservation_id}}&quot;,
+  &quot;rating&quot;: 5,
+  &quot;comment&quot;: &quot;Xizmat a&#x27;lo darajada, ovqatlar mazali!&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="POST" data-search="sharhga rasm qo&#x27;shish /api/reviews/{{review_id}}/photos/ bitta sharhga eng ko&#x27;pi bilan 5 ta rasm.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/reviews/{{review_id}}/photos/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Sharhga rasm qo&#x27;shish</h4>
+        <p class="note">Bitta sharhga eng ko&#x27;pi bilan 5 ta rasm.</p><div class="payload-note">form-data — fayl yuklash</div>
+      </article>
+      <article class="ep" data-method="GET" data-search="mening sharhlarim /api/reviews/my/ foydalanuvchining o&#x27;z sharhlari.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/reviews/my/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Mening sharhlarim</h4>
+        <p class="note">Foydalanuvchining o&#x27;z sharhlari.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="bitta sharh /api/reviews/{{review_id}}/ sharhni rasmlari bilan ko&#x27;rish.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/reviews/{{review_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bitta sharh</h4>
+        <p class="note">Sharhni rasmlari bilan ko&#x27;rish.</p>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="sharhni tahrirlash /api/reviews/{{review_id}}/ faqat sharh egasi. reyting avtomatik qayta hisoblanadi.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/reviews/{{review_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Sharhni tahrirlash</h4>
+        <p class="note">Faqat sharh egasi. Reyting avtomatik qayta hisoblanadi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;rating&quot;: 4,
+  &quot;comment&quot;: &quot;Fikrimni o&#x27;zgartirdim&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="DELETE" data-search="sharhni o&#x27;chirish /api/reviews/{{review_id}}/ faqat sharh egasi yoki admin.">
+        <div class="ep-head">
+          <span class="m m-DELETE">DELETE</span>
+          <code class="path">/api/reviews/{{review_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Sharhni o&#x27;chirish</h4>
+        <p class="note">Faqat sharh egasi yoki admin.</p>
+      </article>
+      <article class="ep" data-method="DELETE" data-search="sharh rasmini o&#x27;chirish /api/review-photos/{{review_photo_id}}/ faqat sharh egasi.">
+        <div class="ep-head">
+          <span class="m m-DELETE">DELETE</span>
+          <code class="path">/api/review-photos/{{review_photo_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Sharh rasmini o&#x27;chirish</h4>
+        <p class="note">Faqat sharh egasi.</p>
+      </article>
+      <article class="ep" data-method="POST" data-search="biznes ochish arizasi /api/business-applications/ loyihaning eng muhim biznes-jarayoni.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/business-applications/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Biznes ochish arizasi</h4>
+        <p class="note">Loyihaning eng muhim biznes-jarayoni.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;business_type&quot;: &quot;restaurant&quot;,
+  &quot;business_name&quot;: &quot;Shoxona Restorani&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="mening arizalarim /api/business-applications/my/ ariza holati: pending_payment | approved | rejected.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/business-applications/my/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Mening arizalarim</h4>
+        <p class="note">Ariza holati: pending_payment | approved | rejected.</p>
+      </article>
+    </section>
+    <section class="group" id="g04">
+      <header class="group-head">
+        <span class="gnum">04</span>
+        <h3>Biznes egasi paneli</h3>
+        <span class="gcount">38</span>
+      </header>
+      
+      <article class="ep" data-method="GET" data-search="dashboard — umumiy ko&#x27;rinish /api/owner/overview/ boshqaruv panelining bosh ekrani: statistika kartochkalari, obuna holati va so&#x27;nggi 5 ta bron.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/overview/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Dashboard — umumiy ko&#x27;rinish</h4>
+        <p class="note">Boshqaruv panelining bosh ekrani: statistika kartochkalari, obuna holati va so&#x27;nggi 5 ta bron.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="biznes sozlamalari (ko&#x27;rish) /api/owner/business/ egasining &quot;sozlamalar&quot; ekrani.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/business/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Biznes sozlamalari (ko&#x27;rish)</h4>
+        <p class="note">Egasining &quot;Sozlamalar&quot; ekrani.</p>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="biznes sozlamalari (tahrirlash) /api/owner/business/ business_type, rating_avg, is_visible o&#x27;zgartirilmaydi.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/owner/business/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Biznes sozlamalari (tahrirlash)</h4>
+        <p class="note">business_type, rating_avg, is_visible o&#x27;zgartirilmaydi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;name&quot;: &quot;Shoxona Restorani&quot;,
+  &quot;district&quot;: &quot;Yunusobod&quot;,
+  &quot;address&quot;: &quot;Amir Temur ko&#x27;chasi 15&quot;,
+  &quot;description&quot;: &quot;Zamonaviy oshxona, VIP xonalar&quot;,
+  &quot;cuisine&quot;: &quot;yevropa&quot;,
+  &quot;open_time&quot;: &quot;08:00&quot;,
+  &quot;close_time&quot;: &quot;23:00&quot;,
+  &quot;latitude&quot;: 41.311081,
+  &quot;longitude&quot;: 69.240562,
+  &quot;telegram_username&quot;: &quot;shoxona_admin&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="xonalar ro&#x27;yxati /api/owner/rooms/ 🍽️ faqat restoran egasiga. to&#x27;yxona egasi so&#x27;rasa → 403.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/rooms/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Xonalar ro&#x27;yxati</h4>
+        <p class="note">🍽️ Faqat restoran egasiga. To&#x27;yxona egasi so&#x27;rasa → 403.</p>
+      </article>
+      <article class="ep" data-method="POST" data-search="xona qo&#x27;shish /api/owner/rooms/ 🍽️ faqat restoran egasiga.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/owner/rooms/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Xona qo&#x27;shish</h4>
+        <p class="note">🍽️ Faqat restoran egasiga.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;name&quot;: &quot;VIP xona — 6 kishilik&quot;,
+  &quot;room_type&quot;: &quot;vip&quot;,
+  &quot;capacity&quot;: 6,
+  &quot;deposit_tier&quot;: &quot;premium&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="bitta xona /api/owner/rooms/{{room_id}}/ 🍽️ faqat restoran egasiga.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/rooms/{{room_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bitta xona</h4>
+        <p class="note">🍽️ Faqat restoran egasiga.</p>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="xonani tahrirlash /api/owner/rooms/{{room_id}}/ 🍽️ faqat restoran egasiga.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/owner/rooms/{{room_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Xonani tahrirlash</h4>
+        <p class="note">🍽️ Faqat restoran egasiga.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;capacity&quot;: 8,
+  &quot;deposit_tier&quot;: &quot;pro&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="DELETE" data-search="xonani o&#x27;chirish /api/owner/rooms/{{room_id}}/ 🍽️ faol bronlari bor xonani o&#x27;chirib bo&#x27;lmaydi (400).">
+        <div class="ep-head">
+          <span class="m m-DELETE">DELETE</span>
+          <code class="path">/api/owner/rooms/{{room_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Xonani o&#x27;chirish</h4>
+        <p class="note">🍽️ Faol bronlari bor xonani o&#x27;chirib bo&#x27;lmaydi (400).</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="zallar ro&#x27;yxati /api/owner/halls/ 🎉 faqat to&#x27;yxona egasiga. restoran egasi so&#x27;rasa → 403.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/halls/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Zallar ro&#x27;yxati</h4>
+        <p class="note">🎉 Faqat to&#x27;yxona egasiga. Restoran egasi so&#x27;rasa → 403.</p>
+      </article>
+      <article class="ep" data-method="POST" data-search="zal qo&#x27;shish /api/owner/halls/ 🎉 faqat to&#x27;yxona egasiga.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/owner/halls/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Zal qo&#x27;shish</h4>
+        <p class="note">🎉 Faqat to&#x27;yxona egasiga.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;name&quot;: &quot;Katta zal&quot;,
+  &quot;people&quot;: 500,
+  &quot;package&quot;: &quot;Standart bezak&quot;,
+  &quot;all_price&quot;: &quot;9000000&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="bitta zal /api/owner/halls/{{hall_id}}/ 🎉 faqat to&#x27;yxona egasiga.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/halls/{{hall_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bitta zal</h4>
+        <p class="note">🎉 Faqat to&#x27;yxona egasiga.</p>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="zalni tahrirlash /api/owner/halls/{{hall_id}}/ 🎉 faqat to&#x27;yxona egasiga.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/owner/halls/{{hall_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Zalni tahrirlash</h4>
+        <p class="note">🎉 Faqat to&#x27;yxona egasiga.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;people&quot;: 600
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="DELETE" data-search="zalni o&#x27;chirish /api/owner/halls/{{hall_id}}/ 🎉 faqat to&#x27;yxona egasiga.">
+        <div class="ep-head">
+          <span class="m m-DELETE">DELETE</span>
+          <code class="path">/api/owner/halls/{{hall_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Zalni o&#x27;chirish</h4>
+        <p class="note">🎉 Faqat to&#x27;yxona egasiga.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="taom paketi narxlari (ko&#x27;rish) /api/owner/pricing/ 🎉 faqat to&#x27;yxona egasiga. 1/2/3 xil taom uchun kishi boshiga narx.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/pricing/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Taom paketi narxlari (ko&#x27;rish)</h4>
+        <p class="note">🎉 Faqat to&#x27;yxona egasiga. 1/2/3 xil taom uchun kishi boshiga narx.</p>
+      </article>
+      <article class="ep" data-method="PUT" data-search="taom paketi narxlarini saqlash /api/owner/pricing/ 🎉 faqat to&#x27;yxona egasiga.">
+        <div class="ep-head">
+          <span class="m m-PUT">PUT</span>
+          <code class="path">/api/owner/pricing/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Taom paketi narxlarini saqlash</h4>
+        <p class="note">🎉 Faqat to&#x27;yxona egasiga.</p><details class="payload"><summary>Request body</summary><pre><code>[
+  {
+    &quot;dish_count&quot;: 1,
+    &quot;price_per_person&quot;: &quot;100000&quot;
+  },
+  {
+    &quot;dish_count&quot;: 2,
+    &quot;price_per_person&quot;: &quot;120000&quot;
+  },
+  {
+    &quot;dish_count&quot;: 3,
+    &quot;price_per_person&quot;: &quot;150000&quot;
+  }
+]</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="menyu ro&#x27;yxati (restoran) /api/owner/menu/restaurant/ 🍽️ egasi mavjud bo&#x27;lmagan taomlarni ham ko&#x27;radi (ommaviy ro&#x27;yxatdan farqi).">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/menu/restaurant/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Menyu ro&#x27;yxati (restoran)</h4>
+        <p class="note">🍽️ Egasi mavjud bo&#x27;lmagan taomlarni ham ko&#x27;radi (ommaviy ro&#x27;yxatdan farqi).</p>
+      </article>
+      <article class="ep" data-method="POST" data-search="taom qo&#x27;shish (restoran) /api/owner/menu/restaurant/ 🍽️ category: starter | soup | main | salad | dessert | drink | other">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/owner/menu/restaurant/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Taom qo&#x27;shish (restoran)</h4>
+        <p class="note">🍽️ category: starter | soup | main | salad | dessert | drink | other</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;name&quot;: &quot;Steyk Ribay&quot;,
+  &quot;category&quot;: &quot;main&quot;,
+  &quot;price&quot;: &quot;140000&quot;,
+  &quot;description&quot;: &quot;Avstraliya mol go&#x27;shti&quot;,
+  &quot;is_available&quot;: true
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="bitta taom (restoran) /api/owner/menu/restaurant/{{menu_item_id}}/ 🍽️ restoran egasiga.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/menu/restaurant/{{menu_item_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bitta taom (restoran)</h4>
+        <p class="note">🍽️ Restoran egasiga.</p>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="taomni tahrirlash (restoran) /api/owner/menu/restaurant/{{menu_item_id}}/ 🍽️ restoran egasiga.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/owner/menu/restaurant/{{menu_item_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Taomni tahrirlash (restoran)</h4>
+        <p class="note">🍽️ Restoran egasiga.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;price&quot;: &quot;150000&quot;,
+  &quot;is_available&quot;: false
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="DELETE" data-search="taomni o&#x27;chirish (restoran) /api/owner/menu/restaurant/{{menu_item_id}}/ 🍽️ restoran egasiga.">
+        <div class="ep-head">
+          <span class="m m-DELETE">DELETE</span>
+          <code class="path">/api/owner/menu/restaurant/{{menu_item_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Taomni o&#x27;chirish (restoran)</h4>
+        <p class="note">🍽️ Restoran egasiga.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="menyu ro&#x27;yxati (to&#x27;yxona) /api/owner/menu/venue/ 🎉 to&#x27;yxona egasiga.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/menu/venue/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Menyu ro&#x27;yxati (to&#x27;yxona)</h4>
+        <p class="note">🎉 To&#x27;yxona egasiga.</p>
+      </article>
+      <article class="ep" data-method="POST" data-search="taom qo&#x27;shish (to&#x27;yxona) /api/owner/menu/venue/ 🎉 narx maydoni yo&#x27;q — to&#x27;yxonada narx /api/owner/pricing/ orqali belgilanadi.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/owner/menu/venue/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Taom qo&#x27;shish (to&#x27;yxona)</h4>
+        <p class="note">🎉 Narx maydoni yo&#x27;q — to&#x27;yxonada narx /api/owner/pricing/ orqali belgilanadi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;name&quot;: &quot;Palov (to&#x27;y oshi)&quot;,
+  &quot;category&quot;: &quot;main&quot;,
+  &quot;description&quot;: &quot;&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="bitta taom (to&#x27;yxona) /api/owner/menu/venue/{{menu_item_id}}/ 🎉 to&#x27;yxona egasiga.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/menu/venue/{{menu_item_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bitta taom (to&#x27;yxona)</h4>
+        <p class="note">🎉 To&#x27;yxona egasiga.</p>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="taomni tahrirlash (to&#x27;yxona) /api/owner/menu/venue/{{menu_item_id}}/ 🎉 to&#x27;yxona egasiga.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/owner/menu/venue/{{menu_item_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Taomni tahrirlash (to&#x27;yxona)</h4>
+        <p class="note">🎉 To&#x27;yxona egasiga.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;name&quot;: &quot;Palov (maxsus)&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="DELETE" data-search="taomni o&#x27;chirish (to&#x27;yxona) /api/owner/menu/venue/{{menu_item_id}}/ 🎉 to&#x27;yxona egasiga.">
+        <div class="ep-head">
+          <span class="m m-DELETE">DELETE</span>
+          <code class="path">/api/owner/menu/venue/{{menu_item_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Taomni o&#x27;chirish (to&#x27;yxona)</h4>
+        <p class="note">🎉 To&#x27;yxona egasiga.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="galereya ro&#x27;yxati /api/owner/photos/ biznes rasmlari.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/photos/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Galereya ro&#x27;yxati</h4>
+        <p class="note">Biznes rasmlari.</p>
+      </article>
+      <article class="ep" data-method="POST" data-search="galereyaga rasm qo&#x27;shish /api/owner/photos/ eng ko&#x27;pi bilan 10 ta rasm.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/owner/photos/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Galereyaga rasm qo&#x27;shish</h4>
+        <p class="note">Eng ko&#x27;pi bilan 10 ta rasm.</p><div class="payload-note">form-data — fayl yuklash</div>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="rasm tartibini o&#x27;zgartirish /api/owner/photos/{{photo_id}}/ ">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/owner/photos/{{photo_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Rasm tartibini o&#x27;zgartirish</h4>
+        <details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;order&quot;: 2
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="DELETE" data-search="rasmni o&#x27;chirish /api/owner/photos/{{photo_id}}/ ">
+        <div class="ep-head">
+          <span class="m m-DELETE">DELETE</span>
+          <code class="path">/api/owner/photos/{{photo_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Rasmni o&#x27;chirish</h4>
+        
+      </article>
+      <article class="ep" data-method="POST" data-search="bo&#x27;sh vaqtlarni generatsiya qilish /api/owner/availability/generate/ ⭐ eng qulay endpoint: tanlangan oylarning barcha kunlari uchun ish jadvalini bir zumda yaratadi.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/owner/availability/generate/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bo&#x27;sh vaqtlarni generatsiya qilish</h4>
+        <p class="note">⭐ Eng qulay endpoint: tanlangan oylarning BARCHA kunlari uchun ish jadvalini bir zumda yaratadi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;room&quot;: &quot;{{room_id}}&quot;,
+  &quot;start_time&quot;: &quot;08:00&quot;,
+  &quot;end_time&quot;: &quot;23:00&quot;,
+  &quot;year&quot;: 2026,
+  &quot;months&quot;: [
+    9,
+    10,
+    11
+  ]
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="bo&#x27;sh vaqtlar ro&#x27;yxati /api/owner/availability/ ">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/availability/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bo&#x27;sh vaqtlar ro&#x27;yxati</h4>
+        <div class="qrow"><span class="qlab">Query</span><span class="q q-opt">date_from</span><span class="q q-opt">date_to</span><span class="q q-opt">is_booked</span></div>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="kunni tahrirlash /api/owner/availability/{{availability_id}}/ bitta kunning ish vaqtini o&#x27;zgartirish.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/owner/availability/{{availability_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Kunni tahrirlash</h4>
+        <p class="note">Bitta kunning ish vaqtini o&#x27;zgartirish.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;start_time&quot;: &quot;10:00&quot;,
+  &quot;end_time&quot;: &quot;22:00&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="DELETE" data-search="kunni o&#x27;chirish /api/owner/availability/{{availability_id}}/ faol bronlari bor kunni o&#x27;chirib bo&#x27;lmaydi (400).">
+        <div class="ep-head">
+          <span class="m m-DELETE">DELETE</span>
+          <code class="path">/api/owner/availability/{{availability_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Kunni o&#x27;chirish</h4>
+        <p class="note">Faol bronlari bor kunni o&#x27;chirib bo&#x27;lmaydi (400).</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="bronlar ro&#x27;yxati /api/owner/reservations/ egasining &quot;bronlar&quot; ekrani. mijoz ismi va telefoni bilan.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/reservations/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bronlar ro&#x27;yxati</h4>
+        <p class="note">Egasining &quot;Bronlar&quot; ekrani. Mijoz ismi va telefoni bilan.</p><div class="qrow"><span class="qlab">Query</span><span class="q q-opt">status</span><span class="q q-opt">date</span></div>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="bron holatini o&#x27;zgartirish /api/owner/reservations/{{reservation_id}}/status/ mijoz depozitni to&#x27;lagach egasi bronni tasdiqlaydi.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/owner/reservations/{{reservation_id}}/status/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bron holatini o&#x27;zgartirish</h4>
+        <p class="note">Mijoz depozitni to&#x27;lagach egasi bronni tasdiqlaydi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;status&quot;: &quot;confirmed&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="sharhlar /api/owner/reviews/ mijozlar sharhlari.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/reviews/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Sharhlar</h4>
+        <p class="note">Mijozlar sharhlari.</p><div class="qrow"><span class="qlab">Query</span><span class="q q-opt">min_rating</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="obuna holati /api/owner/subscription/ holat, oylik narx, qolgan kun (days_left), to&#x27;lov tarixi va admin telegram&#x27;i.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/subscription/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Obuna holati</h4>
+        <p class="note">Holat, oylik narx, qolgan kun (days_left), to&#x27;lov tarixi va admin Telegram&#x27;i.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="to&#x27;lovlar tarixi /api/owner/payments/ admin tasdiqlagan to&#x27;lovlar jurnali.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/owner/payments/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>To&#x27;lovlar tarixi</h4>
+        <p class="note">Admin tasdiqlagan to&#x27;lovlar jurnali.</p>
+      </article>
+    </section>
+    <section class="group" id="g05">
+      <header class="group-head">
+        <span class="gnum">05</span>
+        <h3>Super-admin paneli</h3>
+        <span class="gcount">22</span>
+      </header>
+      
+      <article class="ep" data-method="GET" data-search="dashboard statistikasi /api/admin/overview/ foydalanuvchilar, bizneslar, arizalar, bronlar va obunalar bo&#x27;yicha umumiy raqamlar.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/admin/overview/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Dashboard statistikasi</h4>
+        <p class="note">Foydalanuvchilar, bizneslar, arizalar, bronlar va obunalar bo&#x27;yicha umumiy raqamlar.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="arizalar ro&#x27;yxati /api/admin/applications/ kutilayotgan arizalar. har birida arizachi ismi, telefoni va username&#x27;i.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/admin/applications/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Arizalar ro&#x27;yxati</h4>
+        <p class="note">Kutilayotgan arizalar. Har birida arizachi ismi, telefoni va username&#x27;i.</p><div class="qrow"><span class="qlab">Query</span><span class="q">status</span><span class="q q-opt">business_type</span><span class="q q-opt">search</span></div>
+      </article>
+      <article class="ep" data-method="POST" data-search="to&#x27;lovni tasdiqlash (arizani ma&#x27;qullash) /api/admin/applications/{{application_id}}/approve/ ⭐ asosiy admin amali. telegram orqali to&#x27;lov kelganini ko&#x27;rgach bosiladi.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/admin/applications/{{application_id}}/approve/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>To&#x27;lovni tasdiqlash (arizani ma&#x27;qullash)</h4>
+        <p class="note">⭐ Asosiy admin amali. Telegram orqali to&#x27;lov kelganini ko&#x27;rgach bosiladi.</p>
+      </article>
+      <article class="ep" data-method="POST" data-search="arizani rad etish /api/admin/applications/{{application_id}}/reject/ biznes profili yashiriladi, lekin o&#x27;chirilmaydi — egasi keyin to&#x27;lov qilib qayta faollashtirishi mumkin.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/admin/applications/{{application_id}}/reject/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Arizani rad etish</h4>
+        <p class="note">Biznes profili yashiriladi, lekin o&#x27;chirilmaydi — egasi keyin to&#x27;lov qilib qayta faollashtirishi mumkin.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="bizneslar ro&#x27;yxati /api/admin/businesses/ barcha bizneslar — bloklanganlari ham. har birida obuna holati.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/admin/businesses/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bizneslar ro&#x27;yxati</h4>
+        <p class="note">Barcha bizneslar — bloklanganlari ham. Har birida obuna holati.</p><div class="qrow"><span class="qlab">Query</span><span class="q q-opt">type</span><span class="q q-opt">is_visible</span><span class="q q-opt">search</span></div>
+      </article>
+      <article class="ep" data-method="PATCH" data-search="biznesni bloklash/blokdan chiqarish /api/admin/businesses/{{business_id}}/toggle-block/ is_visible ni teskarisiga o&#x27;zgartiradi. bloklangan biznes ommaviy qidiruvda chiqmaydi.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/admin/businesses/{{business_id}}/toggle-block/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Biznesni bloklash/blokdan chiqarish</h4>
+        <p class="note">is_visible ni teskarisiga o&#x27;zgartiradi. Bloklangan biznes ommaviy qidiruvda chiqmaydi.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="foydalanuvchilar /api/admin/users/ ">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/admin/users/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Foydalanuvchilar</h4>
+        <div class="qrow"><span class="qlab">Query</span><span class="q q-opt">role</span><span class="q q-opt">search</span><span class="q q-opt">is_active</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="foydalanuvchi (ko&#x27;rish) /api/admin/users/{{user_id}}/ ">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/admin/users/{{user_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Foydalanuvchi (ko&#x27;rish)</h4>
+        
+      </article>
+      <article class="ep" data-method="PATCH" data-search="foydalanuvchini tahrirlash /api/admin/users/{{user_id}}/ tahrirlash mumkin: is_active, is_confirmed, is_phone_verified, role.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/admin/users/{{user_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Foydalanuvchini tahrirlash</h4>
+        <p class="note">Tahrirlash mumkin: is_active, is_confirmed, is_phone_verified, role.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;is_active&quot;: true,
+  &quot;is_confirmed&quot;: true
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="obunalar /api/admin/subscriptions/ ">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/admin/subscriptions/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Obunalar</h4>
+        <div class="qrow"><span class="qlab">Query</span><span class="q q-opt">status</span><span class="q q-opt">business_type</span><span class="q q-opt">search</span></div>
+      </article>
+      <article class="ep" data-method="POST" data-search="obunani faollashtirish (to&#x27;lov tasdig&#x27;i) /api/admin/subscriptions/{{subscription_id}}/activate/ obunani 30 kunga uzaytiradi va to&#x27;lov jurnaliga yozuv qo&#x27;shadi.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/admin/subscriptions/{{subscription_id}}/activate/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Obunani faollashtirish (to&#x27;lov tasdig&#x27;i)</h4>
+        <p class="note">Obunani 30 kunga uzaytiradi va to&#x27;lov jurnaliga yozuv qo&#x27;shadi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;amount&quot;: &quot;255000&quot;,
+  &quot;note&quot;: &quot;Telegram orqali karta-kartaga&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="POST" data-search="obunani tugatish /api/admin/subscriptions/{{subscription_id}}/expire/ obunani qo&#x27;lda expired qiladi va biznesni qidiruvdan yashiradi.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/admin/subscriptions/{{subscription_id}}/expire/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Obunani tugatish</h4>
+        <p class="note">Obunani qo&#x27;lda expired qiladi va biznesni qidiruvdan yashiradi.</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="tarif rejalari /api/admin/subscription-plans/ ">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/admin/subscription-plans/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Tarif rejalari</h4>
+        
+      </article>
+      <article class="ep" data-method="POST" data-search="tarif qo&#x27;shish /api/admin/subscription-plans/ ">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/admin/subscription-plans/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Tarif qo&#x27;shish</h4>
+        <details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;business_type&quot;: &quot;restaurant&quot;,
+  &quot;monthly_price&quot;: &quot;255000&quot;,
+  &quot;trial_days&quot;: 7
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="bitta tarif /api/admin/subscription-plans/{{plan_id}}/ ">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/admin/subscription-plans/{{plan_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Bitta tarif</h4>
+        
+      </article>
+      <article class="ep" data-method="PATCH" data-search="tarifni tahrirlash /api/admin/subscription-plans/{{plan_id}}/ ">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/admin/subscription-plans/{{plan_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Tarifni tahrirlash</h4>
+        <details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;monthly_price&quot;: &quot;300000&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="DELETE" data-search="tarifni o&#x27;chirish /api/admin/subscription-plans/{{plan_id}}/ bog&#x27;langan obunalari bor tarifni o&#x27;chirib bo&#x27;lmaydi (400).">
+        <div class="ep-head">
+          <span class="m m-DELETE">DELETE</span>
+          <code class="path">/api/admin/subscription-plans/{{plan_id}}/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Tarifni o&#x27;chirish</h4>
+        <p class="note">Bog&#x27;langan obunalari bor tarifni o&#x27;chirib bo&#x27;lmaydi (400).</p>
+      </article>
+      <article class="ep" data-method="GET" data-search="to&#x27;lovlar jurnali /api/admin/payments/ ">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/admin/payments/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>To&#x27;lovlar jurnali</h4>
+        <div class="qrow"><span class="qlab">Query</span><span class="q q-opt">business</span></div>
+      </article>
+      <article class="ep" data-method="POST" data-search="qo&#x27;lda to&#x27;lov qo&#x27;shish /api/admin/payments/ confirmed_by avtomatik joriy admindan olinadi.">
+        <div class="ep-head">
+          <span class="m m-POST">POST</span>
+          <code class="path">/api/admin/payments/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Qo&#x27;lda to&#x27;lov qo&#x27;shish</h4>
+        <p class="note">confirmed_by avtomatik joriy admindan olinadi.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;subscription&quot;: &quot;{{subscription_id}}&quot;,
+  &quot;amount&quot;: &quot;255000&quot;,
+  &quot;note&quot;: &quot;Payme orqali to&#x27;landi&quot;
+}</code></pre></details>
+      </article>
+      <article class="ep" data-method="GET" data-search="barcha bronlar /api/admin/reservations/ platformadagi barcha bronlar.">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/admin/reservations/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Barcha bronlar</h4>
+        <p class="note">Platformadagi barcha bronlar.</p><div class="qrow"><span class="qlab">Query</span><span class="q q-opt">status</span><span class="q q-opt">business</span></div>
+      </article>
+      <article class="ep" data-method="GET" data-search="platforma sozlamalari (ko&#x27;rish) /api/admin/settings/ ">
+        <div class="ep-head">
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/admin/settings/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Platforma sozlamalari (ko&#x27;rish)</h4>
+        
+      </article>
+      <article class="ep" data-method="PATCH" data-search="platforma sozlamalarini o&#x27;zgartirish /api/admin/settings/ ⭐ depozit narxlari va obuna muddatlari shu yerdan boshqariladi — kodga tegmasdan, deploy qilmasdan.">
+        <div class="ep-head">
+          <span class="m m-PATCH">PATCH</span>
+          <code class="path">/api/admin/settings/</code>
+          <span class="auth auth-token">token</span>
+        </div>
+        <h4>Platforma sozlamalarini o&#x27;zgartirish</h4>
+        <p class="note">⭐ Depozit narxlari va obuna muddatlari shu yerdan boshqariladi — kodga tegmasdan, deploy qilmasdan.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;admin_telegram_username&quot;: &quot;uvente&quot;,
+  &quot;support_phone&quot;: &quot;+998712000000&quot;,
+  &quot;room_deposit_premium&quot;: &quot;99000&quot;,
+  &quot;room_deposit_pro&quot;: &quot;49000&quot;,
+  &quot;venue_deposit&quot;: &quot;599000&quot;,
+  &quot;trial_days&quot;: 7,
+  &quot;subscription_days&quot;: 30
+}</code></pre></details>
+      </article>
+    </section>
+
+    <footer class="foot">
+      Interaktiv hujjatlar: <code>/swagger/</code> · <code>/redoc/</code> · OpenAPI: <code>/api/schema/</code><br>
+      Sog'liq tekshiruvi: <code>/api/health/</code>
+    </footer>
+  </main>
+</div>
+
+<script>
+(function () {
+  const q = document.getElementById('q');
+  const live = document.getElementById('live');
+  const eps = Array.from(document.querySelectorAll('.ep'));
+  const groups = Array.from(document.querySelectorAll('.group'));
+  const active = new Set();
+
+  document.getElementById('tg').addEventListener('click', function (e) {
+    const b = e.target.closest('.tg');
+    if (!b) return;
+    const m = b.dataset.m;
+    if (active.has(m)) { active.delete(m); b.setAttribute('aria-pressed', 'false'); }
+    else { active.add(m); b.setAttribute('aria-pressed', 'true'); }
+    apply();
+  });
+
+  q.addEventListener('input', apply);
+
+  function apply() {
+    const term = q.value.trim().toLowerCase();
+    let shown = 0;
+    eps.forEach(function (el) {
+      const okMethod = active.size === 0 || active.has(el.dataset.method);
+      const okText = !term || el.dataset.search.includes(term);
+      const show = okMethod && okText;
+      el.hidden = !show;
+      if (show) shown++;
+    });
+    groups.forEach(function (g) {
+      g.classList.toggle('empty', !g.querySelector('.ep:not([hidden])'));
+    });
+    live.textContent = shown === eps.length
+      ? eps.length + " ta so'rov"
+      : shown + " / " + eps.length + " ta so'rov";
+  }
+})();
+</script>

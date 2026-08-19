@@ -1,0 +1,76 @@
+/* ===================================================================
+   Reklama / e'lon banneri.
+
+   Hozircha reklama yo'q — loyiha haqidagi ma'lumot turadi. Admin
+   panelda rasm yoki video qo'ysa, shu yerda o'sha chiqadi. Uch holat
+   qo'llab-quvvatlanadi: faqat matn, rasm, video.
+   =================================================================== */
+.banner {
+  position: relative; overflow: hidden;
+  border-radius: var(--radius-l);
+  background: linear-gradient(135deg, var(--emerald-900) 0%, #0C4438 55%, #061F1A 100%);
+  color: #FFFFFF;
+  min-height: 260px;
+  display: flex;
+}
+:root[data-theme="dark"] .banner {
+  background: linear-gradient(135deg, #0D1A2C 0%, #10273B 55%, #071019 100%);
+  border: 1px solid var(--line);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .banner {
+    background: linear-gradient(135deg, #0D1A2C 0%, #10273B 55%, #071019 100%);
+    border: 1px solid var(--line);
+  }
+}
+
+/* Oltin nur — bannerga "qimmat" ko'rinish beradi */
+.banner::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 82% 18%, rgba(224, 192, 90, .26), transparent 48%);
+}
+
+.banner-media { position: absolute; inset: 0; }
+.banner-media img, .banner-media video { width: 100%; height: 100%; object-fit: cover; }
+.banner-media::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, rgba(6, 31, 26, .92) 0%, rgba(6, 31, 26, .66) 45%, transparent 82%);
+}
+:root[data-theme="dark"] .banner-media::after {
+  background: linear-gradient(100deg, rgba(4, 10, 18, .94) 0%, rgba(4, 10, 18, .72) 45%, transparent 82%);
+}
+
+.banner-body {
+  position: relative; z-index: 1;
+  padding: var(--sp-10) var(--sp-12);
+  display: flex; flex-direction: column; justify-content: center; gap: var(--sp-3);
+  max-width: 660px;
+}
+.banner-eyebrow {
+  display: inline-flex; align-items: center; gap: var(--sp-2); align-self: flex-start;
+  padding: 4px 12px; border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, .10);
+  border: 1px solid rgba(224, 192, 90, .38);
+  font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+}
+.banner-eyebrow span { background: var(--gold-shine); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.banner h2 { font-size: clamp(24px, 3.2vw, 38px); line-height: 1.1; }
+.banner h2 em { font-style: italic; background: var(--gold-shine);
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.banner p { color: #D5E4DD; max-width: 52ch; font-size: var(--fs-md); }
+:root[data-theme="dark"] .banner p { color: #B9CBDD; }
+
+.banner-actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-2); }
+
+/* Bir nechta banner bo'lsa — nuqtali navigatsiya */
+.banner-dots { position: absolute; bottom: var(--sp-5); right: var(--sp-6); display: flex; gap: 6px; z-index: 2; }
+.banner-dots button {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255, 255, 255, .35); transition: all var(--transition);
+}
+.banner-dots button.active { width: 22px; border-radius: var(--radius-pill); background: var(--gold-shine); }
+
+@media (max-width: 720px) {
+  .banner-body { padding: var(--sp-8) var(--sp-5); }
+  .banner { min-height: 230px; }
+}

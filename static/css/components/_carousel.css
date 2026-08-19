@@ -1,0 +1,60 @@
+/* ===================================================================
+   Yangi qo'shilgan joylar karuseli.
+
+   Rasm har necha soniyada almashadi va TASODIFIY tartibda ko'rsatiladi —
+   shunda bosh sahifa har safar yangicha ko'rinadi va ro'yxat oxiridagi
+   joylar ham ko'rinish oladi, doim bir xil to'rttasi emas.
+   =================================================================== */
+.spotlight {
+  position: relative; overflow: hidden;
+  border-radius: var(--radius-l);
+  background: var(--surface-2);
+  aspect-ratio: 21 / 9;
+  min-height: 260px;
+}
+.spotlight-slide {
+  position: absolute; inset: 0;
+  opacity: 0; transition: opacity .7s ease;
+}
+.spotlight-slide.active { opacity: 1; }
+.spotlight-slide img { width: 100%; height: 100%; object-fit: cover; }
+.spotlight-slide::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(6, 20, 16, .90) 0%, rgba(6, 20, 16, .35) 45%, transparent 75%);
+}
+:root[data-theme="dark"] .spotlight-slide::after {
+  background: linear-gradient(to top, rgba(4, 9, 17, .94) 0%, rgba(4, 9, 17, .45) 45%, transparent 75%);
+}
+
+.spotlight-caption {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  padding: var(--sp-8); color: #FFFFFF;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: var(--sp-4); flex-wrap: wrap;
+}
+.spotlight-caption .name {
+  font-family: var(--font-display); font-size: clamp(20px, 2.6vw, 30px);
+  font-weight: 600; line-height: 1.15;
+}
+.spotlight-caption .meta { display: flex; gap: var(--sp-3); flex-wrap: wrap; font-size: var(--fs-sm); color: #D5E4DD; margin-top: 4px; }
+.spotlight-badge {
+  align-self: flex-start; padding: 5px 12px; border-radius: var(--radius-pill);
+  background: var(--gold-shine); color: #1A1405;
+  font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+  box-shadow: var(--gold-glow);
+}
+
+.spotlight-progress {
+  position: absolute; top: var(--sp-5); right: var(--sp-6); z-index: 3;
+  display: flex; gap: 5px;
+}
+.spotlight-progress span {
+  width: 22px; height: 3px; border-radius: 2px;
+  background: rgba(255, 255, 255, .28);
+}
+.spotlight-progress span.active { background: var(--gold-shine); }
+
+@media (max-width: 720px) {
+  .spotlight { aspect-ratio: 4 / 3; }
+  .spotlight-caption { padding: var(--sp-5); }
+}

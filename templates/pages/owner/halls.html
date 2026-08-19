@@ -1,0 +1,29 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Zallar</h2>
+    <button class="btn btn-primary btn-sm" id="add-hall" type="button">+ Zal qo'shish</button>
+  </div>
+  <div class="grid grid-auto" id="list"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Taom paketi narxlari</h2>
+  </div>
+  <p class="muted small" style="margin-bottom:var(--sp-4)">
+    Mijoz 1, 2 yoki 3 xil taom tanlaydi — umumiy summa shu narx × mehmonlar soni bo'ladi.
+  </p>
+  <form class="stack stack-4" id="pricing-form">
+    <div class="field-row" id="pricing-fields"></div>
+    <button class="btn btn-primary" style="align-self:flex-start" type="submit" id="pricing-submit">Narxlarni saqlash</button>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/owner/halls.js' %}"></script>
+{% endblock %}

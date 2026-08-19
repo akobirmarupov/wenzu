@@ -1,0 +1,15 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div id="subscription-root"></div>
+
+<div class="panel">
+  <div class="panel-head"><h2 class="display h3">To'lovlar tarixi</h2></div>
+  <div id="payments"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/owner/subscription.js' %}"></script>
+{% endblock %}

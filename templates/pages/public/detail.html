@@ -1,0 +1,14 @@
+{% extends "layouts/public.html" %}
+{% load static %}
+
+{% block content %}
+<section class="section container" id="detail-root">
+  <div class="skeleton" style="height:320px;border-radius:var(--radius-l)"></div>
+  <div class="skeleton skeleton-text" style="width:40%;margin-top:var(--sp-6)"></div>
+  <div class="skeleton skeleton-text" style="width:70%;margin-top:var(--sp-3)"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/public/detail.js' %}"></script>
+{% endblock %}

@@ -28,6 +28,14 @@ class Subscription(BaseModel):
     subscription_ends_at = models.DateTimeField(null=True, blank=True)
     approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
 
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            # Celery job'i har kuni "muddati o'tganlar"ni shu indeks bilan topadi.
+            models.Index(fields=["status", "trial_ends_at"], name="idx_sub_status_trial_end"),
+            models.Index(fields=["status", "subscription_ends_at"], name="idx_sub_status_sub_end"),
+        ]
+
     def __str__(self):
         return f"{self.business} — {self.status}"
 
@@ -37,3 +45,7 @@ class PaymentLog(BaseModel):
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     confirmed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     note = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["subscription", "-created_at"], name="idx_payment_sub_created")]

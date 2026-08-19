@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WENZU — Restoran va to'yxonalarni bron qiling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --emerald-900:#0B3B2E;
+  --emerald-800:#0F4A39;
+  --emerald-600:#12805F;
+  --emerald-500:#17936C;
+  --gold-500:#C9A227;
+  --gold-400:#DDBB44;
+  --paper:#F7F3EA;
+  --paper-dim:#EFE9DA;
+  --ink:#1C2620;
+  --ink-soft:#4B564E;
+  --line:#DFD8C4;
+  --white:#FFFFFF;
+  --amber:#B5502B;
+  --amber-dim:#F1E1D6;
+  --plum:#5B3A72;
+  --gold-dim:#F3E9C7;
+  --crimson:#8C2F39;
+  --crimson-dim:#F5DEE0;
+  --ok:#227A52;
+  --ok-dim:#DFF0E6;
+  --warn:#9A7A17;
+  --warn-dim:#FBF0CE;
+  --radius-s:8px;
+  --radius-m:14px;
+  --radius-l:22px;
+  --shadow:0 10px 30px -12px rgba(11,59,46,0.25);
+  --shadow-soft:0 4px 14px -6px rgba(28,38,32,0.18);
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  font-family:'Manrope',sans-serif;
+  background:var(--paper);
+  color:var(--ink);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4,.display{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  margin:0;
+  letter-spacing:-0.01em;
+}
+p{margin:0;line-height:1.55;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;}
+img{max-width:100%;display:block;}
+::selection{background:var(--gold-400);color:var(--ink);}
+:focus-visible{outline:3px solid var(--gold-500);outline-offset:2px;}
+input,select,textarea{font-family:inherit;font-size:15px;}
+
+.container{max-width:1180px;margin:0 auto;padding:0 24px;}
+
+/* ---------- Buttons ---------- */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:12px 22px;border-radius:999px;border:1.5px solid transparent;
+  font-weight:700;font-size:14.5px;transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+  white-space:nowrap;
+}
+.btn:active{transform:scale(0.97);}
+.btn-primary{background:var(--emerald-600);color:#fff;}
+.btn-primary:hover{background:var(--emerald-800);box-shadow:var(--shadow-soft);}
+.btn-gold{background:var(--gold-500);color:var(--ink);}
+.btn-gold:hover{background:var(--gold-400);box-shadow:var(--shadow-soft);}
+.btn-outline{background:transparent;border-color:var(--ink);color:var(--ink);}
+.btn-outline:hover{background:var(--ink);color:#fff;}
+.btn-outline-light{background:transparent;border-color:rgba(255,255,255,0.55);color:#fff;}
+.btn-outline-light:hover{background:rgba(255,255,255,0.15);}
+.btn-ghost{background:transparent;color:var(--emerald-800);padding:10px 14px;}
+.btn-ghost:hover{background:var(--paper-dim);}
+.btn-danger{background:var(--crimson-dim);color:var(--crimson);}
+.btn-danger:hover{background:var(--crimson);color:#fff;}
+.btn-sm{padding:8px 16px;font-size:13px;}
+.btn-block{width:100%;}
+.btn[disabled]{opacity:0.5;cursor:not-allowed;}
+
+/* ---------- Badges / seal ---------- */
+.seal{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px 5px 10px;border-radius:999px;font-size:12.5px;font-weight:800;
+  border:1.5px dashed currentColor;letter-spacing:.02em;
+}
+.seal-ok{color:var(--ok);background:var(--ok-dim);}
+.seal-warn{color:var(--warn);background:var(--warn-dim);}
+.seal-bad{color:var(--crimson);background:var(--crimson-dim);}
+.seal-gold{color:#7A6210;background:var(--gold-dim);}
+.tag{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--paper-dim);color:var(--ink-soft);font-size:12px;font-weight:700;}
+
+/* ---------- Top nav (public) ---------- */
+.pub-nav{position:sticky;top:0;z-index:40;background:rgba(247,243,234,0.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+.pub-nav-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:1180px;margin:0 auto;}
+.logo{display:flex;align-items:center;gap:9px;font-family:'Fraunces',serif;font-weight:700;font-size:23px;color:var(--emerald-900);}
+.logo .dot{width:9px;height:9px;border-radius:50%;background:var(--gold-500);}
+.pub-links{display:flex;align-items:center;gap:6px;}
+.pub-links a{padding:9px 14px;border-radius:999px;font-weight:700;font-size:14.5px;color:var(--ink-soft);}
+.pub-links a.active,.pub-links a:hover{background:var(--emerald-900);color:#fff;}
+.nav-right{display:flex;align-items:center;gap:10px;}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--emerald-600);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;}
+.user-chip{display:flex;align-items:center;gap:9px;padding:6px 14px 6px 6px;border-radius:999px;background:var(--paper-dim);border:1px solid var(--line);}
+.user-chip:hover{background:var(--white);}
+
+/* ---------- Hero ---------- */
+.hero{background:radial-gradient(120% 160% at 15% 0%, #12513F 0%, var(--emerald-900) 55%, #082A20 100%);color:#fff;position:relative;overflow:hidden;}
+.hero:before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 85% 20%, rgba(201,162,39,0.25), transparent 45%);}
+.hero-inner{position:relative;max-width:1180px;margin:0 auto;padding:88px 24px 64px;}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;color:var(--gold-400);font-weight:800;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:18px;}
+.hero h1{font-size:clamp(34px,5vw,58px);line-height:1.05;max-width:720px;font-weight:600;}
+.hero h1 em{font-style:italic;color:var(--gold-400);}
+.hero p.lead{margin-top:18px;max-width:560px;font-size:17px;color:#DCE8E1;}
+.search-card{margin-top:36px;background:#fff;border-radius:var(--radius-l);padding:10px;display:flex;gap:8px;box-shadow:var(--shadow);max-width:680px;flex-wrap:wrap;}
+.search-tabs{display:flex;gap:4px;background:var(--paper-dim);padding:4px;border-radius:999px;}
+.search-tabs button{border:none;background:transparent;padding:9px 16px;border-radius:999px;font-weight:800;font-size:13.5px;color:var(--ink-soft);}
+.search-tabs button.active{background:var(--emerald-800);color:#fff;}
+.search-input{flex:1;min-width:180px;border:none;padding:10px 6px;font-size:15px;color:var(--ink);background:transparent;}
+.search-input:focus{outline:none;}
+.hero-stats{display:flex;gap:34px;margin-top:44px;flex-wrap:wrap;}
+.hero-stats .n{font-family:'Fraunces',serif;font-size:28px;color:var(--gold-400);}
+.hero-stats .l{font-size:12.5px;color:#BFD3C9;text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
+
+/* ---------- Sections ---------- */
+.section{padding:56px 0;}
+.section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:26px;gap:16px;flex-wrap:wrap;}
+.section-head h2{font-size:28px;}
+.section-head .eyebrow-sm{color:var(--emerald-600);font-weight:800;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:6px;}
+.muted{color:var(--ink-soft);}
+
+.grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));}
+.card{background:#fff;border-radius:var(--radius-m);overflow:hidden;border:1px solid var(--line);transition:transform .18s ease, box-shadow .18s ease;cursor:pointer;}
+.card:hover{transform:translateY(-4px);box-shadow:var(--shadow);}
+.card .cover{height:170px;width:100%;object-fit:cover;background:var(--paper-dim);}
+.card-body{padding:16px 17px 18px;}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.card-body h3{font-size:18.5px;}
+.rating{display:flex;align-items:center;gap:4px;font-weight:800;font-size:13.5px;color:#7A6210;white-space:nowrap;}
+.rating .star{color:var(--gold-500);}
+.card-meta{margin-top:8px;color:var(--ink-soft);font-size:13.5px;display:flex;flex-wrap:wrap;gap:6px 12px;}
+.card-price{margin-top:12px;font-weight:800;color:var(--emerald-800);font-size:15px;}
+.card-price span{font-weight:500;color:var(--ink-soft);font-size:12.5px;}
+
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+.chip{padding:9px 16px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-weight:700;font-size:13.5px;color:var(--ink-soft);}
+.chip.active{background:var(--emerald-900);border-color:var(--emerald-900);color:#fff;}
+.search-mini{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:9px 16px;flex:1;min-width:200px;max-width:340px;}
+.search-mini input{border:none;background:transparent;flex:1;font-size:14px;}
+.search-mini input:focus{outline:none;}
+
+/* CTA banner */
+.cta-banner{background:linear-gradient(120deg,var(--emerald-900),#153F32 70%);border-radius:var(--radius-l);padding:44px 40px;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;position:relative;overflow:hidden;}
+.cta-banner:before{content:"";position:absolute;right:-40px;top:-40px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(201,162,39,0.35),transparent 70%);}
+.cta-banner h3{font-size:24px;max-width:420px;position:relative;}
+.cta-banner p{margin-top:8px;color:#CFE1D8;max-width:420px;position:relative;}
+.cta-banner .btn{position:relative;}
+
+footer{background:var(--emerald-900);color:#CFE1D8;padding:48px 0 26px;margin-top:40px;}
+.footer-grid{display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;}
+.footer-grid h4{color:#fff;font-family:'Fraunces',serif;font-size:20px;margin-bottom:10px;}
+.footer-cols{display:flex;gap:56px;flex-wrap:wrap;}
+.footer-cols h5{color:#fff;font-size:13px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;}
+.footer-cols a{display:block;color:#AFC6BB;font-size:14px;margin-bottom:8px;}
+.footer-bottom{border-top:1px solid rgba(255,255,255,0.12);margin-top:34px;padding-top:20px;font-size:13px;color:#8FA99C;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+
+/* ---------- Detail page ---------- */
+.detail-hero{position:relative;}
+.detail-cover{height:340px;width:100%;object-fit:cover;border-radius:var(--radius-l);}
+.detail-thumbs{display:flex;gap:10px;margin-top:10px;}
+.detail-thumbs img{height:70px;width:100px;object-fit:cover;border-radius:10px;cursor:pointer;border:2px solid transparent;opacity:.75;}
+.detail-thumbs img.active{border-color:var(--gold-500);opacity:1;}
+.detail-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:36px;margin-top:30px;align-items:flex-start;}
+.detail-info h1{font-size:32px;}
+.detail-tags{display:flex;gap:8px;margin:10px 0 16px;flex-wrap:wrap;}
+.book-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-m);padding:22px;position:sticky;top:90px;box-shadow:var(--shadow-soft);}
+.book-card .price{font-family:'Fraunces',serif;font-size:26px;color:var(--emerald-800);}
+.book-card .price span{font-size:13px;color:var(--ink-soft);font-family:'Manrope',sans-serif;font-weight:600;}
+.tabs{display:flex;gap:4px;background:var(--paper-dim);padding:4px;border-radius:999px;margin:30px 0 20px;width:fit-content;}
+.tabs button{border:none;background:transparent;padding:10px 18px;border-radius:999px;font-weight:800;font-size:13.5px;color:var(--ink-soft);}
+.tabs button.active{background:var(--emerald-900);color:#fff;}
+.menu-list{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line);}
+.menu-item{display:flex;justify-content:space-between;padding:15px 0;border-bottom:1px solid var(--line);gap:10px;}
+.menu-item b{font-size:15px;}
+.menu-item .cat{color:var(--ink-soft);font-size:12.5px;}
+.menu-item .price{font-weight:800;color:var(--emerald-800);white-space:nowrap;}
+.hall-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;}
+.hall-card{border:1px solid var(--line);border-radius:var(--radius-s);padding:16px;background:#fff;}
+.review{padding:18px 0;border-bottom:1px solid var(--line);}
+.review-head{display:flex;justify-content:space-between;align-items:center;}
+.review-user{display:flex;align-items:center;gap:10px;}
+.review-user .avatar{width:32px;height:32px;font-size:12px;}
+
+/* ---------- Modal / overlay ---------- */
+.overlay{position:fixed;inset:0;background:rgba(15,20,17,0.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;animation:fadeIn .15s ease;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:#fff;border-radius:var(--radius-l);max-width:440px;width:100%;padding:32px;position:relative;max-height:88vh;overflow-y:auto;animation:pop .18s ease;}
+.modal-wide{max-width:560px;}
+@keyframes pop{from{transform:translateY(10px) scale(.98);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+.modal-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;border:none;background:var(--paper-dim);font-size:16px;color:var(--ink-soft);}
+.modal-close:hover{background:var(--line);}
+.modal h2{font-size:23px;margin-bottom:6px;}
+.field{margin-bottom:15px;}
+.field label{display:block;font-size:13px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;}
+.field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:10px;background:var(--paper);}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--emerald-600);background:#fff;}
+.field-row{display:flex;gap:12px;}
+.field-row .field{flex:1;}
+.form-error{color:var(--crimson);font-size:13px;font-weight:700;margin-top:-6px;margin-bottom:14px;}
+.modal-tabs{display:flex;gap:6px;background:var(--paper-dim);padding:4px;border-radius:999px;margin-bottom:22px;}
+.modal-tabs button{flex:1;border:none;background:transparent;padding:9px;border-radius:999px;font-weight:800;font-size:13.5px;color:var(--ink-soft);}
+.modal-tabs button.active{background:var(--emerald-900);color:#fff;}
+.demo-hint{background:var(--gold-dim);border:1px dashed var(--gold-500);border-radius:10px;padding:12px 14px;font-size:12.5px;color:#6B5610;margin-top:16px;line-height:1.5;}
+.demo-hint b{color:#4d3e0a;}
+
+/* application info modal */
+.apply-msg{background:var(--paper-dim);border-radius:var(--radius-s);padding:18px;font-size:14.5px;line-height:1.7;border:1px solid var(--line);}
+.apply-msg b{color:var(--emerald-800);}
+.tg-line{display:flex;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;background:#E9F5EF;border-radius:10px;color:var(--emerald-800);font-weight:700;}
+
+/* ---------- Dashboard shells (owner / admin) ---------- */
+.dash{display:flex;min-height:100vh;}
+.sidebar{width:250px;min-width:250px;color:#fff;padding:22px 16px;display:flex;flex-direction:column;gap:4px;}
+.sidebar .logo2{display:flex;align-items:center;gap:9px;font-family:'Fraunces',serif;font-weight:700;font-size:20px;color:#fff;padding:6px 10px 22px;}
+.sidebar .role-pill{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;opacity:.75;margin:-14px 0 18px 10px;}
+.side-link{display:flex;align-items:center;gap:11px;padding:11px 14px;border-radius:12px;font-weight:700;font-size:14.5px;opacity:.82;}
+.side-link .ic{width:18px;text-align:center;}
+.side-link:hover{opacity:1;background:rgba(255,255,255,0.08);}
+.side-link.active{opacity:1;background:rgba(255,255,255,0.14);}
+.side-link .count{margin-left:auto;background:var(--crimson);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:2px 8px;}
+.sidebar-bottom{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,0.14);}
+.dash-main{flex:1;background:var(--paper);min-width:0;}
+.dash-topbar{display:flex;justify-content:space-between;align-items:center;padding:20px 32px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5;}
+.dash-topbar h1{font-size:22px;}
+.dash-content{padding:28px 32px 60px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:30px;}
+.stat-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius-m);padding:20px;}
+.stat-card .l{font-size:12.5px;color:var(--ink-soft);font-weight:700;text-transform:uppercase;letter-spacing:.04em;}
+.stat-card .n{font-family:'Fraunces',serif;font-size:30px;margin-top:6px;}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius-m);padding:24px;margin-bottom:22px;}
+.panel h3{font-size:18px;margin-bottom:16px;}
+.table{width:100%;border-collapse:collapse;}
+.table th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);padding:10px 12px;border-bottom:2px solid var(--line);}
+.table td{padding:13px 12px;border-bottom:1px solid var(--line);font-size:14.5px;vertical-align:middle;}
+.table tr:last-child td{border-bottom:none;}
+.row-actions{display:flex;gap:8px;}
+.empty-state{text-align:center;padding:50px 20px;color:var(--ink-soft);}
+.empty-state .ic{font-size:38px;margin-bottom:10px;}
+.list-item{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);gap:10px;}
+.list-item:last-child{border-bottom:none;}
+.add-form{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.add-form input{flex:1;min-width:120px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;}
+
+/* role accent themes */
+.theme-restaurant .sidebar{background:linear-gradient(180deg,#2B2019,#1E1712);}
+.theme-restaurant .side-link.active,.theme-restaurant .side-link:hover{background:rgba(181,80,43,0.28);}
+.theme-restaurant .role-pill{color:#E5A67F;}
+.theme-restaurant .stat-card .n,.theme-restaurant .accent{color:var(--amber);}
+.theme-restaurant .btn-primary{background:var(--amber);}
+.theme-restaurant .btn-primary:hover{background:#8E3D1F;}
+
+.theme-venue .sidebar{background:linear-gradient(180deg,#2D2038,#1E1626);}
+.theme-venue .side-link.active,.theme-venue .side-link:hover{background:rgba(201,162,39,0.22);}
+.theme-venue .role-pill{color:#D8B3EE;}
+.theme-venue .stat-card .n,.theme-venue .accent{color:var(--plum);}
+.theme-venue .btn-primary{background:var(--plum);}
+.theme-venue .btn-primary:hover{background:#432A55;}
+
+.theme-admin .sidebar{background:linear-gradient(180deg,#1B1F27,#12151B);}
+.theme-admin .side-link.active,.theme-admin .side-link:hover{background:rgba(140,47,57,0.28);}
+.theme-admin .role-pill{color:#E29CA3;}
+.theme-admin .stat-card .n,.theme-admin .accent{color:var(--crimson);}
+.theme-admin .btn-primary{background:var(--crimson);}
+.theme-admin .btn-primary:hover{background:#6E232B;}
+
+/* profile (public) */
+.profile-wrap{display:grid;grid-template-columns:260px 1fr;gap:28px;align-items:flex-start;}
+.profile-side{background:#fff;border:1px solid var(--line);border-radius:var(--radius-m);padding:22px;position:sticky;top:90px;}
+.profile-side .avatar{width:58px;height:58px;font-size:20px;margin-bottom:10px;}
+.profile-nav a{display:block;padding:10px 12px;border-radius:10px;font-weight:700;font-size:14px;color:var(--ink-soft);margin-top:4px;}
+.profile-nav a.active,.profile-nav a:hover{background:var(--paper-dim);color:var(--ink);}
+.biz-choice{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;}
+.biz-choice .opt{border:1.5px solid var(--line);border-radius:var(--radius-m);padding:22px;background:#fff;text-align:left;}
+.biz-choice .opt:hover{border-color:var(--emerald-600);box-shadow:var(--shadow-soft);}
+.biz-choice .opt .ic{font-size:30px;margin-bottom:10px;}
+.biz-choice .opt .price{margin-top:10px;font-weight:800;color:var(--emerald-800);}
+.booking-row{display:flex;justify-content:space-between;align-items:center;padding:16px;border:1px solid var(--line);border-radius:var(--radius-s);margin-bottom:12px;background:#fff;gap:12px;flex-wrap:wrap;}
+
+/* toast */
+#toast-root{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;}
+.toast{background:var(--ink);color:#fff;padding:13px 22px;border-radius:999px;font-weight:700;font-size:14px;box-shadow:var(--shadow);animation:pop .18s ease;display:flex;align-items:center;gap:8px;}
+
+/* demo switcher */
+#demo-panel{position:fixed;bottom:18px;right:18px;z-index:150;font-family:'Manrope',sans-serif;}
+#demo-panel .dp-toggle{width:54px;height:54px;border-radius:50%;background:var(--emerald-900);color:#fff;border:none;box-shadow:var(--shadow);font-size:22px;display:flex;align-items:center;justify-content:center;}
+#demo-panel .dp-body{position:absolute;bottom:64px;right:0;width:250px;background:#fff;border-radius:var(--radius-m);box-shadow:var(--shadow);border:1px solid var(--line);padding:14px;display:none;}
+#demo-panel.open .dp-body{display:block;}
+.dp-title{font-size:11px;text-transform:uppercase;letter-spacing:.06em;font-weight:800;color:var(--ink-soft);margin-bottom:10px;}
+.dp-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:9px 10px;margin-bottom:7px;font-size:13px;font-weight:700;}
+.dp-item:hover{background:var(--paper-dim);}
+.dp-item .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dp-item small{display:block;font-weight:500;color:var(--ink-soft);font-size:11px;}
+
+/* misc */
+.divider{height:1px;background:var(--line);margin:22px 0;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;}
+.icon-btn:hover{background:var(--paper-dim);}
+.step-line{display:flex;gap:8px;margin:6px 0 22px;}
+.step-line span{flex:1;height:4px;border-radius:99px;background:var(--line);}
+.step-line span.done{background:var(--emerald-600);}
+
+/* ---------- Rooms / booking flow (added) ---------- */
+.cat-chip-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.cat-chip{padding:10px 18px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-weight:800;font-size:13.5px;color:var(--ink-soft);display:flex;align-items:center;gap:8px;}
+.cat-chip.active{background:var(--emerald-900);border-color:var(--emerald-900);color:#fff;}
+.room-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
+.room-card{border:1px solid var(--line);border-radius:var(--radius-m);overflow:hidden;background:#fff;}
+.room-card .rc-photo{height:110px;width:100%;object-fit:cover;background:var(--paper-dim);}
+.room-card .rc-body{padding:14px;}
+.room-card .rc-body b{font-size:15px;}
+.hour-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;margin:10px 0 4px;}
+.hour-cell{padding:9px 4px;text-align:center;border-radius:9px;border:1.5px solid var(--line);font-weight:800;font-size:13px;background:#fff;color:var(--ink);}
+.hour-cell.busy{background:var(--crimson-dim);color:var(--crimson);border-color:transparent;cursor:not-allowed;opacity:.85;}
+.hour-cell.free{cursor:pointer;}
+.hour-cell.free:hover{border-color:var(--emerald-600);}
+.hour-cell.sel{background:var(--emerald-600);color:#fff;border-color:var(--emerald-600);}
+.hour-legend{display:flex;gap:16px;font-size:12.5px;color:var(--ink-soft);margin:6px 0 16px;flex-wrap:wrap;}
+.hour-legend span{display:inline-flex;align-items:center;gap:6px;}
+.hour-legend i{width:11px;height:11px;border-radius:3px;display:inline-block;}
+.dish-chip-row{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 4px;}
+.dish-chip{flex:1;min-width:110px;border:1.5px solid var(--line);border-radius:var(--radius-s);padding:12px;text-align:center;background:#fff;cursor:pointer;}
+.dish-chip b{display:block;font-size:15px;}
+.dish-chip .p{font-size:12.5px;color:var(--ink-soft);margin-top:4px;}
+.dish-chip.active{border-color:var(--emerald-600);background:#E9F5EF;}
+.menu-photo-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));}
+.menu-photo-card{border:1.5px solid var(--line);border-radius:var(--radius-m);overflow:hidden;background:#fff;position:relative;}
+.menu-photo-card.selectable{cursor:pointer;}
+.menu-photo-card.checked{border-color:var(--emerald-600);box-shadow:0 0 0 3px rgba(23,147,108,0.18);}
+.menu-photo-card img{height:120px;width:100%;object-fit:cover;background:var(--paper-dim);}
+.menu-photo-card .mp-body{padding:10px 12px 12px;}
+.menu-photo-card .mp-body b{font-size:14px;display:block;}
+.menu-photo-card .check-badge{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:#fff;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:transparent;}
+.menu-photo-card.checked .check-badge{background:var(--emerald-600);border-color:var(--emerald-600);color:#fff;}
+.total-box{background:var(--paper-dim);border-radius:var(--radius-s);padding:14px 16px;margin-top:14px;}
+.total-box .row{display:flex;justify-content:space-between;font-size:13.5px;padding:4px 0;}
+.total-box .row.grand{font-weight:800;font-size:16px;color:var(--emerald-800);border-top:1px dashed var(--line);margin-top:6px;padding-top:10px;}
+.hours-line{display:inline-flex;align-items:center;gap:6px;background:var(--paper-dim);padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:700;color:var(--ink-soft);}
+
+@media(max-width:980px){
+  .detail-grid{grid-template-columns:1fr;}
+  .book-card{position:static;}
+  .profile-wrap{grid-template-columns:1fr;}
+  .profile-side{position:static;}
+  .pub-links{display:none;}
+  .dash{flex-direction:column;}
+  .sidebar{width:100%;flex-direction:row;flex-wrap:wrap;padding:14px;}
+  .sidebar-bottom{margin-top:0;border-top:none;}
+}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+<div id="toast-root"></div>
+
+<div id="demo-panel">
+  <div class="dp-body" id="dp-body">
+    <div class="dp-title">Demo rejim — rolni tanlang</div>
+    <button class="dp-item" onclick="quickLogin('u1')"><span class="dot" style="background:#12805F"></span><span>Dilshod Aliyev<small>Oddiy foydalanuvchi</small></span></button>
+    <button class="dp-item" onclick="quickLogin('u2')"><span class="dot" style="background:#12805F"></span><span>Nodira Karimova<small>Oddiy foydalanuvchi</small></span></button>
+    <button class="dp-item" onclick="quickLogin('u3')"><span class="dot" style="background:#B5502B"></span><span>Sardor Yusupov<small>Restoran egasi</small></span></button>
+    <button class="dp-item" onclick="quickLogin('u4')"><span class="dot" style="background:#5B3A72"></span><span>Gulnora Rashidova<small>To'yxona egasi</small></span></button>
+    <button class="dp-item" onclick="quickLogin('u5')"><span class="dot" style="background:#8C2F39"></span><span>Uvente Admin<small>Administrator</small></span></button>
+    <button class="dp-item" onclick="logout()"><span class="dot" style="background:#9AA39B"></span><span>Mehmon sifatida<small>Ro'yxatdan o'tmasdan</small></span></button>
+  </div>
+  <button class="dp-toggle" onclick="toggleDemoPanel()" title="Demo rejim">◎</button>
+</div>
+
+<script>
+/* =========================================================
+   WENZU — interaktiv prototip (front-end only, xotirada DB)
+   Model: businesses/models.py (Room, deposit_tier),
+          catalog/models.py (RestaurantMenuItem, VenueMenuItem),
+          reservations/models.py (Availability, Reservation)
+          asosida qurilgan.
+   ========================================================= */
+
+/* ---------- DATA ---------- */
+const CAT_LABEL = {vip:'VIP xona', outdoor:'Tashqari terrassa', standard:'Zal'};
+const CAT_ICON = {vip:'👑', outdoor:'🌿', standard:'🍽️'};
+
+const db = {
+  users:[
+    {id:'u1',phone:'+998 90 111 22 33',password:'user123',name:'Dilshod Aliyev',role:'user'},
+    {id:'u2',phone:'+998 90 777 88 99',password:'user123',name:'Nodira Karimova',role:'user'},
+    {id:'u3',phone:'+998 90 123 45 67',password:'rest123',name:'Sardor Yusupov',role:'restaurant_owner',businessId:'rest-2'},
+    {id:'u4',phone:'+998 90 987 65 43',password:'venue123',name:'Gulnora Rashidova',role:'venue_owner',businessId:'venue-1'},
+    {id:'u5',phone:'admin',password:'admin123',name:"Uvente Admin",role:'admin'},
+  ],
+  restaurants:[
+    {id:'rest-1',name:"Choyxona Chinor",cuisine:'milliy',district:"Chilonzor",rating:4.8,
+     cover:'https://picsum.photos/seed/chinor-cover/900/600',
+     gallery:['https://picsum.photos/seed/chinor-cover/900/600','https://picsum.photos/seed/chinor2/900/600','https://picsum.photos/seed/chinor3/900/600'],
+     description:"An'anaviy o'zbek milliy taomlari, keng hovli va sharqona muhit. Oilaviy kechki ovqat va do'stlar davrasi uchun ideal joy.",
+     openTime:'08:00', closeTime:'23:00', telegram:'@chinor_admin',
+     menu:[
+       {name:'Osh (Toshkent usuli)',price:45000,cat:'Asosiy taom',photo:'https://picsum.photos/seed/osh-chinor/500/360'},
+       {name:'Shashlik (qo\'y go\'shti)',price:38000,cat:'Asosiy taom',photo:'https://picsum.photos/seed/shashlik-chinor/500/360'},
+       {name:'Norin',price:35000,cat:'Asosiy taom',photo:'https://picsum.photos/seed/norin-chinor/500/360'},
+       {name:"Ko'k choy (choynak)",price:8000,cat:'Ichimlik',photo:'https://picsum.photos/seed/choy-chinor/500/360'},
+       {name:'Somsa (3 dona)',price:18000,cat:"Boshlang'ich",photo:'https://picsum.photos/seed/somsa-chinor/500/360'},
+     ],
+     rooms:[
+       {id:'r1-1',name:'Hovli — 2 kishilik',category:'outdoor',capacity:2,depositTier:'pro',photo:'https://picsum.photos/seed/chinor-outdoor1/500/340'},
+       {id:'r1-2',name:'Hovli — 6 kishilik',category:'outdoor',capacity:6,depositTier:'pro',photo:'https://picsum.photos/seed/chinor-outdoor2/500/340'},
+       {id:'r1-3',name:'Zal — 4 kishilik',category:'standard',capacity:4,depositTier:'pro',photo:'https://picsum.photos/seed/chinor-standard/500/340'},
+     ],
+     ownerId:null},
+    {id:'rest-2',name:"Shoxona Restorani",cuisine:'yevropa',district:"Yunusobod",rating:4.6,
+     cover:'https://picsum.photos/seed/shoxona-cover/900/600',
+     gallery:['https://picsum.photos/seed/shoxona-cover/900/600','https://picsum.photos/seed/shoxona2/900/600','https://picsum.photos/seed/shoxona3/900/600'],
+     description:"Zamonaviy oshxona, VIP xonalar va tashqi terrassa. Muhim uchrashuvlar, oilaviy kechki ovqat va do'stlar davrasi uchun mos.",
+     openTime:'08:00', closeTime:'23:00', telegram:'@shoxona_admin',
+     menu:[
+       {name:'Steyk Ribay',price:140000,cat:'Asosiy taom',photo:'https://picsum.photos/seed/steyk-shoxona/500/360'},
+       {name:'Losos grilda',price:120000,cat:'Asosiy taom',photo:'https://picsum.photos/seed/losos-shoxona/500/360'},
+       {name:'Sezar salat',price:52000,cat:"Boshlang'ich",photo:'https://picsum.photos/seed/sezar-shoxona/500/360'},
+       {name:'Tiramisu',price:38000,cat:'Desert',photo:'https://picsum.photos/seed/tiramisu-shoxona/500/360'},
+       {name:'Fresh sharbat',price:22000,cat:'Ichimlik',photo:'https://picsum.photos/seed/sharbat-shoxona/500/360'},
+     ],
+     rooms:[
+       {id:'r2-1',name:'VIP xona — 6 kishilik',category:'vip',capacity:6,depositTier:'premium',photo:'https://picsum.photos/seed/shoxona-vip/500/340'},
+       {id:'r2-2',name:'Tashqari terrassa — 2 kishilik',category:'outdoor',capacity:2,depositTier:'pro',photo:'https://picsum.photos/seed/shoxona-t2/500/340'},
+       {id:'r2-3',name:'Tashqari terrassa — 3 kishilik',category:'outdoor',capacity:3,depositTier:'pro',photo:'https://picsum.photos/seed/shoxona-t3/500/340'},
+       {id:'r2-4',name:'Tashqari terrassa — 4 kishilik',category:'outdoor',capacity:4,depositTier:'pro',photo:'https://picsum.photos/seed/shoxona-t4/500/340'},
+       {id:'r2-5',name:'Tashqari terrassa — 5 kishilik',category:'outdoor',capacity:5,depositTier:'premium',photo:'https://picsum.photos/seed/shoxona-t5/500/340'},
+       {id:'r2-6',name:'Tashqari terrassa — 10 kishilik',category:'outdoor',capacity:10,depositTier:'premium',photo:'https://picsum.photos/seed/shoxona-t10/500/340'},
+       {id:'r2-7',name:'Tashqari terrassa — 13 kishilik',category:'outdoor',capacity:13,depositTier:'premium',photo:'https://picsum.photos/seed/shoxona-t13/500/340'},
+       {id:'r2-8',name:'Zal — 4 kishilik',category:'standard',capacity:4,depositTier:'pro',photo:'https://picsum.photos/seed/shoxona-zal4/500/340'},
+       {id:'r2-9',name:'Zal — 8 kishilik',category:'standard',capacity:8,depositTier:'pro',photo:'https://picsum.photos/seed/shoxona-zal8/500/340'},
+     ],
+     ownerId:'u3'},
+    {id:'rest-3',name:"Osh Markazi",cuisine:'milliy',district:"Mirzo Ulug'bek",rating:4.9,
+     cover:'https://picsum.photos/seed/oshmarkazi-cover/900/600',
+     gallery:['https://picsum.photos/seed/oshmarkazi-cover/900/600','https://picsum.photos/seed/osh2/900/600','https://picsum.photos/seed/osh3/900/600'],
+     description:"Shahardagi eng mashhur oshxonalardan biri. Kunlik yangi tayyorlanadigan osh va tez xizmat.",
+     openTime:'09:00', closeTime:'22:00', telegram:'@oshmarkazi_admin',
+     menu:[
+       {name:'Osh (katta lagan)',price:40000,cat:'Asosiy taom',photo:'https://picsum.photos/seed/osh-markazi1/500/360'},
+       {name:'Osh (kichik)',price:28000,cat:'Asosiy taom',photo:'https://picsum.photos/seed/osh-markazi2/500/360'},
+       {name:'Achchiq-chuchuk',price:10000,cat:'Salat',photo:'https://picsum.photos/seed/achchiq/500/360'},
+       {name:"Ko'k choy",price:6000,cat:'Ichimlik',photo:'https://picsum.photos/seed/kokchoy/500/360'},
+     ],
+     rooms:[
+       {id:'r3-1',name:'Umumiy zal — 4 kishilik',category:'standard',capacity:4,depositTier:'pro',photo:'https://picsum.photos/seed/osh-zal4/500/340'},
+       {id:'r3-2',name:'Umumiy zal — 8 kishilik',category:'standard',capacity:8,depositTier:'pro',photo:'https://picsum.photos/seed/osh-zal8/500/340'},
+     ],
+     ownerId:null},
+    {id:'rest-4',name:"Sky Lounge",cuisine:'fusion',district:"Shayxontohur",rating:4.7,
+     cover:'https://picsum.photos/seed/skylounge-cover/900/600',
+     gallery:['https://picsum.photos/seed/skylounge-cover/900/600','https://picsum.photos/seed/sky2/900/600','https://picsum.photos/seed/sky3/900/600'],
+     description:"Shahar manzarasi ochiladigan tomdagi restoran. Fusion taomlar, DJ kechalari va kokteyllar.",
+     openTime:'10:00', closeTime:'24:00', telegram:'@skylounge_admin',
+     menu:[
+       {name:'Wagyu burger',price:95000,cat:'Asosiy taom',photo:'https://picsum.photos/seed/wagyu/500/360'},
+       {name:'Tom Yum',price:68000,cat:"Sho'rva",photo:'https://picsum.photos/seed/tomyum/500/360'},
+       {name:"Sushi to'plami",price:110000,cat:'Asosiy taom',photo:'https://picsum.photos/seed/sushi/500/360'},
+     ],
+     rooms:[
+       {id:'r4-1',name:'Tom — panorama stol (4 kishilik)',category:'vip',capacity:4,depositTier:'premium',photo:'https://picsum.photos/seed/sky-vip/500/340'},
+       {id:'r4-2',name:'Bar zonasi (2 kishilik)',category:'standard',capacity:2,depositTier:'pro',photo:'https://picsum.photos/seed/sky-bar/500/340'},
+     ],
+     ownerId:null},
+  ],
+  venues:[
+    {id:'venue-1',name:"Grand Palace To'yxonasi",district:"Yunusobod",capacity:500,rating:4.8,
+     cover:'https://picsum.photos/seed/grandpalace-cover/900/600',
+     gallery:['https://picsum.photos/seed/grandpalace-cover/900/600','https://picsum.photos/seed/grand2/900/600','https://picsum.photos/seed/grand3/900/600'],
+     description:"Shaharning eng nufuzli to'yxonalaridan biri. Zamonaviy zal, katta parking va professional dekoratsiya xizmati.",
+     telegram:'@grandpalace_admin', deposit:300000,
+     dishPricing:{1:100000,2:120000,3:150000},
+     halls:[
+       {id:'h1-1',name:'Katta zal',capacity:500,photo:'https://picsum.photos/seed/grand-hall1/500/340'},
+       {id:'h1-2',name:'Kichik zal (nikoh marosimi)',capacity:120,photo:'https://picsum.photos/seed/grand-hall2/500/340'},
+     ],
+     menu:[
+       {name:'Palov (to\'y oshi)',cat:'Asosiy taom',photo:'https://picsum.photos/seed/toy-osh/500/360'},
+       {name:'Manti',cat:'Asosiy taom',photo:'https://picsum.photos/seed/manti/500/360'},
+       {name:'Lag\'mon',cat:'Asosiy taom',photo:'https://picsum.photos/seed/lagmon/500/360'},
+       {name:'Salatlar to\'plami',cat:'Salat',photo:'https://picsum.photos/seed/salatlar/500/360'},
+       {name:'Shirinliklar stoli',cat:'Desert',photo:'https://picsum.photos/seed/shirinlik/500/360'},
+       {name:'Ichimliklar (limonad, sharbat)',cat:'Ichimlik',photo:'https://picsum.photos/seed/ichimlik/500/360'},
+     ],
+     ownerId:'u4'},
+    {id:'venue-2',name:"Bog'i Rayhon",district:"Sergeli",capacity:400,rating:4.5,
+     cover:'https://picsum.photos/seed/bogirayhon-cover/900/600',
+     gallery:['https://picsum.photos/seed/bogirayhon-cover/900/600','https://picsum.photos/seed/bogi2/900/600','https://picsum.photos/seed/bogi3/900/600'],
+     description:"Ochiq havoda va yopiq zalda o'tkaziladigan tadbirlar uchun qulay maskan. Bog' hududi fotosessiya uchun ajoyib.",
+     telegram:'@bogirayhon_admin', deposit:250000,
+     dishPricing:{1:90000,2:110000,3:140000},
+     halls:[
+       {id:'h2-1',name:'Yopiq zal',capacity:300,photo:'https://picsum.photos/seed/bogi-hall1/500/340'},
+       {id:'h2-2',name:"Ochiq bog' maydoni",capacity:400,photo:'https://picsum.photos/seed/bogi-hall2/500/340'},
+     ],
+     menu:[
+       {name:'Palov',cat:'Asosiy taom',photo:'https://picsum.photos/seed/bogi-osh/500/360'},
+       {name:'Kabob',cat:'Asosiy taom',photo:'https://picsum.photos/seed/bogi-kabob/500/360'},
+       {name:'Salatlar',cat:'Salat',photo:'https://picsum.photos/seed/bogi-salat/500/360'},
+     ],
+     ownerId:null},
+    {id:'venue-3',name:"Diyor Saroyi",district:"Mirzo Ulug'bek",capacity:800,rating:4.6,
+     cover:'https://picsum.photos/seed/diyorsaroyi-cover/900/600',
+     gallery:['https://picsum.photos/seed/diyorsaroyi-cover/900/600','https://picsum.photos/seed/diyor2/900/600','https://picsum.photos/seed/diyor3/900/600'],
+     description:"Katta tadbirlar uchun mo'ljallangan ulkan zal. Zamonaviy yorug'lik va tovush tizimi bilan jihozlangan.",
+     telegram:'@diyorsaroyi_admin', deposit:350000,
+     dishPricing:{1:110000,2:135000,3:165000},
+     halls:[
+       {id:'h3-1',name:'Asosiy zal',capacity:800,photo:'https://picsum.photos/seed/diyor-hall1/500/340'},
+       {id:'h3-2',name:"Bo'lim zali",capacity:200,photo:'https://picsum.photos/seed/diyor-hall2/500/340'},
+     ],
+     menu:[
+       {name:'Osh',cat:'Asosiy taom',photo:'https://picsum.photos/seed/diyor-osh/500/360'},
+       {name:'Manti',cat:'Asosiy taom',photo:'https://picsum.photos/seed/diyor-manti/500/360'},
+       {name:'Shashlik',cat:'Asosiy taom',photo:'https://picsum.photos/seed/diyor-shashlik/500/360'},
+       {name:'Shirinliklar',cat:'Desert',photo:'https://picsum.photos/seed/diyor-shirin/500/360'},
+     ],
+     ownerId:null},
+  ],
+  reservations:[
+    {id:'bk-1',type:'restaurant',businessId:'rest-2',roomId:'r2-1',userId:'u1',date:'2026-08-22',startTime:'19:00',endTime:'21:00',guests:4,menuSel:['Steyk Ribay'],depositAmount:69000,specialRequest:'',status:'tasdiqlangan',createdAt:'2026-08-10'},
+    {id:'bk-2',type:'restaurant',businessId:'rest-2',roomId:'r2-3',userId:'u2',date:'2026-08-25',startTime:'08:00',endTime:'12:00',guests:2,menuSel:[],depositAmount:49000,specialRequest:'',status:'tasdiqlangan',createdAt:'2026-08-14'},
+    {id:'bk-3',type:'venue',businessId:'venue-1',hallId:'h1-1',userId:'u1',date:'2026-09-14',guests:250,dishCount:2,pricePerPerson:120000,totalPrice:30000000,menuSel:['Palov (to\'y oshi)','Manti'],depositAmount:300000,status:'kutilmoqda',createdAt:'2026-08-12'},
+    {id:'bk-4',type:'restaurant',businessId:'rest-2',roomId:'r2-8',userId:'u1',date:'2026-08-18',startTime:'13:00',endTime:'15:00',guests:3,menuSel:[],depositAmount:49000,specialRequest:'',status:'tasdiqlangan',createdAt:'2026-08-09'},
+  ],
+  applications:[
+    {id:'ap-1',userId:'u2',businessType:'restaurant',businessName:"Bahor Taomxonasi",phone:'+998 90 777 88 99',status:'kutilmoqda',createdAt:'2026-08-13'},
+  ],
+  reviews:[
+    {id:'rv-1',businessId:'rest-2',type:'restaurant',userId:'u1',userName:'Dilshod Aliyev',rating:5,text:"Xizmat a'lo darajada, ovqatlar mazali. Albatta yana boraman!",date:'2026-08-02'},
+    {id:'rv-2',businessId:'rest-2',type:'restaurant',userId:'u2',userName:'Nodira Karimova',rating:4,text:"Interyer chiroyli, lekin biroz kutishga to'g'ri keldi.",date:'2026-07-28'},
+    {id:'rv-1v',businessId:'venue-1',type:'venue',userId:'u2',userName:'Nodira Karimova',rating:5,text:"To'yimiz juda chiroyli o'tdi, xodimlar diqqat bilan yordam berishdi.",date:'2026-07-20'},
+  ],
+  nextId(prefix,arr){let n=1;while(arr.some(x=>x.id===prefix+'-'+n))n++;return prefix+'-'+n;},
+  newLocalId(prefix){ return prefix+'-'+Math.random().toString(36).slice(2,8); }
+};
+
+/* ---------- STATE ---------- */
+const state = {
+  session:null,
+  screen:{name:'home', id:null},
+  authModal:null,        // 'login' | 'register' | null
+  pendingAction:null,    // function to run after login
+  bookingModal:null,     // {type,businessId,roomId/hallId,...,step}
+  applyModal:null,       // {type} -> shows contact-admin message (biznes ochish arizasi)
+  reviewModal:null,      // {businessId,type}
+  detailTab:'menu',
+  detailImg:0,
+  roomCatFilter:null,
+  filterCuisine:'barchasi',
+  filterQuery:'',
+  filterQueryVenue:'',
+  profileTab:'info',
+  bizChoice:null,        // 'restaurant'|'venue'|'restaurant-applied'|'venue-applied'
+};
+
+/* ---------- HELPERS ---------- */
+function fmt(n){ return Number(n).toLocaleString('ru-RU').replace(/,/g,' ') + " so'm"; }
+function initials(name){ return name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
+function stars(rating){
+  let full = Math.round(rating);
+  let s='';
+  for(let i=0;i<5;i++) s += `<span class="star">${i<full?'★':'☆'}</span>`;
+  return s;
+}
+function findUser(id){ return db.users.find(u=>u.id===id); }
+function findBiz(type,id){ return (type==='restaurant'?db.restaurants:db.venues).find(b=>b.id===id); }
+function findRoom(biz,id){ return biz.rooms.find(r=>r.id===id); }
+function findHall(biz,id){ return biz.halls.find(h=>h.id===id); }
+function currentUser(){ return state.session ? findUser(state.session.userId) : null; }
+function toast(msg){
+  const root=document.getElementById('toast-root');
+  const el=document.createElement('div');
+  el.className='toast'; el.textContent=msg;
+  root.appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+function esc(s){ return String(s).replace(/'/g,"\\'"); }
+function go(name,id){ state.screen={name,id:id||null}; state.detailTab= name==='venueDetail'?'halls':(name==='restaurantDetail'?'menu':state.detailTab); state.detailImg=0; state.roomCatFilter=null; window.scrollTo({top:0,behavior:'instant'}); render(); }
+function toggleDemoPanel(){ document.getElementById('demo-panel').classList.toggle('open'); }
+
+/* ---------- AUTH ---------- */
+function openAuth(mode, pendingAction){
+  state.authModal=mode; state.pendingAction=pendingAction||null; state.authError=''; render();
+}
+function closeAuth(){ state.authModal=null; state.pendingAction=null; state.authError=''; render(); }
+function requireAuthThen(action){
+  if(state.session){ action(); } else { openAuth('login', action); }
+}
+function doLogin(){
+  const phone=document.getElementById('login-phone').value.trim();
+  const pass=document.getElementById('login-pass').value.trim();
+  const u = db.users.find(x=>x.phone===phone && x.password===pass);
+  if(!u){ state.authError="Telefon raqami yoki parol noto'g'ri."; render(); return; }
+  state.session={role:u.role,userId:u.id};
+  const pending = state.pendingAction;
+  state.authModal=null; state.pendingAction=null; state.authError='';
+  toast(`Xush kelibsiz, ${u.name.split(' ')[0]}!`);
+  if(u.role==='user'){ state.screen={name:'home'}; } else { state.screen={name:'overview'}; }
+  render();
+  if(pending) pending();
+}
+function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const phone=document.getElementById('reg-phone').value.trim();
+  const pass=document.getElementById('reg-pass').value.trim();
+  if(!name||!phone||!pass){ state.authError="Barcha maydonlarni to'ldiring."; render(); return; }
+  if(db.users.some(u=>u.phone===phone)){ state.authError="Bu raqam allaqachon ro'yxatdan o'tgan."; render(); return; }
+  const id = db.nextId('u', db.users);
+  const user={id,phone,password:pass,name,role:'user'};
+  db.users.push(user);
+  state.session={role:'user',userId:id};
+  const pending = state.pendingAction;
+  state.authModal=null; state.pendingAction=null; state.authError='';
+  toast(`Ro'yxatdan muvaffaqiyatli o'tdingiz, ${name.split(' ')[0]}!`);
+  state.screen={name:'home'};
+  render();
+  if(pending) pending();
+}
+function quickLogin(userId){
+  const u=findUser(userId);
+  state.session={role:u.role,userId:u.id};
+  state.authModal=null; state.pendingAction=null;
+  state.screen = u.role==='user' ? {name:'home'} : {name:'overview'};
+  document.getElementById('demo-panel').classList.remove('open');
+  toast(`${u.name} sifatida kirdingiz`);
+  render();
+}
+function logout(){
+  state.session=null; state.screen={name:'home'};
+  document.getElementById('demo-panel').classList.remove('open');
+  render();
+}
+
+/* ---------- BOOKING: ROOM (restaurant) / HALL (venue) ---------- */
+function openRoomBooking(businessId,roomId){
+  requireAuthThen(()=>{
+    if(state.session.role!=='user'){ toast("Bron qilish faqat oddiy foydalanuvchi profilida mavjud."); return; }
+    state.bookingModal={type:'restaurant',businessId,roomId,date:'',selStart:null,selEnd:null,guests:2,menuSel:[],specialRequest:'',step:'form'};
+    render();
+  });
+}
+function openHallBooking(businessId,hallId){
+  requireAuthThen(()=>{
+    if(state.session.role!=='user'){ toast("Bron qilish faqat oddiy foydalanuvchi profilida mavjud."); return; }
+    state.bookingModal={type:'venue',businessId,hallId,date:'',guests:100,dishCount:1,menuSel:[],step:'form'};
+    render();
+  });
+}
+function closeBooking(){ state.bookingModal=null; render(); }
+
+function bookedHours(biz,roomId,date){
+  if(!date) return [];
+  return db.reservations.filter(r=>r.type==='restaurant'&&r.businessId===biz.id&&r.roomId===roomId&&r.date===date&&r.status!=='bekor qilindi')
+    .map(r=>({start:parseInt(r.startTime),end:parseInt(r.endTime)}));
+}
+function hourIsBusy(ranges,h){ return ranges.some(rg=>h>=rg.start&&h<rg.end); }
+function isDateBookedForHall(businessId,hallId,date){
+  return db.reservations.some(r=>r.type==='venue'&&r.businessId===businessId&&r.hallId===hallId&&r.date===date&&r.status!=='bekor qilindi');
+}
+
+function clickHour(h){
+  const bm=state.bookingModal;
+  const biz=findBiz('restaurant',bm.businessId);
+  const ranges=bookedHours(biz,bm.roomId,bm.date);
+  if(hourIsBusy(ranges,h)) return;
+  if(bm.selStart===null){ bm.selStart=h; bm.selEnd=h+1; }
+  else if(h===bm.selEnd && !hourIsBusy(ranges,h)){ bm.selEnd=h+1; }
+  else if(h===bm.selStart-1 && !hourIsBusy(ranges,h)){ bm.selStart=h; }
+  else { bm.selStart=h; bm.selEnd=h+1; }
+  render();
+}
+function resetHourSel(){ state.bookingModal.selStart=null; state.bookingModal.selEnd=null; render(); }
+function updateBookingField(key,val){ state.bookingModal[key]=val; render(); }
+function toggleMenuSel(name,max){
+  const bm=state.bookingModal;
+  const i=bm.menuSel.indexOf(name);
+  if(i>-1){ bm.menuSel.splice(i,1); }
+  else {
+    if(max && bm.menuSel.length>=max){ toast(`Ko'pi bilan ${max} xil taom tanlashingiz mumkin.`); return; }
+    bm.menuSel.push(name);
+  }
+  render();
+}
+function setDishCount(n){ const bm=state.bookingModal; bm.dishCount=n; if(bm.menuSel.length>n) bm.menuSel=bm.menuSel.slice(0,n); render(); }
+
+function goBookingStep(step){
+  const bm=state.bookingModal;
+  if(step==='confirm'){
+    if(bm.type==='restaurant'){
+      if(!bm.date){ toast("Sanani tanlang."); return; }
+      if(bm.selStart===null){ toast("Bo'sh vaqtni tanlang."); return; }
+      if(!bm.guests||bm.guests<1){ toast("Mehmonlar sonini kiriting."); return; }
+    } else {
+      if(!bm.date){ toast("Sanani tanlang."); return; }
+      const biz=findBiz('venue',bm.businessId);
+      if(isDateBookedForHall(biz.id,bm.hallId,bm.date)){ toast("Bu kun uchun zal band. Boshqa sanani tanlang."); return; }
+      if(!bm.guests||bm.guests<1){ toast("Mehmonlar sonini kiriting."); return; }
+    }
+  }
+  bm.step=step; render();
+}
+function submitBookingApplication(){
+  const bm=state.bookingModal;
+  const biz=findBiz(bm.type,bm.businessId);
+  const id=db.nextId('bk',db.reservations);
+  let rec={id,type:bm.type,businessId:biz.id,userId:state.session.userId,date:bm.date,guests:Number(bm.guests)||1,status:'kutilmoqda',createdAt:new Date().toISOString().slice(0,10),menuSel:bm.menuSel.slice()};
+  if(bm.type==='restaurant'){
+    const room=findRoom(biz,bm.roomId);
+    rec.roomId=room.id;
+    rec.startTime=String(bm.selStart).padStart(2,'0')+':00';
+    rec.endTime=String(bm.selEnd).padStart(2,'0')+':00';
+    rec.depositAmount = room.depositTier==='premium'?69000:49000;
+    rec.specialRequest=bm.specialRequest||'';
+  } else {
+    const hall=findHall(biz,bm.hallId);
+    rec.hallId=hall.id;
+    rec.dishCount=bm.dishCount;
+    rec.pricePerPerson=biz.dishPricing[bm.dishCount];
+    rec.totalPrice=rec.pricePerPerson*rec.guests;
+    rec.depositAmount=biz.deposit;
+  }
+  db.reservations.push(rec);
+  bm.step='done';
+  bm.createdReservationId=id;
+  render();
+}
+
+/* ---------- REVIEWS ---------- */
+function openReview(businessId,type){ requireAuthThen(()=>{ state.reviewModal={businessId,type,rating:5}; render(); }); }
+function closeReview(){ state.reviewModal=null; render(); }
+function submitReview(){
+  const text=document.getElementById('rv-text').value.trim();
+  const rating=Number(document.querySelector('input[name=rv-rating]:checked')?.value||5);
+  if(!text){ toast("Sharh matnini kiriting."); return; }
+  const u=currentUser();
+  const {businessId,type}=state.reviewModal;
+  db.reviews.unshift({id:db.nextId('rv',db.reviews),businessId,type,userId:u.id,userName:u.name,rating,text,date:new Date().toISOString().slice(0,10)});
+  state.reviewModal=null;
+  toast("Sharhingiz uchun rahmat!");
+  render();
+}
+
+/* ---------- BUSINESS APPLICATION (Restoran/To'yxona ochish) ---------- */
+function chooseBiz(type){ state.bizChoice=type; render(); }
+function openApplyInfo(type){ state.applyModal={type}; render(); }
+function closeApplyInfo(){ state.applyModal=null; render(); }
+function submitApplication(){
+  const name=document.getElementById('app-bizname').value.trim();
+  if(!name){ toast("Biznes nomini kiriting."); return; }
+  const u=currentUser();
+  const {type}=state.applyModal;
+  db.applications.push({id:db.nextId('ap',db.applications),userId:u.id,businessType:type,businessName:name,phone:u.phone,status:'kutilmoqda',createdAt:new Date().toISOString().slice(0,10)});
+  state.applyModal=null;
+  state.bizChoice=type+'-applied';
+  toast("Arizangiz yuborildi!");
+  render();
+}
+function approveApplication(id){
+  const ap=db.applications.find(a=>a.id===id);
+  ap.status='tasdiqlangan';
+  const u=findUser(ap.userId);
+  if(ap.businessType==='restaurant'){
+    const bizId=db.nextId('rest',db.restaurants);
+    db.restaurants.push({id:bizId,name:ap.businessName,cuisine:'yangi',district:"Toshkent",rating:5.0,
+      cover:'https://picsum.photos/seed/'+bizId+'/900/600',
+      gallery:['https://picsum.photos/seed/'+bizId+'/900/600'],
+      description:"Yangi qo'shilgan restoran. Ma'lumotlar tez orada to'ldiriladi.",
+      openTime:'09:00', closeTime:'23:00', telegram:'@'+bizId+'_admin',
+      menu:[], rooms:[], ownerId:u.id});
+    u.role='restaurant_owner'; u.businessId=bizId;
+  } else {
+    const bizId=db.nextId('venue',db.venues);
+    db.venues.push({id:bizId,name:ap.businessName,district:"Toshkent",capacity:200,rating:5.0,
+      cover:'https://picsum.photos/seed/'+bizId+'/900/600',
+      gallery:['https://picsum.photos/seed/'+bizId+'/900/600'],
+      description:"Yangi qo'shilgan to'yxona. Ma'lumotlar tez orada to'ldiriladi.",
+      telegram:'@'+bizId+'_admin', deposit:300000, dishPricing:{1:100000,2:120000,3:150000},
+      halls:[], menu:[], ownerId:u.id});
+    u.role='venue_owner'; u.businessId=bizId;
+  }
+  toast(`Ariza tasdiqlandi: ${u.name} endi biznes egasi.`);
+  render();
+}
+function rejectApplication(id){
+  const ap=db.applications.find(a=>a.id===id);
+  ap.status='rad etildi';
+  toast("Ariza rad etildi.");
+  render();
+}
+
+/* ---------- OWNER CRUD: restaurant ---------- */
+function addRoom(bizId){
+  const n=document.getElementById('rm-name').value.trim();
+  const cat=document.getElementById('rm-cat').value;
+  const c=Number(document.getElementById('rm-cap').value);
+  const tier=document.getElementById('rm-tier').value;
+  const photo=document.getElementById('rm-photo').value.trim()||('https://picsum.photos/seed/'+db.newLocalId('room')+'/500/340');
+  if(!n||!c){ toast("Nomi va sig'imini kiriting."); return; }
+  findBiz('restaurant',bizId).rooms.push({id:db.newLocalId('room'),name:n,category:cat,capacity:c,depositTier:tier,photo});
+  toast("Xona/stol qo'shildi."); render();
+}
+function delRoom(bizId,roomId){ const b=findBiz('restaurant',bizId); b.rooms=b.rooms.filter(r=>r.id!==roomId); render(); }
+function addMenuItem(bizId){
+  const n=document.getElementById('mi-name').value.trim();
+  const p=Number(document.getElementById('mi-price').value);
+  const c=document.getElementById('mi-cat').value.trim()||'Boshqa';
+  const photo=document.getElementById('mi-photo').value.trim()||('https://picsum.photos/seed/'+db.newLocalId('menu')+'/500/360');
+  if(!n||!p){ toast("Nomi va narxini kiriting."); return; }
+  findBiz('restaurant',bizId).menu.push({name:n,price:p,cat:c,photo});
+  toast("Menyu bandi qo'shildi."); render();
+}
+function delMenuItem(bizId,idx){ findBiz('restaurant',bizId).menu.splice(idx,1); render(); }
+function saveRestSettings(bizId){
+  const b=findBiz('restaurant',bizId);
+  b.name=document.getElementById('st-name').value.trim()||b.name;
+  b.district=document.getElementById('st-district').value.trim()||b.district;
+  b.description=document.getElementById('st-desc').value;
+  b.openTime=document.getElementById('st-open').value||b.openTime;
+  b.closeTime=document.getElementById('st-close').value||b.closeTime;
+  b.telegram=document.getElementById('st-tg').value.trim()||b.telegram;
+  toast("Ma'lumotlar saqlandi.");
+  render();
+}
+
+/* ---------- OWNER CRUD: venue ---------- */
+function addHall(bizId){
+  const n=document.getElementById('hl-name').value.trim();
+  const c=Number(document.getElementById('hl-cap').value);
+  const photo=document.getElementById('hl-photo').value.trim()||('https://picsum.photos/seed/'+db.newLocalId('hall')+'/500/340');
+  if(!n||!c){ toast("Nomi va sig'imini kiriting."); return; }
+  findBiz('venue',bizId).halls.push({id:db.newLocalId('hall'),name:n,capacity:c,photo});
+  toast("Zal qo'shildi."); render();
+}
+function delHall(bizId,hallId){ const b=findBiz('venue',bizId); b.halls=b.halls.filter(h=>h.id!==hallId); render(); }
+function addVenueMenuItem(bizId){
+  const n=document.getElementById('vm-name').value.trim();
+  const c=document.getElementById('vm-cat').value.trim()||'Boshqa';
+  const photo=document.getElementById('vm-photo').value.trim()||('https://picsum.photos/seed/'+db.newLocalId('vmenu')+'/500/360');
+  if(!n){ toast("Taom nomini kiriting."); return; }
+  findBiz('venue',bizId).menu.push({name:n,cat:c,photo});
+  toast("Taom qo'shildi."); render();
+}
+function delVenueMenuItem(bizId,idx){ findBiz('venue',bizId).menu.splice(idx,1); render(); }
+function saveVenueSettings(bizId){
+  const b=findBiz('venue',bizId);
+  b.name=document.getElementById('st-name').value.trim()||b.name;
+  b.district=document.getElementById('st-district').value.trim()||b.district;
+  b.description=document.getElementById('st-desc').value;
+  b.telegram=document.getElementById('st-tg').value.trim()||b.telegram;
+  b.deposit=Number(document.getElementById('st-deposit').value)||b.deposit;
+  b.dishPricing={
+    1:Number(document.getElementById('st-p1').value)||b.dishPricing[1],
+    2:Number(document.getElementById('st-p2').value)||b.dishPricing[2],
+    3:Number(document.getElementById('st-p3').value)||b.dishPricing[3],
+  };
+  toast("Ma'lumotlar saqlandi.");
+  render();
+}
+
+function setReservationStatus(id,status){
+  db.reservations.find(r=>r.id===id).status=status;
+  toast(status==='tasdiqlangan'?"Bron tasdiqlandi.":"Bron bekor qilindi.");
+  render();
+}
+function toggleBusinessBlock(type,id){
+  const b=findBiz(type,id);
+  b.blocked=!b.blocked;
+  toast(b.blocked?"Biznes bloklandi.":"Biznes blokdan chiqarildi.");
+  render();
+}
+
+/* =========================================================
+   RENDER — PUBLIC SHELL
+   ========================================================= */
+function render(){
+  const app=document.getElementById('app');
+  const s=state.session;
+  if(s && s.role==='restaurant_owner'){ app.innerHTML = ownerShell('restaurant'); }
+  else if(s && s.role==='venue_owner'){ app.innerHTML = ownerShell('venue'); }
+  else if(s && s.role==='admin'){ app.innerHTML = adminShell(); }
+  else { app.innerHTML = publicShell(); }
+  renderOverlays();
+}
+function renderOverlays(){
+  const root = document.getElementById('overlay-root');
+  if(!root) return;
+  let html='';
+  if(state.authModal) html+=authModalHtml();
+  if(state.bookingModal) html+=bookingModalHtml();
+  if(state.reviewModal) html+=reviewModalHtml();
+  if(state.applyModal) html+=applyModalHtml();
+  root.innerHTML=html;
+}
+
+function navLink(name,label){
+  const active = (state.screen.name===name) || (name==='restaurants' && state.screen.name==='restaurantDetail') || (name==='venues' && state.screen.name==='venueDetail');
+  return `<a href="#" class="${active?'active':''}" onclick="go('${name}');return false;">${label}</a>`;
+}
+function pubNav(){
+  const u=currentUser();
+  return `
+  <div class="pub-nav"><div class="pub-nav-inner">
+    <a href="#" class="logo" onclick="go('home');return false;"><span class="dot"></span>WENZU</a>
+    <div class="pub-links">
+      ${navLink('home',"Bosh sahifa")}
+      ${navLink('restaurants',"Restoranlar")}
+      ${navLink('venues',"To'yxonalar")}
+    </div>
+    <div class="nav-right">
+      ${u ? `
+        <a href="#" class="user-chip" onclick="go('profile');return false;">
+          <span class="avatar">${initials(u.name)}</span>
+          <span style="font-weight:700;font-size:13.5px;">${u.name.split(' ')[0]}</span>
+        </a>
+        <button class="btn btn-ghost btn-sm" onclick="logout()">Chiqish</button>
+      ` : `
+        <button class="btn btn-ghost btn-sm" onclick="openAuth('login')">Kirish</button>
+        <button class="btn btn-primary btn-sm" onclick="openAuth('register')">Ro'yxatdan o'tish</button>
+      `}
+    </div>
+  </div></div>`;
+}
+function pubFooter(){
+  return `
+  <footer><div class="container footer-grid">
+    <div>
+      <h4>WENZU</h4>
+      <p style="max-width:280px;color:#AFC6BB;font-size:14px;">Restoran va to'yxonalarni onlayn bron qilish platformasi. Toshkent bo'ylab eng yaxshi joylarni toping.</p>
+    </div>
+    <div class="footer-cols">
+      <div><h5>Platforma</h5>
+        <a href="#" onclick="go('restaurants');return false;">Restoranlar</a>
+        <a href="#" onclick="go('venues');return false;">To'yxonalar</a>
+        <a href="#" onclick="go('profile');return false;">Biznes ochish</a>
+      </div>
+      <div><h5>Aloqa</h5>
+        <a href="#">@uvente_admin — Telegram</a>
+        <a href="#">info@wenzu.uz</a>
+        <a href="#">+998 71 200 00 00</a>
+      </div>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <span>© 2026 WENZU. Barcha huquqlar himoyalangan.</span>
+    <span>Bu — interaktiv prototip (demo ma'lumotlar bilan)</span>
+  </div>
+  </footer>`;
+}
+function publicShell(){
+  let body='';
+  switch(state.screen.name){
+    case 'restaurants': body=screenRestaurants(); break;
+    case 'venues': body=screenVenues(); break;
+    case 'restaurantDetail': body=screenDetail('restaurant',state.screen.id); break;
+    case 'venueDetail': body=screenDetail('venue',state.screen.id); break;
+    case 'profile': body=screenProfile(); break;
+    case 'home': default: body=screenHome(); break;
+  }
+  return `${pubNav()}${body}${pubFooter()}<div id="overlay-root"></div>`;
+}
+
+/* ---------- HOME ---------- */
+function screenHome(){
+  const topRest = db.restaurants.slice(0,4);
+  const topVenue = db.venues.slice(0,3);
+  return `
+  <section class="hero">
+    <div class="hero-inner">
+      <span class="eyebrow">✦ Toshkentdagi eng sara joylar</span>
+      <h1>Har bir tadbiringiz uchun <em>to'g'ri joyni</em> toping va bron qiling</h1>
+      <p class="lead">Restoran va to'yxonalarni erkin ko'rib chiqing — menyusi, xona/zallari, sharhlarini solishtiring. Bron qilish uchungina ro'yxatdan o'tasiz.</p>
+      <div class="search-card">
+        <div class="search-tabs">
+          <button class="${state.homeTab!=='venue'?'active':''}" onclick="state.homeTab='restaurant';render();">Restoran</button>
+          <button class="${state.homeTab==='venue'?'active':''}" onclick="state.homeTab='venue';render();">To'yxona</button>
+        </div>
+        <input class="search-input" id="home-search" placeholder="${state.homeTab==='venue'?"To'yxona nomi yoki tuman...":"Restoran nomi yoki tuman..."}">
+        <button class="btn btn-gold" onclick="homeSearch()">Qidirish</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="n">${db.restaurants.length+db.venues.length}+</div><div class="l">Faol joylar</div></div>
+        <div><div class="n">${db.reservations.length}+</div><div class="l">Bronlar</div></div>
+        <div><div class="n">4.7</div><div class="l">O'rtacha reyting</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section container">
+    <div class="section-head">
+      <div><span class="eyebrow-sm">Tanlangan</span><h2>Mashhur restoranlar</h2></div>
+      <a href="#" onclick="go('restaurants');return false;" class="btn btn-outline btn-sm">Barchasini ko'rish →</a>
+    </div>
+    <div class="grid">${topRest.map(restCard).join('')}</div>
+  </section>
+
+  <section class="section container" style="padding-top:0;">
+    <div class="section-head">
+      <div><span class="eyebrow-sm">Tanlangan</span><h2>Ommabop to'yxonalar</h2></div>
+      <a href="#" onclick="go('venues');return false;" class="btn btn-outline btn-sm">Barchasini ko'rish →</a>
+    </div>
+    <div class="grid">${topVenue.map(venueCard).join('')}</div>
+  </section>
+
+  <section class="container" style="padding-bottom:60px;">
+    <div class="cta-banner">
+      <div>
+        <h3>Restoran yoki to'yxonangizni WENZU'ga qo'shing</h3>
+        <p>Oyiga atigi 255 000 so'm — birinchi 7 kun mutlaqo bepul sinab ko'ring.</p>
+      </div>
+      <button class="btn btn-gold" onclick="requireAuthThen(()=>{state.profileTab='business';go('profile');})">Biznesni ro'yxatga olish</button>
+    </div>
+  </section>`;
+}
+function homeSearch(){
+  const q=document.getElementById('home-search').value;
+  if(state.homeTab==='venue'){ state.filterQueryVenue=q; go('venues'); } else { state.filterQuery=q; go('restaurants'); }
+}
+function restCard(r){
+  const roomCount=r.rooms.length;
+  return `<div class="card" onclick="go('restaurantDetail','${r.id}')">
+    <img class="cover" src="${r.cover}" alt="${r.name}">
+    <div class="card-body">
+      <div class="card-top"><h3>${r.name}</h3><span class="rating">${r.rating} <span class="star">★</span></span></div>
+      <div class="card-meta"><span>📍 ${r.district}</span><span class="tag">${cuisineLabel(r.cuisine)}</span></div>
+      <div class="card-meta" style="margin-top:6px;"><span>🕗 ${r.openTime}–${r.closeTime}</span><span>🪑 ${roomCount} xona/stol turi</span></div>
+    </div>
+  </div>`;
+}
+function venueCard(v){
+  const from=Math.min(v.dishPricing[1],v.dishPricing[2],v.dishPricing[3]);
+  return `<div class="card" onclick="go('venueDetail','${v.id}')">
+    <img class="cover" src="${v.cover}" alt="${v.name}">
+    <div class="card-body">
+      <div class="card-top"><h3>${v.name}</h3><span class="rating">${v.rating} <span class="star">★</span></span></div>
+      <div class="card-meta"><span>📍 ${v.district}</span><span class="tag">${v.capacity} kishigacha</span></div>
+      <div class="card-price">${fmt(from)} <span>/ kishidan boshlab</span></div>
+    </div>
+  </div>`;
+}
+function cuisineLabel(c){ return {milliy:"Milliy taomlar",yevropa:"Yevropa oshxonasi",fusion:"Fusion",yangi:"Yangi"}[c]||c; }
+
+/* ---------- RESTAURANTS LIST ---------- */
+function screenRestaurants(){
+  const q=(state.filterQuery||'').toLowerCase();
+  let list=db.restaurants.filter(r=>!r.blocked);
+  if(state.filterCuisine!=='barchasi') list=list.filter(r=>r.cuisine===state.filterCuisine);
+  if(q) list=list.filter(r=>r.name.toLowerCase().includes(q)||r.district.toLowerCase().includes(q));
+  const cuisines=['barchasi','milliy','yevropa','fusion'];
+  return `<section class="section container">
+    <div class="section-head"><div><span class="eyebrow-sm">${list.length} ta joy</span><h2>Restoranlar</h2></div></div>
+    <div class="filter-row">
+      <div class="search-mini">🔍 <input placeholder="Nomi yoki tuman..." value="${state.filterQuery||''}" oninput="state.filterQuery=this.value;render()"></div>
+      ${cuisines.map(c=>`<button class="chip ${state.filterCuisine===c?'active':''}" onclick="state.filterCuisine='${c}';render()">${c==='barchasi'?'Barchasi':cuisineLabel(c)}</button>`).join('')}
+    </div>
+    <div class="grid" id="list-grid">${list.length?list.map(restCard).join(''):emptyState("Hech narsa topilmadi","Boshqa kalit so'z yoki filtr bilan urinib ko'ring.")}</div>
+  </section>`;
+}
+function screenVenues(){
+  const q=(state.filterQueryVenue||'').toLowerCase();
+  let list=db.venues.filter(v=>!v.blocked);
+  if(q) list=list.filter(v=>v.name.toLowerCase().includes(q)||v.district.toLowerCase().includes(q));
+  return `<section class="section container">
+    <div class="section-head"><div><span class="eyebrow-sm">${list.length} ta joy</span><h2>To'yxonalar</h2></div></div>
+    <div class="filter-row">
+      <div class="search-mini">🔍 <input placeholder="Nomi yoki tuman..." value="${state.filterQueryVenue||''}" oninput="state.filterQueryVenue=this.value;render()"></div>
+    </div>
+    <div class="grid">${list.length?list.map(venueCard).join(''):emptyState("Hech narsa topilmadi","Boshqa kalit so'z bilan urinib ko'ring.")}</div>
+  </section>`;
+}
+function emptyState(title,sub){ return `<div class="empty-state" style="grid-column:1/-1;"><div class="ic">🔎</div><h3>${title}</h3><p>${sub}</p></div>`; }
+
+/* ---------- DETAIL ---------- */
+function screenDetail(type,id){
+  const b=findBiz(type,id);
+  if(!b) return `<div class="container section"><p>Topilmadi.</p></div>`;
+  const isRest = type==='restaurant';
+  const reviews = db.reviews.filter(r=>r.businessId===id);
+  const avgLabel = reviews.length ? (reviews.reduce((a,r)=>a+r.rating,0)/reviews.length).toFixed(1) : b.rating;
+  return `<section class="container" style="padding-top:26px;">
+    <div style="margin-bottom:14px;"><a href="#" onclick="go('${isRest?'restaurants':'venues'}');return false;" class="muted" style="font-weight:700;font-size:13.5px;">← ${isRest?'Restoranlar':"To'yxonalar"}</a></div>
+    <div class="detail-hero">
+      <img class="detail-cover" id="detail-cover-img" src="${b.gallery[state.detailImg]||b.cover}" alt="${b.name}">
+      <div class="detail-thumbs">${b.gallery.map((g,i)=>`<img src="${g}" class="${i===state.detailImg?'active':''}" onclick="state.detailImg=${i};render()">`).join('')}</div>
+    </div>
+    <div class="detail-grid">
+      <div class="detail-info">
+        <h1>${b.name}</h1>
+        <div class="detail-tags">
+          <span class="tag">📍 ${b.district}</span>
+          ${isRest?`<span class="tag">${cuisineLabel(b.cuisine)}</span><span class="tag">🕗 ${b.openTime}–${b.closeTime}</span>`:`<span class="tag">${b.capacity} kishigacha</span>`}
+          <span class="rating" style="background:var(--gold-dim);padding:4px 10px;border-radius:999px;">${avgLabel} ${stars(avgLabel)}</span>
+        </div>
+        <p class="muted" style="font-size:15px;">${b.description}</p>
+
+        <div class="tabs">
+          ${isRest ? `<button class="${state.detailTab==='menu'?'active':''}" onclick="state.detailTab='menu';render()">Menyu</button>
+                      <button class="${state.detailTab==='rooms'?'active':''}" onclick="state.detailTab='rooms';render()">Xonalar</button>`
+                   : `<button class="${state.detailTab==='halls'?'active':''}" onclick="state.detailTab='halls';render()">Zallar</button>
+                      <button class="${state.detailTab==='menu'?'active':''}" onclick="state.detailTab='menu';render()">Menyu</button>`}
+          <button class="${state.detailTab==='reviews'?'active':''}" onclick="state.detailTab='reviews';render()">Sharhlar (${reviews.length})</button>
+        </div>
+
+        ${detailTabBody(type,b,reviews)}
+      </div>
+
+      <div class="book-card">
+        ${isRest?`
+          <div class="hours-line" style="margin-bottom:10px;">🕗 Ish vaqti: ${b.openTime}–${b.closeTime}</div>
+          <p class="muted" style="font-size:13.5px;">Menyudan ko'rib chiqing, so'ng kerakli xona yoki stolni tanlab band qiling. Ovqat tanlash ixtiyoriy — joyga borib ham buyurtma berishingiz mumkin.</p>
+          <button class="btn btn-primary btn-block" style="margin-top:14px;" onclick="state.detailTab='rooms';render();document.getElementById('detail-cover-img').scrollIntoView({behavior:'smooth'})">Xonalarni ko'rish</button>
+        `:`
+          <div class="price">${fmt(b.dishPricing[1])} <span>/ kishidan boshlab</span></div>
+          <p class="muted" style="font-size:13px;margin-top:4px;">Narx tanlangan taom soniga qarab (1–3 xil) belgilanadi.</p>
+          <button class="btn btn-primary btn-block" style="margin-top:14px;" onclick="state.detailTab='halls';render();document.getElementById('detail-cover-img').scrollIntoView({behavior:'smooth'})">Zallarni ko'rish</button>
+        `}
+        <p class="muted" style="font-size:12.5px;margin-top:12px;">Bron qilish uchun ro'yxatdan o'tish kerak bo'ladi. Ko'rib chiqish — mutlaqo bepul.</p>
+        <div class="divider"></div>
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;"><span class="muted">Reyting</span><b>${avgLabel} / 5</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-top:6px;"><span class="muted">Tuman</span><b>${b.district}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:13.5px;margin-top:6px;"><span class="muted">Telegram</span><b>${b.telegram}</b></div>
+      </div>
+    </div>
+  </section>`;
+}
+function detailTabBody(type,b,reviews){
+  if(state.detailTab==='menu'){
+    return `<div class="menu-photo-grid">${b.menu.length?b.menu.map(m=>`
+      <div class="menu-photo-card">
+        <img src="${m.photo}" alt="${m.name}">
+        <div class="mp-body"><b>${m.name}</b><span class="muted" style="font-size:12.5px;">${m.cat}${type==='restaurant'?' • '+fmt(m.price):''}</span></div>
+      </div>`).join(''):`<p class="muted" style="padding:16px 0;">Menyu hali to'ldirilmagan.</p>`}</div>`;
+  }
+  if(state.detailTab==='rooms'){
+    const cats=[...new Set(b.rooms.map(r=>r.category))];
+    if(!state.roomCatFilter) state.roomCatFilter=cats[0]||null;
+    const filtered=b.rooms.filter(r=>r.category===state.roomCatFilter);
+    return `
+      <div class="cat-chip-row">
+        ${cats.map(c=>`<button class="cat-chip ${state.roomCatFilter===c?'active':''}" onclick="state.roomCatFilter='${c}';render()">${CAT_ICON[c]||''} ${CAT_LABEL[c]||c}</button>`).join('')}
+      </div>
+      <div class="room-grid">${filtered.length?filtered.map(r=>`
+        <div class="room-card">
+          <img class="rc-photo" src="${r.photo}" alt="${r.name}">
+          <div class="rc-body">
+            <b>${r.name}</b>
+            <p class="muted" style="margin-top:4px;font-size:13px;">${r.capacity} kishigacha</p>
+            <p style="margin-top:6px;"><span class="seal ${r.depositTier==='premium'?'seal-gold':'seal-ok'}">Depozit: ${fmt(r.depositTier==='premium'?69000:49000)}</span></p>
+            <button class="btn btn-primary btn-sm btn-block" style="margin-top:12px;" onclick="openRoomBooking('${b.id}','${r.id}')">Band qilish</button>
+          </div>
+        </div>`).join(''):`<p class="muted">Bu toifada xona/stol hali kiritilmagan.</p>`}</div>`;
+  }
+  if(state.detailTab==='halls'){
+    return `
+      <div class="total-box" style="margin-bottom:18px;">
+        <div class="row"><span>1 xil taom</span><b>${fmt(b.dishPricing[1])} / kishi</b></div>
+        <div class="row"><span>2 xil taom</span><b>${fmt(b.dishPricing[2])} / kishi</b></div>
+        <div class="row"><span>3 xil taom</span><b>${fmt(b.dishPricing[3])} / kishi</b></div>
+        <div class="row" style="border-top:1px dashed var(--line);margin-top:6px;padding-top:8px;"><span>Bron uchun depozit</span><b>${fmt(b.deposit)}</b></div>
+      </div>
+      <div class="room-grid">${b.halls.length?b.halls.map(h=>`
+        <div class="room-card">
+          <img class="rc-photo" src="${h.photo}" alt="${h.name}">
+          <div class="rc-body">
+            <b>${h.name}</b>
+            <p class="muted" style="margin-top:4px;font-size:13px;">${h.capacity} kishigacha</p>
+            <button class="btn btn-primary btn-sm btn-block" style="margin-top:12px;" onclick="openHallBooking('${b.id}','${h.id}')">Band qilish</button>
+          </div>
+        </div>`).join(''):`<p class="muted">Zallar ro'yxati hali kiritilmagan.</p>`}</div>`;
+  }
+  if(state.detailTab==='reviews'){
+    return `<div>
+      <button class="btn btn-outline btn-sm" style="margin-bottom:14px;" onclick="openReview('${b.id}','${type}')">+ Sharh qoldirish</button>
+      ${reviews.length?reviews.map(r=>`
+        <div class="review">
+          <div class="review-head">
+            <div class="review-user"><span class="avatar">${initials(r.userName)}</span><b>${r.userName}</b></div>
+            <span class="rating">${r.rating} <span class="star">★</span></span>
+          </div>
+          <p style="margin-top:10px;">${r.text}</p>
+          <p class="muted" style="font-size:12px;margin-top:6px;">${r.date}</p>
+        </div>`).join(''):`<p class="muted">Hozircha sharhlar yo'q. Birinchi bo'lib fikr bildiring!</p>`}
+    </div>`;
+  }
+  return '';
+}
+
+/* ---------- PROFILE ---------- */
+function screenProfile(){
+  const u=currentUser();
+  if(!u){ return `<section class="container section"><p>Profilni ko'rish uchun tizimga kiring.</p><button class="btn btn-primary" onclick="openAuth('login')">Kirish</button></section>`; }
+  return `<section class="container section">
+    <div class="profile-wrap">
+      <div class="profile-side">
+        <span class="avatar" style="width:58px;height:58px;font-size:20px;">${initials(u.name)}</span>
+        <h3 style="margin-top:12px;font-size:19px;">${u.name}</h3>
+        <p class="muted" style="font-size:13.5px;margin-top:2px;">${u.phone}</p>
+        <div class="profile-nav" style="margin-top:18px;">
+          <a href="#" class="${state.profileTab==='info'?'active':''}" onclick="state.profileTab='info';render();return false;">👤 Ma'lumotlarim</a>
+          <a href="#" class="${state.profileTab==='bookings'?'active':''}" onclick="state.profileTab='bookings';render();return false;">📅 Mening bronlarim</a>
+          <a href="#" class="${state.profileTab==='business'?'active':''}" onclick="state.profileTab='business';render();return false;">🏢 Biznes ochish</a>
+        </div>
+      </div>
+      <div>${profileTabBody(u)}</div>
+    </div>
+  </section>`;
+}
+function profileTabBody(u){
+  if(state.profileTab==='info'){
+    return `<div class="panel">
+      <h3>Shaxsiy ma'lumotlar</h3>
+      <div class="field-row">
+        <div class="field"><label>To'liq ism</label><input value="${u.name}" disabled></div>
+        <div class="field"><label>Telefon raqami</label><input value="${u.phone}" disabled></div>
+      </div>
+      <p class="muted" style="font-size:13px;">Bu — demo profil, ma'lumotlarni tahrirlash prototipda faollashtirilmagan.</p>
+    </div>`;
+  }
+  if(state.profileTab==='bookings'){
+    const list=db.reservations.filter(r=>r.userId===u.id).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+    return `<div class="panel"><h3>Mening bronlarim</h3>
+      ${list.length?list.map(r=>bookingRow(r,false)).join(''):emptyState("Hali bronlar yo'q","Restoran yoki to'yxona tanlab, bron qilishni boshlang.")}
+    </div>`;
+  }
+  if(state.profileTab==='business'){
+    return businessTabBody(u);
+  }
+  return '';
+}
+function businessTabBody(u){
+  if(u.role!=='user'){
+    return `<div class="panel"><h3>Biznes egasi paneli</h3><p class="muted">Sizda allaqachon biznes bor. Boshqarish uchun boshqaruv panelidan foydalaning — chap tomondagi "Demo rejim" orqali rolingizga mos boshqaruv paneliga o'ting.</p></div>`;
+  }
+  const myApp = db.applications.filter(a=>a.userId===u.id).sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0];
+  if(myApp && myApp.status==='kutilmoqda'){
+    return `<div class="panel">
+      <h3>Arizangiz ko'rib chiqilmoqda</h3>
+      <div class="booking-row">
+        <div><b>${myApp.businessName}</b><div class="muted" style="font-size:13px;margin-top:3px;">${myApp.businessType==='restaurant'?'Restoran':"To'yxona"} • ${myApp.createdAt}</div></div>
+        <span class="seal seal-warn">${myApp.status}</span>
+      </div>
+      <p class="muted" style="margin-top:14px;font-size:13.5px;">Super-admin arizani tasdiqlagach, sizga biznes boshqaruv paneli ochiladi.</p>
+    </div>`;
+  }
+  if(!state.bizChoice){
+    return `<div class="panel">
+      <h3>Restoran yoki to'yxona egasimisiz?</h3>
+      <p class="muted" style="font-size:13.5px;margin-bottom:18px;">WENZU platformasiga qo'shiling — mijozlar to'g'ridan-to'g'ri sizni bron qilishi mumkin bo'ladi.</p>
+      <div class="biz-choice">
+        <button class="opt" onclick="chooseBiz('restaurant')" style="cursor:pointer;">
+          <div class="ic">🍽️</div><h3>Restoran ochish</h3>
+          <p class="muted" style="font-size:13.5px;margin-top:8px;">Menyu va xona/stollaringizni qo'shing, bron qabul qiling.</p>
+        </button>
+        <button class="opt" onclick="chooseBiz('venue')" style="cursor:pointer;">
+          <div class="ic">🎉</div><h3>To'yxona ochish</h3>
+          <p class="muted" style="font-size:13.5px;margin-top:8px;">Zallaringiz va taom paketlaringizni qo'shing, to'y bronlarini qabul qiling.</p>
+        </button>
+      </div>
+    </div>`;
+  }
+  const type=state.bizChoice;
+  const label = type==='restaurant'?'Restoran':"To'yxona";
+  const icon = type==='restaurant'?'🍽️':'🎉';
+  return `<div class="panel">
+    <button class="btn btn-ghost btn-sm" style="margin-bottom:14px;" onclick="state.bizChoice=null;render()">← Orqaga</button>
+    <div class="biz-choice">
+      <div class="opt" style="border-color:var(--emerald-600);">
+        <div class="ic">${icon}</div>
+        <h3>${label} ochish</h3>
+        <p class="muted" style="font-size:13.5px;margin-top:8px;">${type==='restaurant'?"Restoraningiz WENZU platformasida ko'rinadi, mijozlar to'g'ridan-to'g'ri xona/stol bron qilishi mumkin bo'ladi.":"To'yxonangiz WENZU platformasida ko'rinadi, mijozlar zallaringizni bron qilishi mumkin bo'ladi."}</p>
+        <ul class="muted" style="font-size:13.5px;margin-top:12px;padding-left:18px;line-height:1.9;">
+          <li>Cheksiz miqdorda bron qabul qilish</li>
+          <li>Menyu / xona-zallarni o'zingiz boshqarasiz</li>
+          <li>Sharh va reytinglarni kuzatish</li>
+        </ul>
+        <div class="price" style="margin-top:16px;font-size:20px;">255 000 so'm <span style="font-weight:600;font-size:13px;color:var(--ink-soft);">/ oyiga</span></div>
+        <span class="seal seal-gold" style="margin-top:10px;">✦ Boshlanishiga 7 kun bepul</span>
+        <button class="btn btn-primary btn-block" style="margin-top:20px;" onclick="openApplyInfo('${type}')">Ariza berish</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   MODALS
+   ========================================================= */
+function authModalHtml(){
+  const mode=state.authModal;
+  return `<div class="overlay" onclick="if(event.target===this)closeAuth()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeAuth()">✕</button>
+      <div class="modal-tabs">
+        <button class="${mode==='login'?'active':''}" onclick="openAuth('login',state.pendingAction)">Kirish</button>
+        <button class="${mode==='register'?'active':''}" onclick="openAuth('register',state.pendingAction)">Ro'yxatdan o'tish</button>
+      </div>
+      ${mode==='login'?`
+        <h2>Xush kelibsiz</h2>
+        <p class="muted" style="font-size:13.5px;margin-bottom:20px;">Bron qilish va profilingizga kirish uchun tizimga kiring.</p>
+        <div class="field"><label>Telefon raqami</label><input id="login-phone" placeholder="+998 90 111 22 33"></div>
+        <div class="field"><label>Parol</label><input id="login-pass" type="password" placeholder="••••••••"></div>
+        ${state.authError?`<div class="form-error">${state.authError}</div>`:''}
+        <button class="btn btn-primary btn-block" onclick="doLogin()">Kirish</button>
+        <div class="demo-hint"><b>Demo hisoblar:</b><br>
+          Foydalanuvchi: +998 90 111 22 33 / user123<br>
+          Restoran egasi: +998 90 123 45 67 / rest123<br>
+          To'yxona egasi: +998 90 987 65 43 / venue123<br>
+          Admin: admin / admin123
+        </div>
+      `:`
+        <h2>Ro'yxatdan o'tish</h2>
+        <p class="muted" style="font-size:13.5px;margin-bottom:20px;">Bron qilish uchun bir necha soniyada ro'yxatdan o'ting.</p>
+        <div class="field"><label>To'liq ism</label><input id="reg-name" placeholder="Ism Familiya"></div>
+        <div class="field"><label>Telefon raqami</label><input id="reg-phone" placeholder="+998 90 000 00 00"></div>
+        <div class="field"><label>Parol</label><input id="reg-pass" type="password" placeholder="••••••••"></div>
+        ${state.authError?`<div class="form-error">${state.authError}</div>`:''}
+        <button class="btn btn-primary btn-block" onclick="doRegister()">Ro'yxatdan o'tish</button>
+      `}
+    </div>
+  </div>`;
+}
+function bookingModalHtml(){
+  const bm=state.bookingModal;
+  const biz=findBiz(bm.type,bm.businessId);
+  const isRest=bm.type==='restaurant';
+  let inner='';
+
+  if(bm.step==='done'){
+    const rec=db.reservations.find(r=>r.id===bm.createdReservationId);
+    inner=`
+      <h2>Ariza yuborildi ✅</h2>
+      <div class="apply-msg">
+        <p>Assalomu alaykum! 👋 So'rovingiz qabul qilindi va hozircha <b>"kutilmoqda"</b> holatida.</p>
+        <p style="margin-top:10px;">Bronni yakuniy tasdiqlash uchun <b>${biz.telegram}</b> administratoriga Telegram orqali murojaat qiling va oldindan <b>${fmt(rec.depositAmount)}</b> depozit to'lovini amalga oshiring${isRest?" — bu summa keyinchalik ovqatlanganingizga qo'shiladi":''}.</p>
+        <p style="margin-top:10px;">To'lov qilinib, admin bilan gaplashilgandan so'ng bron tasdiqlanadi.</p>
+      </div>
+      <div class="tg-line">✈️ Telegram: <b>&nbsp;${biz.telegram}</b></div>
+      <button class="btn btn-primary btn-block" style="margin-top:18px;" onclick="closeBooking();state.profileTab='bookings';go('profile');">Bronlarimga o'tish</button>
+    `;
+  } else if(bm.step==='confirm'){
+    const deposit = isRest ? (findRoom(biz,bm.roomId).depositTier==='premium'?69000:49000) : biz.deposit;
+    inner=`
+      <h2>Joyni band qilishni tasdiqlang</h2>
+      <div class="apply-msg">
+        <p>Assalomu alaykum! 👋 ${isRest?'Stolni':'Zalni'} band qilish uchun restoran adminiga murojaat qiling va Ariza berish tugmasini bosing.</p>
+        <p style="margin-top:10px;">Oldindan <b>${fmt(deposit)}</b> depozit to'lovini amalga oshirishingiz kerak bo'ladi${isRest?" — bu summa ovqatlanganingizga qo'shiladi":''}.</p>
+      </div>
+      <div class="total-box">
+        <div class="row"><span>Sana</span><b>${bm.date}</b></div>
+        ${isRest?`<div class="row"><span>Vaqt</span><b>${String(bm.selStart).padStart(2,'0')}:00 – ${String(bm.selEnd).padStart(2,'0')}:00</b></div>`:''}
+        <div class="row"><span>Mehmonlar</span><b>${bm.guests} kishi</b></div>
+        ${!isRest?`<div class="row"><span>Taom soni</span><b>${bm.dishCount} xil</b></div><div class="row"><span>Kishi boshiga</span><b>${fmt(biz.dishPricing[bm.dishCount])}</b></div><div class="row grand"><span>Umumiy summa</span><b>${fmt(biz.dishPricing[bm.dishCount]*bm.guests)}</b></div>`:''}
+        <div class="row"><span>Depozit (oldindan)</span><b>${fmt(deposit)}</b></div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:18px;">
+        <button class="btn btn-outline" style="flex:1;" onclick="goBookingStep('form')">← Orqaga</button>
+        <button class="btn btn-primary" style="flex:2;" onclick="submitBookingApplication()">Ariza berish</button>
+      </div>
+    `;
+  } else if(isRest){
+    const room=findRoom(biz,bm.roomId);
+    const ranges=bookedHours(biz,bm.roomId,bm.date);
+    const openH=parseInt(biz.openTime); let closeH=parseInt(biz.closeTime); if(closeH<=openH) closeH+=24;
+    let hoursHtml='';
+    if(bm.date){
+      for(let h=openH;h<closeH;h++){
+        const hh=h%24;
+        const busy=hourIsBusy(ranges,h);
+        const sel = bm.selStart!==null && h>=bm.selStart && h<bm.selEnd;
+        hoursHtml+=`<div class="hour-cell ${busy?'busy':(sel?'sel':'free')}" ${busy?'':`onclick="clickHour(${h})"`}>${String(hh).padStart(2,'0')}:00</div>`;
+      }
+    }
+    inner=`
+      <h2>${room.name} — band qilish</h2>
+      <p class="muted" style="font-size:13.5px;margin-bottom:16px;">${biz.name} • <span class="hours-line">🕗 Ish vaqti: ${biz.openTime}–${biz.closeTime}</span></p>
+      <div class="field"><label>Sana</label><input id="bk-date" type="date" value="${bm.date}" onchange="updateBookingField('date',this.value);state.bookingModal.selStart=null;state.bookingModal.selEnd=null;"></div>
+      ${bm.date?`
+        <label style="display:block;font-size:13px;font-weight:700;color:var(--ink-soft);margin-bottom:6px;">Bo'sh vaqtni tanlang</label>
+        <div class="hour-grid">${hoursHtml}</div>
+        <div class="hour-legend">
+          <span><i style="background:#fff;border:1.5px solid var(--line);"></i> Bo'sh</span>
+          <span><i style="background:var(--emerald-600);"></i> Tanlangan</span>
+          <span><i style="background:var(--crimson-dim);"></i> Band</span>
+        </div>
+        ${bm.selStart!==null?`<p class="muted" style="font-size:13px;margin-bottom:10px;">Tanlangan: <b>${String(bm.selStart%24).padStart(2,'0')}:00 – ${String(bm.selEnd%24).padStart(2,'0')}:00</b> · <a href="#" onclick="resetHourSel();return false;">tozalash</a></p>`:''}
+      `:`<p class="muted" style="font-size:13px;margin-bottom:14px;">Bo'sh vaqtlarni ko'rish uchun avval sanani tanlang.</p>`}
+      <div class="field"><label>Mehmonlar soni (${room.capacity} kishigacha)</label><input id="bk-guests" type="number" min="1" max="${room.capacity}" value="${bm.guests}" oninput="updateBookingField('guests',this.value)"></div>
+      ${biz.menu.length?`
+        <label style="display:block;font-size:13px;font-weight:700;color:var(--ink-soft);margin:14px 0 8px;">Menyudan taom tanlash (ixtiyoriy)</label>
+        <div class="menu-photo-grid">
+          ${biz.menu.map(m=>{const nm=esc(m.name);return `<div class="menu-photo-card selectable ${bm.menuSel.includes(m.name)?'checked':''}" onclick="toggleMenuSel('${nm}')">
+            <div class="check-badge">✓</div>
+            <img src="${m.photo}" alt="${m.name}">
+            <div class="mp-body"><b>${m.name}</b><span class="muted" style="font-size:12.5px;">${fmt(m.price)}</span></div>
+          </div>`;}).join('')}
+        </div>
+        <p class="muted" style="font-size:12px;margin-top:8px;">Ovqat tanlamasdan ham bron qilishingiz mumkin — joyga borib buyurtma berishingiz mumkin.</p>
+      `:''}
+      <div class="field" style="margin-top:14px;"><label>Qo'shimcha istak (ixtiyoriy)</label><textarea id="bk-note" rows="2" oninput="updateBookingField('specialRequest',this.value)">${bm.specialRequest||''}</textarea></div>
+      <button class="btn btn-primary btn-block" style="margin-top:6px;" onclick="goBookingStep('confirm')">Joy band qilish</button>
+    `;
+  } else {
+    const hall=findHall(biz,bm.hallId);
+    const dateBusy = bm.date && isDateBookedForHall(biz.id,bm.hallId,bm.date);
+    inner=`
+      <h2>${hall.name} — band qilish</h2>
+      <p class="muted" style="font-size:13.5px;margin-bottom:16px;">${biz.name} • ${hall.capacity} kishigacha</p>
+      <div class="field"><label>Sana (to'yxonada faqat 1 kun tanlanadi)</label><input id="bk-date" type="date" value="${bm.date}" onchange="updateBookingField('date',this.value)"></div>
+      ${dateBusy?`<p style="color:var(--crimson);font-weight:700;font-size:13.5px;margin:-6px 0 14px;">⛔ Bu kun uchun zal allaqachon band. Boshqa sanani tanlang.</p>`:''}
+      <label style="display:block;font-size:13px;font-weight:700;color:var(--ink-soft);margin-bottom:8px;">Nechta xil taom bo'lsin?</label>
+      <div class="dish-chip-row">
+        ${[1,2,3].map(n=>`<div class="dish-chip ${bm.dishCount===n?'active':''}" onclick="setDishCount(${n})"><b>${n} xil taom</b><div class="p">${fmt(biz.dishPricing[n])} / kishi</div></div>`).join('')}
+      </div>
+      <div class="field" style="margin-top:14px;"><label>Mehmonlar soni</label><input id="bk-guests" type="number" min="1" value="${bm.guests}" oninput="updateBookingField('guests',this.value)"></div>
+      ${biz.menu.length?`
+        <label style="display:block;font-size:13px;font-weight:700;color:var(--ink-soft);margin:14px 0 8px;">Taomlarni tanlang (${bm.menuSel.length}/${bm.dishCount})</label>
+        <div class="menu-photo-grid">
+          ${biz.menu.map(m=>{const nm=esc(m.name);return `<div class="menu-photo-card selectable ${bm.menuSel.includes(m.name)?'checked':''}" onclick="toggleMenuSel('${nm}',state.bookingModal.dishCount)">
+            <div class="check-badge">✓</div>
+            <img src="${m.photo}" alt="${m.name}">
+            <div class="mp-body"><b>${m.name}</b><span class="muted" style="font-size:12.5px;">${m.cat}</span></div>
+          </div>`;}).join('')}
+        </div>
+      `:''}
+      <div class="total-box">
+        <div class="row"><span>Kishi boshiga</span><b>${fmt(biz.dishPricing[bm.dishCount])}</b></div>
+        <div class="row grand"><span>Umumiy summa (${bm.guests||0} kishi)</span><b>${fmt(biz.dishPricing[bm.dishCount]*(Number(bm.guests)||0))}</b></div>
+      </div>
+      <button class="btn btn-primary btn-block" style="margin-top:16px;" ${dateBusy?'disabled':''} onclick="goBookingStep('confirm')">Zal band qilish</button>
+    `;
+  }
+  return `<div class="overlay" onclick="if(event.target===this)closeBooking()">
+    <div class="modal modal-wide">
+      <button class="modal-close" onclick="closeBooking()">✕</button>
+      ${inner}
+    </div>
+  </div>`;
+}
+function reviewModalHtml(){
+  return `<div class="overlay" onclick="if(event.target===this)closeReview()">
+    <div class="modal">
+      <button class="modal-close" onclick="closeReview()">✕</button>
+      <h2>Sharh qoldirish</h2>
+      <div class="field"><label>Baho</label>
+        <div style="display:flex;gap:6px;">
+          ${[1,2,3,4,5].map(n=>`<label style="cursor:pointer;"><input type="radio" name="rv-rating" value="${n}" ${n===5?'checked':''} style="display:none;" onchange="render()"><span style="font-size:22px;color:${n<=5?'var(--gold-500)':'#ccc'};">★</span></label>`).join('')}
+        </div>
+      </div>
+      <div class="field"><label>Fikringiz</label><textarea id="rv-text" rows="4" placeholder="Tajribangiz haqida yozing..."></textarea></div>
+      <button class="btn btn-primary btn-block" onclick="submitReview()">Yuborish</button>
+    </div>
+  </div>`;
+}
+function applyModalHtml(){
+  const {type}=state.applyModal;
+  const label=type==='restaurant'?'restoran':"to'yxona";
+  return `<div class="overlay" onclick="if(event.target===this)closeApplyInfo()">
+    <div class="modal modal-wide">
+      <button class="modal-close" onclick="closeApplyInfo()">✕</button>
+      <h2>Ariza berish</h2>
+      <div class="field"><label>${type==='restaurant'?'Restoran':"To'yxona"} nomi</label><input id="app-bizname" placeholder="Masalan: ${type==='restaurant'?'Bahor Taomxonasi':"Navro'z Saroyi"}"></div>
+      <div class="apply-msg">
+        <p>Assalomu alaykum! 👋</p>
+        <p style="margin-top:10px;">Sizning ${label}ingizni WENZU platformasiga qo'shish uchun oylik obuna narxi — <b>255 000 so'm</b>. Boshlanishiga esa <b>7 kun mutlaqo bepul</b> — ya'ni tizimni tekin ishlatib ko'rasiz, keyin xohlasangiz davom etasiz.</p>
+        <p style="margin-top:10px;">Arizangizni tasdiqlatish uchun <b>@uvente_admin</b> administratorga Telegram orqali murojaat qiling.</p>
+      </div>
+      <div class="tg-line">✈️ Telegram: <b>&nbsp;@uvente_admin</b></div>
+      <button class="btn btn-primary btn-block" style="margin-top:18px;" onclick="submitApplication()">Arizani yuborish</button>
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   OWNER DASHBOARD (restaurant_owner / venue_owner)
+   ========================================================= */
+function ownerShell(kind){
+  const u=currentUser();
+  const biz = findBiz(kind, u.businessId);
+  const themeClass = kind==='restaurant' ? 'theme-restaurant' : 'theme-venue';
+  const roleLabel = kind==='restaurant' ? 'Restoran egasi' : "To'yxona egasi";
+  const myReservations = db.reservations.filter(r=>r.businessId===u.businessId);
+  const pendingCount = myReservations.filter(r=>r.status==='kutilmoqda').length;
+  const screens = kind==='restaurant'
+    ? [['overview','📊',"Umumiy ko'rinish"],['bookings','📅','Bronlar',pendingCount],['rooms','🪑','Xonalar'],['menu','🍽️','Menyu'],['reviews','⭐','Sharhlar'],['subscription','💳','Obuna'],['settings','⚙️','Sozlamalar']]
+    : [['overview','📊',"Umumiy ko'rinish"],['bookings','📅','Bronlar',pendingCount],['halls','🏛️','Zallar'],['menu','🍽️','Menyu'],['reviews','⭐','Sharhlar'],['subscription','💳','Obuna'],['settings','⚙️','Sozlamalar']];
+  if(!screens.some(x=>x[0]===state.screen.name)) state.screen.name='overview';
+  return `<div class="dash ${themeClass}">
+    <div class="sidebar">
+      <div class="logo2"><span class="dot" style="width:9px;height:9px;border-radius:50%;background:var(--gold-500);"></span>WENZU</div>
+      <div class="role-pill">${roleLabel}</div>
+      ${screens.map(sc=>`<a href="#" class="side-link ${state.screen.name===sc[0]?'active':''}" onclick="go('${sc[0]}');return false;"><span class="ic">${sc[1]}</span>${sc[2]}${sc[3]?`<span class="count">${sc[3]}</span>`:''}</a>`).join('')}
+      <div class="sidebar-bottom">
+        <a href="#" class="side-link" onclick="go('home');window.location.hash='';state.session=null;render();return false;" style="opacity:.9;"><span class="ic">🌐</span>Saytni ko'rish</a>
+        <a href="#" class="side-link" onclick="logout();return false;"><span class="ic">↩</span>Chiqish</a>
+      </div>
+    </div>
+    <div class="dash-main">
+      <div class="dash-topbar">
+        <h1>${dashTitle(state.screen.name)}</h1>
+        <div class="user-chip"><span class="avatar" style="background:var(--ink);">${initials(u.name)}</span><span style="font-weight:700;font-size:13.5px;">${u.name}</span></div>
+      </div>
+      <div class="dash-content">${ownerScreen(kind,biz,u)}</div>
+    </div>
+  </div><div id="overlay-root"></div>`;
+}
+function dashTitle(name){
+  return {overview:"Umumiy ko'rinish",bookings:"Bronlar",menu:"Menyu",rooms:"Xonalar",halls:"Zallar",reviews:"Sharhlar",subscription:"Obuna",settings:"Sozlamalar",applications:"Arizalar",users:"Foydalanuvchilar",businesses:"Bizneslar",subs:"Obunalar"}[name]||'';
+}
+function ownerScreen(kind,biz,u){
+  const s=state.screen.name;
+  const myReservations = db.reservations.filter(r=>r.businessId===biz.id).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
+  const myReviews = db.reviews.filter(r=>r.businessId===biz.id);
+  if(s==='overview'){
+    const avg = myReviews.length? (myReviews.reduce((a,r)=>a+r.rating,0)/myReviews.length).toFixed(1) : biz.rating;
+    return `
+    <div class="stat-grid">
+      <div class="stat-card"><div class="l">Jami bronlar</div><div class="n">${myReservations.length}</div></div>
+      <div class="stat-card"><div class="l">Kutilayotgan bronlar</div><div class="n">${myReservations.filter(r=>r.status==='kutilmoqda').length}</div></div>
+      <div class="stat-card"><div class="l">Reyting</div><div class="n accent">${avg} ★</div></div>
+      <div class="stat-card"><div class="l">Obuna holati</div><div class="n" style="font-size:16px;"><span class="seal seal-gold">7 kun bepul</span></div></div>
+    </div>
+    <div class="panel">
+      <h3>So'nggi bronlar</h3>
+      ${myReservations.length?myReservations.slice(0,5).map(r=>bookingRow(r,true)).join(''):emptyState("Hozircha bronlar yo'q","Mijozlar sizni bron qilganda shu yerda ko'rinadi.")}
+    </div>
+    <div class="panel">
+      <h3>${biz.name}</h3>
+      <img src="${biz.cover}" style="width:100%;height:200px;object-fit:cover;border-radius:12px;margin-bottom:14px;">
+      <p class="muted">${biz.description}</p>
+    </div>`;
+  }
+  if(s==='bookings'){
+    return `<div class="panel"><h3>Barcha bronlar</h3>
+      ${myReservations.length?myReservations.map(r=>bookingRow(r,false)).join(''):emptyState("Bronlar yo'q","")}
+    </div>`;
+  }
+  if(s==='rooms'){
+    return `<div class="panel"><h3>Xona / stollar boshqaruvi</h3>
+      ${biz.rooms.length?`<div class="room-grid" style="margin-bottom:20px;">${biz.rooms.map(r=>`
+        <div class="room-card">
+          <img class="rc-photo" src="${r.photo}" alt="${r.name}">
+          <div class="rc-body">
+            <b>${r.name}</b>
+            <p class="muted" style="margin-top:4px;font-size:13px;">${CAT_LABEL[r.category]||r.category} • ${r.capacity} kishigacha</p>
+            <p style="margin-top:6px;"><span class="seal ${r.depositTier==='premium'?'seal-gold':'seal-ok'}">Depozit: ${fmt(r.depositTier==='premium'?69000:49000)}</span></p>
+            <button class="btn btn-sm btn-danger btn-block" style="margin-top:10px;" onclick="delRoom('${biz.id}','${r.id}')">🗑 O'chirish</button>
+          </div>
+        </div>`).join('')}</div>`:emptyState("Xona/stollar yo'q","Quyidagi forma orqali qo'shing.")}
+      <div class="field-row">
+        <div class="field"><label>Nomi</label><input id="rm-name" placeholder="Masalan: Tashqari terrassa — 3 kishilik"></div>
+        <div class="field"><label>Toifasi</label><select id="rm-cat"><option value="vip">VIP xona</option><option value="outdoor">Tashqari terrassa</option><option value="standard">Zal</option></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Sig'imi (kishi)</label><input id="rm-cap" type="number" placeholder="Masalan: 3"></div>
+        <div class="field"><label>Depozit tarifi</label><select id="rm-tier"><option value="pro">Pro — 49 000 so'm</option><option value="premium">Premium — 69 000 so'm</option></select></div>
+      </div>
+      <div class="field"><label>Rasm URL (ixtiyoriy)</label><input id="rm-photo" placeholder="https://..."></div>
+      <button class="btn btn-primary" onclick="addRoom('${biz.id}')">+ Qo'shish</button>
+    </div>`;
+  }
+  if(s==='menu'){
+    return `<div class="panel"><h3>Menyu boshqaruvi</h3>
+      ${biz.menu.length?`<div class="menu-photo-grid" style="margin-bottom:20px;">${biz.menu.map((m,i)=>`
+        <div class="menu-photo-card">
+          <img src="${m.photo}" alt="${m.name}">
+          <div class="mp-body"><b>${m.name}</b><span class="muted" style="font-size:12.5px;">${m.cat} • ${fmt(m.price)}</span>
+            <button class="btn btn-sm btn-danger btn-block" style="margin-top:8px;" onclick="delMenuItem('${biz.id}',${i})">🗑 O'chirish</button>
+          </div>
+        </div>`).join('')}</div>`:emptyState("Menyu bo'sh","Quyidagi forma orqali taom qo'shing.")}
+      <div class="field-row">
+        <div class="field"><label>Taom nomi</label><input id="mi-name" placeholder="Taom nomi"></div>
+        <div class="field"><label>Turkum</label><input id="mi-cat" placeholder="Masalan: Asosiy taom"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Narxi (so'm)</label><input id="mi-price" type="number" placeholder="45000"></div>
+        <div class="field"><label>Rasm URL</label><input id="mi-photo" placeholder="https://..."></div>
+      </div>
+      <button class="btn btn-primary" onclick="addMenuItem('${biz.id}')">+ Qo'shish</button>
+    </div>`;
+  }
+  if(s==='halls'){
+    return `<div class="panel"><h3>Zallar boshqaruvi</h3>
+      ${biz.halls.length?`<div class="room-grid" style="margin-bottom:20px;">${biz.halls.map(h=>`
+        <div class="room-card">
+          <img class="rc-photo" src="${h.photo}" alt="${h.name}">
+          <div class="rc-body">
+            <b>${h.name}</b>
+            <p class="muted" style="margin-top:4px;font-size:13px;">${h.capacity} kishigacha</p>
+            <button class="btn btn-sm btn-danger btn-block" style="margin-top:10px;" onclick="delHall('${biz.id}','${h.id}')">🗑 O'chirish</button>
+          </div>
+        </div>`).join('')}</div>`:emptyState("Zallar yo'q","")}
+      <div class="field-row">
+        <div class="field"><label>Zal nomi</label><input id="hl-name" placeholder="Masalan: Katta zal"></div>
+        <div class="field"><label>Sig'imi (kishi)</label><input id="hl-cap" type="number" placeholder="500"></div>
+      </div>
+      <div class="field"><label>Rasm URL (ixtiyoriy)</label><input id="hl-photo" placeholder="https://..."></div>
+      <button class="btn btn-primary" onclick="addHall('${biz.id}')">+ Qo'shish</button>
+    </div>`;
+  }
+  if(s==='reviews'){
+    return `<div class="panel"><h3>Mijozlar sharhlari</h3>
+      ${myReviews.length?myReviews.map(r=>`<div class="review"><div class="review-head"><div class="review-user"><span class="avatar">${initials(r.userName)}</span><b>${r.userName}</b></div><span class="rating">${r.rating} ★</span></div><p style="margin-top:10px;">${r.text}</p></div>`).join(''):emptyState("Sharhlar yo'q","")}
+    </div>`;
+  }
+  if(s==='subscription'){
+    return `<div class="panel">
+      <h3>Obuna holati</h3>
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="l">Holat</div><div class="n" style="font-size:17px;"><span class="seal seal-gold">7 kun bepul sinov</span></div></div>
+        <div class="stat-card"><div class="l">Oylik narx</div><div class="n" style="font-size:22px;">255 000 <span style="font-size:13px;">so'm</span></div></div>
+        <div class="stat-card"><div class="l">Sinov tugashi</div><div class="n" style="font-size:22px;">6 kun</div></div>
+      </div>
+      <p class="muted">Sinov muddati tugagach, obunani davom ettirish uchun to'lov qilishingiz kerak bo'ladi. To'lovni tasdiqlash admin tomonidan qo'lda amalga oshiriladi.</p>
+      <button class="btn btn-primary" style="margin-top:14px;" onclick="openApplyInfo('${kind}')">Admin bilan bog'lanish</button>
+    </div>`;
+  }
+  if(s==='settings'){
+    if(kind==='restaurant'){
+      return `<div class="panel"><h3>Restoran sozlamalari</h3>
+        <div class="field-row">
+          <div class="field"><label>Nomi</label><input id="st-name" value="${biz.name}"></div>
+          <div class="field"><label>Tuman</label><input id="st-district" value="${biz.district}"></div>
+        </div>
+        <div class="field"><label>Tavsif</label><textarea id="st-desc" rows="4">${biz.description}</textarea></div>
+        <div class="field-row">
+          <div class="field"><label>Ish boshlanish vaqti</label><input id="st-open" type="time" value="${biz.openTime}"></div>
+          <div class="field"><label>Ish tugash vaqti</label><input id="st-close" type="time" value="${biz.closeTime}"></div>
+        </div>
+        <div class="field"><label>Telegram username (admin)</label><input id="st-tg" value="${biz.telegram}" placeholder="@sizning_username"></div>
+        <button class="btn btn-primary" onclick="saveRestSettings('${biz.id}')">Saqlash</button>
+      </div>`;
+    }
+    return `<div class="panel"><h3>To'yxona sozlamalari</h3>
+      <div class="field-row">
+        <div class="field"><label>Nomi</label><input id="st-name" value="${biz.name}"></div>
+        <div class="field"><label>Tuman</label><input id="st-district" value="${biz.district}"></div>
+      </div>
+      <div class="field"><label>Tavsif</label><textarea id="st-desc" rows="4">${biz.description}</textarea></div>
+      <div class="field-row">
+        <div class="field"><label>1 xil taom (kishi boshiga)</label><input id="st-p1" type="number" value="${biz.dishPricing[1]}"></div>
+        <div class="field"><label>2 xil taom (kishi boshiga)</label><input id="st-p2" type="number" value="${biz.dishPricing[2]}"></div>
+        <div class="field"><label>3 xil taom (kishi boshiga)</label><input id="st-p3" type="number" value="${biz.dishPricing[3]}"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Bron uchun depozit (so'm)</label><input id="st-deposit" type="number" value="${biz.deposit}"></div>
+        <div class="field"><label>Telegram username (admin)</label><input id="st-tg" value="${biz.telegram}" placeholder="@sizning_username"></div>
+      </div>
+      <p class="muted" style="font-size:12.5px;margin-bottom:14px;">Eslatma: to'yxonada eng ko'pi bilan 3 xil taom tanlash mumkin, eng kami — 1 xil.</p>
+      <button class="btn btn-primary" onclick="saveVenueSettings('${biz.id}')">Saqlash</button>
+    </div>`;
+  }
+  return '';
+}
+function bookingRow(r,compact){
+  const biz=findBiz(r.type,r.businessId);
+  const user=findUser(r.userId);
+  const badge = r.status==='tasdiqlangan'?'seal-ok':(r.status==='bekor qilindi'?'seal-bad':'seal-warn');
+  const isRest=r.type==='restaurant';
+  let detail;
+  if(isRest){
+    const room=biz?findRoom(biz,r.roomId):null;
+    detail=`${r.date} • ${r.startTime}–${r.endTime} • ${r.guests} kishi${compact?'':` • ${biz?biz.name:''}${room?' — '+room.name:''}`}`;
+  } else {
+    const hall=biz?findHall(biz,r.hallId):null;
+    detail=`${r.date} • ${r.guests} kishi • ${r.dishCount} xil taom • ${fmt(r.totalPrice)}${compact?'':` • ${biz?biz.name:''}${hall?' — '+hall.name:''}`}`;
+  }
+  return `<div class="booking-row">
+    <div>
+      <b>${user?user.name:'—'}</b>
+      <div class="muted" style="font-size:13px;margin-top:3px;">${detail}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="seal ${badge}">${r.status}</span>
+      ${r.status==='kutilmoqda'?`<button class="btn btn-sm btn-primary" onclick="setReservationStatus('${r.id}','tasdiqlangan')">Tasdiqlash</button><button class="btn btn-sm btn-danger" onclick="setReservationStatus('${r.id}','bekor qilindi')">Bekor qilish</button>`:''}
+    </div>
+  </div>`;
+}
+
+/* =========================================================
+   ADMIN DASHBOARD
+   ========================================================= */
+function adminShell(){
+  const u=currentUser();
+  const pendingApps = db.applications.filter(a=>a.status==='kutilmoqda').length;
+  const screens=[['overview','📊',"Umumiy ko'rinish"],['applications','📝','Arizalar',pendingApps],['users','👥','Foydalanuvchilar'],['businesses','🏢','Bizneslar'],['subs','💳','Obunalar'],['settings','⚙️','Sozlamalar']];
+  if(!screens.some(x=>x[0]===state.screen.name)) state.screen.name='overview';
+  return `<div class="dash theme-admin">
+    <div class="sidebar">
+      <div class="logo2"><span class="dot" style="width:9px;height:9px;border-radius:50%;background:var(--gold-500);"></span>WENZU</div>
+      <div class="role-pill">Administrator</div>
+      ${screens.map(sc=>`<a href="#" class="side-link ${state.screen.name===sc[0]?'active':''}" onclick="go('${sc[0]}');return false;"><span class="ic">${sc[1]}</span>${sc[2]}${sc[3]?`<span class="count">${sc[3]}</span>`:''}</a>`).join('')}
+      <div class="sidebar-bottom">
+        <a href="#" class="side-link" onclick="logout();return false;"><span class="ic">↩</span>Chiqish</a>
+      </div>
+    </div>
+    <div class="dash-main">
+      <div class="dash-topbar">
+        <h1>${dashTitle(state.screen.name)}</h1>
+        <div class="user-chip"><span class="avatar" style="background:var(--ink);">${initials(u.name)}</span><span style="font-weight:700;font-size:13.5px;">${u.name}</span></div>
+      </div>
+      <div class="dash-content">${adminScreen()}</div>
+    </div>
+  </div><div id="overlay-root"></div>`;
+}
+function adminScreen(){
+  const s=state.screen.name;
+  if(s==='overview'){
+    return `<div class="stat-grid">
+      <div class="stat-card"><div class="l">Foydalanuvchilar</div><div class="n">${db.users.length}</div></div>
+      <div class="stat-card"><div class="l">Bizneslar</div><div class="n">${db.restaurants.length+db.venues.length}</div></div>
+      <div class="stat-card"><div class="l">Kutilayotgan arizalar</div><div class="n accent">${db.applications.filter(a=>a.status==='kutilmoqda').length}</div></div>
+      <div class="stat-card"><div class="l">Jami bronlar</div><div class="n">${db.reservations.length}</div></div>
+    </div>
+    <div class="panel"><h3>So'nggi arizalar</h3>
+      ${db.applications.slice(-4).reverse().map(applicationRow).join('') || emptyState("Arizalar yo'q","")}
+    </div>`;
+  }
+  if(s==='applications'){
+    return `<div class="panel"><h3>Barcha arizalar</h3>
+      ${db.applications.length?db.applications.slice().reverse().map(applicationRow).join(''):emptyState("Arizalar yo'q","")}
+    </div>`;
+  }
+  if(s==='users'){
+    return `<div class="panel"><h3>Foydalanuvchilar</h3>
+      <table class="table"><thead><tr><th>Ism</th><th>Telefon</th><th>Rol</th></tr></thead><tbody>
+      ${db.users.map(u=>`<tr><td><b>${u.name}</b></td><td>${u.phone}</td><td>${roleBadge(u.role)}</td></tr>`).join('')}
+      </tbody></table>
+    </div>`;
+  }
+  if(s==='businesses'){
+    const all=[...db.restaurants.map(r=>({...r,type:'restaurant'})),...db.venues.map(v=>({...v,type:'venue'}))];
+    return `<div class="panel"><h3>Bizneslar</h3>
+      <table class="table"><thead><tr><th>Nomi</th><th>Turi</th><th>Egasi</th><th>Holat</th><th></th></tr></thead><tbody>
+      ${all.map(b=>{
+        const owner=b.ownerId?findUser(b.ownerId):null;
+        return `<tr><td><b>${b.name}</b><div class="muted" style="font-size:12.5px;">${b.district}</div></td><td>${b.type==='restaurant'?'Restoran':"To'yxona"}</td><td>${owner?owner.name:'—'}</td><td>${b.blocked?'<span class="seal seal-bad">Bloklangan</span>':'<span class="seal seal-ok">Faol</span>'}</td>
+        <td><button class="btn btn-sm ${b.blocked?'btn-primary':'btn-danger'}" onclick="toggleBusinessBlock('${b.type}','${b.id}')">${b.blocked?'Blokdan chiqarish':'Bloklash'}</button></td></tr>`;
+      }).join('')}
+      </tbody></table>
+    </div>`;
+  }
+  if(s==='subs'){
+    const owners = db.users.filter(u=>u.role==='restaurant_owner'||u.role==='venue_owner');
+    return `<div class="panel"><h3>Obunalar / to'lovlar</h3>
+      <table class="table"><thead><tr><th>Biznes egasi</th><th>Biznes</th><th>Tarif</th><th>Holat</th></tr></thead><tbody>
+      ${owners.length?owners.map(o=>{
+        const biz=findBiz(o.role==='restaurant_owner'?'restaurant':'venue',o.businessId);
+        return `<tr><td><b>${o.name}</b></td><td>${biz?biz.name:'—'}</td><td>255 000 so'm/oy</td><td><span class="seal seal-gold">7 kun bepul</span></td></tr>`;
+      }).join(''):`<tr><td colspan="4">${emptyState("Obunalar yo'q","")}</td></tr>`}
+      </tbody></table>
+    </div>`;
+  }
+  if(s==='settings'){
+    return `<div class="panel"><h3>Platforma sozlamalari</h3>
+      <div class="field-row">
+        <div class="field"><label>Oylik obuna narxi</label><input value="255 000 so'm"></div>
+        <div class="field"><label>Bepul sinov muddati</label><input value="7 kun"></div>
+      </div>
+      <div class="field"><label>Admin Telegram</label><input value="@uvente_admin"></div>
+      <button class="btn btn-primary" onclick="toast('Sozlamalar saqlandi (demo)')">Saqlash</button>
+    </div>`;
+  }
+  return '';
+}
+function applicationRow(a){
+  const u=findUser(a.userId);
+  const badge = a.status==='tasdiqlangan'?'seal-ok':(a.status==='rad etildi'?'seal-bad':'seal-warn');
+  return `<div class="booking-row">
+    <div>
+      <b>${a.businessName}</b>
+      <div class="muted" style="font-size:13px;margin-top:3px;">${a.businessType==='restaurant'?'Restoran':"To'yxona"} • ${u?u.name:'—'} • ${a.phone} • ${a.createdAt}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span class="seal ${badge}">${a.status}</span>
+      ${a.status==='kutilmoqda'?`<button class="btn btn-sm btn-primary" onclick="approveApplication('${a.id}')">Tasdiqlash</button><button class="btn btn-sm btn-danger" onclick="rejectApplication('${a.id}')">Rad etish</button>`:''}
+    </div>
+  </div>`;
+}
+function roleBadge(role){
+  const map={user:['Foydalanuvchi','seal-ok'],restaurant_owner:['Restoran egasi','seal-warn'],venue_owner:["To'yxona egasi",'seal-gold'],admin:['Admin','seal-bad']};
+  const [l,c]=map[role]||[role,'seal-ok'];
+  return `<span class="seal ${c}">${l}</span>`;
+}
+function renderListOnly(){ render(); }
+
+/* ---------- INIT ---------- */
+render();
+</script>
+</body>
+</html>

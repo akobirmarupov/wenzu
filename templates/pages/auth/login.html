@@ -1,0 +1,37 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+
+{% block content %}
+<div class="stack stack-2">
+  <span class="eyebrow" data-i18n="nav.login">Kirish</span>
+  <h1 class="display" data-i18n="auth.loginTitle">Kirish</h1>
+  <p class="muted small" data-i18n="auth.loginLead"></p>
+</div>
+
+<form class="stack stack-4" id="login-form" novalidate>
+  <div class="form-alert" id="form-error" hidden></div>
+
+  <div class="field">
+    <label for="username" data-i18n="auth.username">Username</label>
+    <input class="input" id="username" name="username" autocomplete="username"
+           placeholder="masalan: sardor_y" required>
+  </div>
+
+  <div class="field">
+    <label for="password" data-i18n="auth.password">Parol</label>
+    <input class="input" id="password" name="password" type="password"
+           autocomplete="current-password" placeholder="••••••••" required>
+  </div>
+
+  <button class="btn btn-primary btn-block btn-lg" type="submit" id="submit" data-i18n="auth.loginTitle">Kirish</button>
+</form>
+
+<p class="small center muted">
+  <span data-i18n="auth.noAccount"></span>
+  <a href="/royxat/" class="strong" style="color:var(--theme-accent)" data-i18n="nav.register">Ro'yxatdan o'tish</a>
+</p>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/auth/login.js' %}"></script>
+{% endblock %}

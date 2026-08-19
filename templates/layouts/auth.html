@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="auth-wrap">
+  <aside class="auth-visual">
+    <a href="/" class="logo" style="color:#fff"><span class="dot"></span>WENZU</a>
+    {% block visual %}
+    <h2>Joyni <em>oldindan</em> band qiling</h2>
+    <p data-i18n="home.heroLead"></p>
+    {% endblock %}
+  </aside>
+
+  <main class="auth-form-side">
+    <div class="auth-controls" id="auth-controls"></div>
+    <div class="auth-card">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+{% endblock %}

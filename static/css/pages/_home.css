@@ -1,0 +1,96 @@
+/* ===================================================================
+   Bosh sahifa.
+
+   Chap menyu bo'lgani uchun bu yerda gorizontal "hero" emas, balki
+   qidiruv paneli + spotlight karusel + banner + yangiliklar tartibi
+   ishlatiladi. Har bir bo'lim boshqa turdagi ma'lumot beradi, shunda
+   sahifa faqat kartochkalar ro'yxatiga aylanib qolmaydi.
+   =================================================================== */
+.home-head {
+  padding: var(--sp-8) 0 var(--sp-6);
+  display: flex; flex-direction: column; gap: var(--sp-4);
+}
+.home-head h1 { font-size: clamp(26px, 3.4vw, 40px); line-height: 1.08; }
+.home-head h1 em {
+  font-style: italic;
+  background: var(--gold-shine);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+.home-search {
+  display: flex; gap: var(--sp-2); flex-wrap: wrap;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-l); padding: var(--sp-2);
+  box-shadow: var(--shadow-sm); max-width: 780px;
+}
+.home-search .search { border: 0; background: var(--surface-2); }
+
+.home-tabs { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
+.home-tab {
+  padding: 8px 18px; border-radius: var(--radius-pill);
+  border: 1.5px solid var(--line); background: var(--surface);
+  font-weight: 700; font-size: var(--fs-sm); color: var(--ink-soft);
+  transition: all var(--transition);
+}
+.home-tab:hover { border-color: var(--theme-accent); color: var(--theme-accent); }
+.home-tab.active {
+  background: var(--gold-shine); border-color: transparent; color: #1A1405;
+  box-shadow: var(--gold-glow);
+}
+
+/* Statistika chizig'i */
+.home-stats {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--sp-3);
+}
+.home-stat {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-m); padding: var(--sp-4) var(--sp-5);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.home-stat .value {
+  font-family: var(--font-display); font-size: 28px; font-weight: 600;
+  line-height: 1; font-variant-numeric: tabular-nums;
+  background: var(--gold-shine);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.home-stat .label {
+  font-size: 10.5px; font-weight: 800; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+
+/* Ikki ustunli blok: karusel + yon lenta */
+.home-split { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--sp-6); align-items: start; }
+@media (max-width: 1000px) { .home-split { grid-template-columns: 1fr; } }
+
+/* Qanday ishlaydi */
+.how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--sp-6); }
+.how-step { display: flex; flex-direction: column; gap: var(--sp-2); }
+.how-step .n {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-weight: 700;
+  background: var(--gold-shine); color: #1A1405;
+  box-shadow: var(--gold-glow);
+}
+
+/* Biznes ochish chaqirig'i */
+.cta-band {
+  position: relative; overflow: hidden;
+  background: linear-gradient(120deg, var(--emerald-800) 0%, var(--emerald-900) 60%, #061F1A 100%);
+  color: #FFFFFF; border-radius: var(--radius-l); padding: var(--sp-10);
+  display: flex; align-items: center; gap: var(--sp-8); flex-wrap: wrap;
+}
+:root[data-theme="dark"] .cta-band {
+  background: linear-gradient(120deg, #10273B 0%, #0D1A2C 60%, #071019 100%);
+  border: 1px solid var(--line);
+}
+.cta-band::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 88% 20%, rgba(224, 192, 90, .22), transparent 45%);
+}
+.cta-band > * { position: relative; }
+.cta-band h2 { font-size: var(--fs-xl); }
+.cta-band h2 em { font-style: italic; background: var(--gold-shine);
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+.cta-band p { color: #D5E4DD; max-width: 48ch; margin-top: var(--sp-2); }

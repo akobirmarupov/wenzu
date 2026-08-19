@@ -1,0 +1,77 @@
+/* ===================================================================
+   Obuna va Premium bo'limi.
+
+   Karta ataylab "qimmat" ko'rinadi: qorong'i fon, oltin gradient va
+   nur. Bu — to'lov qilinadigan joy, shuning uchun u sahifadagi eng
+   e'tiborli element bo'lishi kerak.
+   =================================================================== */
+.premium-card {
+  position: relative; overflow: hidden;
+  border-radius: var(--radius-l); padding: var(--sp-8);
+  background: linear-gradient(135deg, #0D1B16 0%, #142E25 55%, #08130F 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(224, 192, 90, .28);
+}
+:root[data-theme="dark"] .premium-card {
+  background: linear-gradient(135deg, #0C1726 0%, #12283E 55%, #070F1A 100%);
+}
+.premium-card::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 86% 14%, rgba(224, 192, 90, .28), transparent 44%);
+}
+/* Yuqoridagi ingichka oltin chiziq */
+.premium-card::after {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--gold-shine);
+}
+.premium-card > * { position: relative; }
+
+.premium-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; }
+.premium-plan {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 14px; border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+}
+.premium-plan-trial { background: var(--gold-shine); color: #1A1405; box-shadow: var(--gold-glow); }
+.premium-plan-active { background: rgba(63, 190, 134, .20); color: #6FE0AB; border: 1px solid rgba(63, 190, 134, .45); }
+.premium-plan-expired { background: rgba(234, 122, 133, .18); color: #FFAFB6; border: 1px solid rgba(234, 122, 133, .42); }
+
+.premium-price {
+  font-family: var(--font-display); font-size: clamp(30px, 4vw, 44px);
+  font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums;
+  background: var(--gold-shine);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.premium-price small { font-family: var(--font-body); font-size: 14px; font-weight: 600; color: rgba(255,255,255,.6); -webkit-text-fill-color: rgba(255,255,255,.6); }
+
+.premium-meta { display: flex; gap: var(--sp-6); flex-wrap: wrap; margin-top: var(--sp-5); }
+.premium-meta .item { display: flex; flex-direction: column; gap: 2px; }
+.premium-meta .k { font-size: 10.5px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; color: rgba(255,255,255,.52); }
+.premium-meta .v { font-size: var(--fs-md); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Qolgan kunlar chizig'i */
+.premium-bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden; margin-top: var(--sp-5); }
+.premium-bar span { display: block; height: 100%; border-radius: 3px; background: var(--gold-shine); }
+.premium-bar.low span { background: linear-gradient(90deg, #EA7A85, #FFAFB6); }
+
+.premium-actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-6); }
+
+/* Imkoniyatlar ro'yxati */
+.premium-benefits { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-3); margin-top: var(--sp-6); }
+.premium-benefit { display: flex; align-items: flex-start; gap: var(--sp-2); font-size: var(--fs-sm); color: rgba(255,255,255,.86); }
+.premium-benefit .tick {
+  width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 11px; font-weight: 800;
+  background: var(--gold-shine); color: #1A1405;
+}
+
+/* To'lov qadamlari */
+.pay-steps { counter-reset: step; display: grid; gap: var(--sp-4); }
+.pay-step { counter-increment: step; display: grid; grid-template-columns: 34px 1fr; gap: var(--sp-3); align-items: start; }
+.pay-step::before {
+  content: counter(step); grid-row: span 2;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-weight: 700; font-size: var(--fs-sm);
+  background: var(--theme-accent-dim); color: var(--theme-accent-dark);
+}

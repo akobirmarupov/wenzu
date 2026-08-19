@@ -1,0 +1,40 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+
+{% block visual %}
+<h2>Raqamingizni <em>tasdiqlang</em></h2>
+<p>Tasdiqlangan raqam bron qilish va biznes ochish uchun talab qilinadi.</p>
+{% endblock %}
+
+{% block content %}
+<div class="stack stack-2">
+  <span class="eyebrow" data-i18n="auth.confirm">Tasdiqlash</span>
+  <h1 class="display" data-i18n="auth.verifyTitle">Telefonni tasdiqlash</h1>
+  <p class="muted small">
+    <span id="phone-label">Raqamingizga</span> 6 xonali kod yubordik.
+  </p>
+</div>
+
+<form class="stack stack-5" id="verify-form" novalidate>
+  <div class="form-alert" id="form-error" hidden></div>
+
+  <div class="code-inputs" id="code-inputs">
+    <input inputmode="numeric" maxlength="1" aria-label="1-raqam" autocomplete="one-time-code">
+    <input inputmode="numeric" maxlength="1" aria-label="2-raqam">
+    <input inputmode="numeric" maxlength="1" aria-label="3-raqam">
+    <input inputmode="numeric" maxlength="1" aria-label="4-raqam">
+    <input inputmode="numeric" maxlength="1" aria-label="5-raqam">
+    <input inputmode="numeric" maxlength="1" aria-label="6-raqam">
+  </div>
+
+  <button class="btn btn-primary btn-block btn-lg" type="submit" id="submit" data-i18n="auth.confirm">Tasdiqlash</button>
+
+  <button class="btn btn-ghost btn-block" type="button" id="resend">
+    <span data-i18n="auth.resend"></span> <span class="strong" data-i18n="auth.resendAction"></span>
+  </button>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/auth/verify.js' %}"></script>
+{% endblock %}

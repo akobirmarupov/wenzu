@@ -1,0 +1,61 @@
+/* Modal oynalar */
+.overlay {
+  position: fixed; inset: 0; z-index: var(--z-overlay);
+  background: rgba(11, 59, 46, .45);
+  backdrop-filter: blur(3px);
+  display: grid; place-items: center;
+  padding: var(--sp-4);
+  overflow-y: auto;
+  animation: fade .16s ease;
+}
+@keyframes fade { from { opacity: 0; } }
+
+.modal {
+  position: relative;
+  width: 100%; max-width: 460px;
+  max-height: calc(100vh - var(--sp-8));
+  overflow-y: auto;
+  background: var(--white);
+  border-radius: var(--radius-l);
+  padding: var(--sp-8);
+  box-shadow: var(--shadow-lg);
+  animation: rise .2s cubic-bezier(.2, .8, .3, 1);
+}
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+
+.modal-wide { max-width: 640px; }
+.modal h2 { font-size: var(--fs-xl); margin-bottom: var(--sp-4); }
+.modal-close {
+  position: absolute; top: var(--sp-4); right: var(--sp-4);
+  width: 32px; height: 32px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--paper-dim); color: var(--ink-soft); font-size: 15px;
+}
+.modal-close:hover { background: var(--ink); color: var(--white); }
+
+/* Telegram bilan bog'lanish bloki (bron/ariza tasdig'i) */
+.notice {
+  background: var(--paper); border: 1px solid var(--line);
+  border-left: 4px solid var(--gold-500);
+  border-radius: var(--radius-s);
+  padding: var(--sp-4); display: flex; flex-direction: column; gap: var(--sp-2);
+  font-size: var(--fs-sm);
+}
+.tg-line {
+  display: flex; align-items: center; gap: var(--sp-2);
+  background: var(--emerald-100); color: var(--emerald-900);
+  border-radius: var(--radius-s); padding: var(--sp-3) var(--sp-4);
+  font-weight: 700; font-size: var(--fs-sm);
+}
+
+/* Yig'indi qutisi (narx hisobi) */
+.total-box {
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--radius-s); padding: var(--sp-4);
+  display: flex; flex-direction: column; gap: var(--sp-2);
+}
+.total-box .row { display: flex; justify-content: space-between; font-size: var(--fs-sm); }
+.total-box .row.grand {
+  border-top: 1px solid var(--line); padding-top: var(--sp-2);
+  font-size: var(--fs-md); font-weight: 700;
+}

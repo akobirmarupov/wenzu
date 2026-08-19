@@ -1,0 +1,20 @@
+{% extends "layouts/public.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container section-sm">
+  <div class="page-head">
+    <div class="stack stack-2">
+      <span class="eyebrow" data-i18n="home.ctaEyebrow">Biznes egalariga</span>
+      <h1 class="display h1" data-i18n="nav.business">Biznes ochish</h1>
+      <p class="lede small" data-i18n="businessPage.lead"></p>
+    </div>
+  </div>
+
+  <div id="business-root" style="margin-top:var(--sp-5)"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/public/business.js' %}"></script>
+{% endblock %}

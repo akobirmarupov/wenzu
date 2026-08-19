@@ -1,0 +1,59 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Bo'sh vaqtlarni ochish</h2>
+  </div>
+  <p class="muted small" style="margin-bottom:var(--sp-5)">
+    Tanlangan oylarning <b>barcha kunlari</b> uchun ish jadvali bir zumda yaratiladi.
+    Bu qilinmasa mijozlar bron qila olmaydi. Allaqachon ochilgan kunlar qayta yozilmaydi.
+  </p>
+
+  <form class="stack stack-5" id="generate-form">
+    <div class="field-row" id="target-fields"></div>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="start_time">Ish boshlanishi</label>
+        <input class="input" id="start_time" name="start_time" type="time" value="08:00" required>
+      </div>
+      <div class="field">
+        <label for="end_time">Ish tugashi</label>
+        <input class="input" id="end_time" name="end_time" type="time" value="23:00" required>
+        <span class="field-hint" id="time-hint"></span>
+      </div>
+      <div class="field">
+        <label for="year">Yil</label>
+        <select class="select" id="year" name="year"></select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Oylar</label>
+      <div class="row row-2 row-wrap" id="months"></div>
+    </div>
+
+    <button class="btn btn-primary" style="align-self:flex-start" type="submit" id="generate">
+      Jadvalni yaratish
+    </button>
+  </form>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Ochilgan kunlar</h2>
+    <div class="row row-2" id="schedule-filters"></div>
+  </div>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Sana</th><th>Joy</th><th>Vaqt</th><th>Holat</th><th></th></tr></thead>
+    <tbody id="schedule-list"></tbody>
+  </table></div>
+  <div id="pager"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/owner/schedule.js' %}"></script>
+{% endblock %}

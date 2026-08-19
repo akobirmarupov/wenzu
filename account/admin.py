@@ -31,7 +31,7 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
     fieldsets = (
         (None, {"fields": ("username", "password")}),
-        (_("Shaxsiy ma'lumotlar"), {"fields": ("full_name", "phone_number")}),
+        (_("Shaxsiy ma'lumotlar"), {"fields": ("full_name", "phone_number", "avatar", "bio", "birth_date", "preferred_language")}),
         (_("Rol va tasdiqlanganlik"), {"fields": ("role", "is_phone_verified", "is_confirmed")}),
         (_("Ruxsatlar"), {
             "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions"),

@@ -1,0 +1,15 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="grid grid-3" id="review-stats"></div>
+<div class="panel">
+  <div class="panel-head"><h2 class="display h3">Mijozlar sharhlari</h2></div>
+  <div id="list"></div>
+  <div id="pager"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/owner/reviews.js' %}"></script>
+{% endblock %}

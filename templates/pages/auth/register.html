@@ -1,0 +1,72 @@
+{% extends "layouts/auth.html" %}
+{% load static %}
+
+{% block visual %}
+<h2>Bir necha bosishda <em>bron</em></h2>
+<p>Ro'yxatdan o'ting va sevimli joyingizni oldindan band qiling.</p>
+<ul class="auth-points">
+  <li><span class="ic">✓</span><span>Bo'sh vaqtlarni real vaqtda ko'rasiz</span></li>
+  <li><span class="ic">✓</span><span>Bron tarixi bir joyda saqlanadi</span></li>
+  <li><span class="ic">✓</span><span>O'z restoraningizni ham qo'sha olasiz — 7 kun bepul</span></li>
+</ul>
+{% endblock %}
+
+{% block content %}
+<div class="stack stack-2">
+  <span class="eyebrow" data-i18n="nav.register">Ro'yxatdan o'tish</span>
+  <h1 class="display" data-i18n="auth.registerTitle">Ro'yxatdan o'tish</h1>
+</div>
+
+<form class="stack stack-4" id="register-form" novalidate>
+  <div class="form-alert" id="form-error" hidden></div>
+
+  <div class="field">
+    <label for="full_name" data-i18n="auth.fullName">To'liq ism</label>
+    <input class="input" id="full_name" name="full_name" autocomplete="name"
+           placeholder="Sardor Yusupov" required>
+    <span class="field-error" data-error="full_name" hidden></span>
+  </div>
+
+  <div class="field">
+    <label for="phone_number" data-i18n="auth.phone">Telefon raqami</label>
+    <input class="input" id="phone_number" name="phone_number" type="tel"
+           autocomplete="tel" placeholder="+998901234567" required>
+    <span class="field-hint" data-i18n="auth.phoneHint"></span>
+    <span class="field-error" data-error="phone_number" hidden></span>
+  </div>
+
+  <div class="field">
+    <label for="username" data-i18n="auth.username">Username</label>
+    <input class="input" id="username" name="username" autocomplete="username"
+           placeholder="sardor_y" required>
+    <span class="field-hint" data-i18n="auth.usernameHint"></span>
+    <span class="field-error" data-error="username" hidden></span>
+  </div>
+
+  <div class="field-row">
+    <div class="field">
+      <label for="password" data-i18n="auth.password">Parol</label>
+      <input class="input" id="password" name="password" type="password"
+             autocomplete="new-password" data-i18n-placeholder="auth.passwordHint" required>
+      <span class="field-error" data-error="password" hidden></span>
+    </div>
+    <div class="field">
+      <label for="password_confirm" data-i18n="auth.passwordConfirm">Parolni takrorlang</label>
+      <input class="input" id="password_confirm" name="password_confirm" type="password"
+             autocomplete="new-password" required>
+      <span class="field-error" data-error="password_confirm" hidden></span>
+    </div>
+  </div>
+
+  <button class="btn btn-primary btn-block btn-lg" type="submit" id="submit" data-i18n="auth.continue">Davom etish</button>
+</form>
+
+<p class="small center muted">
+  <span data-i18n="auth.hasAccount"></span>
+  <a href="/kirish/" class="strong" style="color:var(--theme-accent)" data-i18n="nav.login">Kirish</a>
+</p>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/auth/register.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,42 @@
+/* Yangiliklar lentasi */
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--sp-5); }
+
+.news-card {
+  display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-m); overflow: hidden;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.news-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+.news-card img { aspect-ratio: 16 / 9; object-fit: cover; width: 100%; background: var(--surface-2); }
+.news-card .body { padding: var(--sp-4) var(--sp-5); display: flex; flex-direction: column; gap: var(--sp-2); flex: 1; }
+.news-card h3 { font-size: var(--fs-md); line-height: 1.25; }
+.news-card p { font-size: var(--fs-sm); color: var(--ink-soft); }
+.news-card .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
+
+.news-cat {
+  align-self: flex-start; padding: 3px 10px; border-radius: var(--radius-pill);
+  font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+}
+.news-cat-news   { background: var(--info-dim);   color: var(--info); }
+.news-cat-tip    { background: var(--ok-dim);     color: var(--ok); }
+.news-cat-event  { background: var(--gold-100);   color: var(--gold-600); }
+.news-cat-update { background: var(--theme-accent-dim); color: var(--theme-accent-dark); }
+
+.news-pinned { position: relative; }
+.news-pinned::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--gold-shine); z-index: 1;
+}
+
+/* Kichik lenta (yon ustunda) */
+.news-strip { display: flex; flex-direction: column; }
+.news-strip-item {
+  display: flex; gap: var(--sp-3); padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.news-strip-item:last-child { border-bottom: 0; }
+.news-strip-item .dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 7px;
+  background: var(--gold-shine);
+}

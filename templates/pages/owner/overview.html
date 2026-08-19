@@ -1,0 +1,20 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="grid grid-4" id="stats"></div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">So'nggi bronlar</h2>
+    <a class="btn btn-ghost btn-sm" href="/panel/bronlar/">Barchasi →</a>
+  </div>
+  <div id="recent"></div>
+</div>
+
+<div class="panel" id="business-card"></div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/owner/overview.js' %}"></script>
+{% endblock %}

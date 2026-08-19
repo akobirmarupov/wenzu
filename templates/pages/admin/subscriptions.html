@@ -1,0 +1,20 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Obunalar</h2>
+    <div class="row row-2 row-wrap" id="status-filters"></div>
+  </div>
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Biznes</th><th>Egasi</th><th>Tarif</th><th>Holat</th><th>Qolgan</th><th></th></tr></thead>
+    <tbody id="list"></tbody>
+  </table></div>
+  <div id="pager"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/admin/subscriptions.js' %}"></script>
+{% endblock %}

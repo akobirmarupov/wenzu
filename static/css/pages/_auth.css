@@ -1,0 +1,71 @@
+/* Kirish / ro'yxatdan o'tish sahifalari */
+.auth-wrap {
+  min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr;
+  background: var(--ground);
+}
+.auth-visual {
+  position: relative; overflow: hidden; color: #FFFFFF;
+  background: radial-gradient(120% 140% at 20% 10%, #12513F 0%, var(--emerald-900) 60%, #061F1A 100%);
+  display: flex; flex-direction: column; justify-content: center; gap: var(--sp-4);
+  padding: var(--sp-16) var(--sp-12);
+}
+:root[data-theme="dark"] .auth-visual {
+  background: radial-gradient(120% 140% at 20% 10%, #12283E 0%, #0D1A2C 60%, #060D16 100%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .auth-visual {
+    background: radial-gradient(120% 140% at 20% 10%, #12283E 0%, #0D1A2C 60%, #060D16 100%);
+  }
+}
+.auth-visual::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: radial-gradient(circle at 80% 25%, rgba(224,192,90,.22), transparent 45%);
+}
+.auth-visual .logo { color: #FFFFFF; }
+.auth-visual > * { position: relative; }
+.auth-visual h2 { font-size: clamp(26px, 3vw, 38px); line-height: 1.1; }
+.auth-visual h2 em {
+  font-style: italic;
+  background: var(--gold-shine);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.auth-visual p { color: #DCE8E1; max-width: 40ch; }
+.auth-points { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-6); }
+.auth-points li { display: flex; align-items: flex-start; gap: var(--sp-3); font-size: var(--fs-sm); color: #DCE8E1; }
+.auth-points .ic { color: var(--gold-400); font-weight: 800; }
+.auth-points li { color: rgba(255, 255, 255, .82); }
+
+.auth-form-side { display: grid; place-items: center; padding: var(--sp-8) var(--sp-6); }
+.auth-card {
+  width: 100%; max-width: 430px;
+  display: flex; flex-direction: column; gap: var(--sp-5);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-l); padding: var(--sp-8);
+  box-shadow: var(--shadow);
+}
+/* Yuqoridagi ingichka oltin chiziq — kartani "tugallangan" qiladi */
+.auth-card { position: relative; overflow: hidden; }
+.auth-card::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--gold-shine);
+}
+.auth-card h1 { font-size: var(--fs-2xl); }
+
+/* SMS kod kiritish kataklari */
+.code-inputs { display: flex; gap: var(--sp-2); justify-content: center; }
+.code-inputs input {
+  width: 48px; height: 56px; text-align: center; color: var(--ink);
+  font-family: var(--font-mono); font-size: var(--fs-lg); font-weight: 700;
+  border: 1.5px solid var(--line); border-radius: var(--radius-s); background: var(--white);
+}
+.code-inputs input:focus { outline: none; border-color: var(--theme-accent); box-shadow: 0 0 0 3px var(--theme-accent-dim); }
+
+@media (max-width: 860px) { .auth-wrap { grid-template-columns: 1fr; } .auth-visual { display: none; } }
+
+/* Til va tema boshqaruvi — kirish sahifasining o'ng yuqori burchagida */
+.auth-controls {
+  position: absolute; top: var(--sp-5); right: var(--sp-6);
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.auth-form-side { position: relative; }
+.auth-controls .lang-switch { width: 150px; }

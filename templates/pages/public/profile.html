@@ -1,0 +1,17 @@
+{% extends "layouts/public.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container section-sm">
+  <section class="profile-cover" id="profile-cover"></section>
+
+  <div class="profile-body">
+    <nav class="profile-menu" id="profile-menu" aria-label="Profil bo'limlari"></nav>
+    <div id="profile-content"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/public/profile.js' %}"></script>
+{% endblock %}

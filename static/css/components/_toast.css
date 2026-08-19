@@ -1,0 +1,19 @@
+/* Xabarnoma (toast) */
+#toast-root {
+  position: fixed; z-index: var(--z-toast);
+  bottom: var(--sp-6); left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  pointer-events: none;
+}
+.toast {
+  background: var(--ink); color: var(--paper);
+  padding: 12px 20px; border-radius: var(--radius-pill);
+  font-size: var(--fs-sm); font-weight: 600;
+  box-shadow: var(--shadow-lg);
+  animation: toast-in .22s cubic-bezier(.2, .8, .3, 1);
+  max-width: min(90vw, 460px);
+}
+.toast-ok   { background: var(--ok); color: var(--white); }
+.toast-bad  { background: var(--danger); color: var(--white); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(10px); } }
+.toast.leaving { opacity: 0; transition: opacity .2s ease; }

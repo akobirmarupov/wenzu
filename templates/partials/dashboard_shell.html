@@ -1,0 +1,13 @@
+{# Panel qobig'i — yon menyu JS tomonidan rolga qarab to'ldiriladi #}
+<div class="shell">
+  <aside class="side-nav" id="sidebar" aria-label="Panel menyusi"></aside>
+  <div class="nav-scrim" id="nav-scrim" hidden></div>
+
+  <div class="shell-main">
+    {% include "partials/topbar.html" %}
+
+    <main class="dash-content" id="dash-content">
+      {% block dashboard_content %}{% endblock %}
+    </main>
+  </div>
+</div>

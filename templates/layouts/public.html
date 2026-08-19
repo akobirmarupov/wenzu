@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="shell">
+  {% include "partials/public_sidebar.html" %}
+
+  <div class="shell-main">
+    {% include "partials/topbar.html" %}
+
+    <main id="main">
+      {% block content %}{% endblock %}
+    </main>
+
+    {% include "partials/footer.html" %}
+  </div>
+</div>
+{% endblock %}

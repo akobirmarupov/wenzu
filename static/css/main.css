@@ -1,0 +1,41 @@
+/* ===================================================================
+   WENZU — uslublar kirish nuqtasi.
+
+   Bu yerda faqat import'lar bo'ladi. Tartib muhim: tokenlar birinchi
+   (qolgan hamma narsa ularga tayanadi), keyin reset, keyin tipografiya
+   va tartib, oxirida komponentlar va sahifalar — shunda kaskadda
+   keyingi qatlam oldingisini xotirjam ustidan yoza oladi.
+   =================================================================== */
+
+/* --- 1. Asos --- */
+@import url("base/_tokens.css");
+@import url("base/_reset.css");
+@import url("base/_typography.css");
+@import url("base/_layout.css");
+
+/* --- 2. Komponentlar --- */
+@import url("components/_button.css");
+@import url("components/_badge.css");
+@import url("components/_avatar.css");
+@import url("components/_card.css");
+@import url("components/_form.css");
+@import url("components/_table.css");
+@import url("components/_modal.css");
+@import url("components/_toast.css");
+@import url("components/_state.css");
+@import url("components/_shell.css");
+@import url("components/_topbar.css");
+@import url("components/_footer.css");
+@import url("components/_sidebar.css");
+
+@import url("components/_banner.css");
+@import url("components/_carousel.css");
+@import url("components/_news.css");
+
+/* --- 3. Sahifalar --- */
+@import url("pages/_home.css");
+@import url("pages/_catalog.css");
+@import url("pages/_detail.css");
+@import url("pages/_auth.css");
+@import url("pages/_profile.css");
+@import url("pages/_premium.css");

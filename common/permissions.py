@@ -86,3 +86,85 @@ class IsPhoneVerified(BasePermission):
             and request.user.is_authenticated
             and request.user.is_phone_verified
         )
+
+class IsBusinessRole(BasePermission):
+    """
+    Vazifasi: faqat `role='business'` bo'lgan foydalanuvchi (restoran yoki
+    to'yxona egasi) kira oladigan `/api/owner/...` endpointlari uchun.
+
+    Restoran egasi va to'yxona egasi bitta rolda — ular bir-biridan
+    `user.businesses.first().business_type` orqali ajraladi. Login javobida
+    ham shu `business.type` qaytariladi va frontend shunga qarab
+    kerakli boshqaruv panelini (ownerShell) ochadi.
+    """
+    message = "Bu bo'lim faqat biznes egalari uchun."
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == "business"
+        )
+
+
+class IsOwnerOfBusinessType(IsBusinessRole):
+    """
+    Vazifasi: `IsBusinessRole` ustiga biznes TURINI ham tekshiradi — masalan
+    "Xonalar" endpointi faqat restoran egasiga, "Zallar" faqat to'yxona
+    egasiga ochilishi kerak. View'da:
+
+        permission_classes = [IsOwnerOfBusinessType]
+        required_business_type = Business.TYPE_RESTAURANT
+    """
+
+    def has_permission(self, request, view):
+        if not super().has_permission(request, view):
+            return False
+        required = getattr(view, "required_business_type", None)
+        if required is None:
+            return True
+        business = request.user.businesses.first()
+        if business is None:
+            self.message = "Sizda hali biznes profili yo'q."
+            return False
+        if business.business_type != required:
+            self.message = (
+                "Bu bo'lim restoran egalari uchun."
+                if required == "restaurant"
+                else "Bu bo'lim to'yxona egalari uchun."
+            )
+            return False
+        return True
+
+
+class HasActiveSubscription(BasePermission):
+    """
+    Obunasi tugagan biznes egasiga YOZISH amallarini taqiqlaydi.
+
+    O'qish (GET) ochiq qoladi — aks holda egasi o'z paneliga kira olmay,
+    "Obunangiz tugadi, davom ettirish uchun @admin bilan bog'laning"
+    degan ekranni ham ko'rmasdi. Ya'ni to'lovga undash imkoniyati
+    yo'qolardi (TZ 4.1, 6-qadam).
+    """
+
+    message = (
+        "Obunangiz muddati tugagan. Davom ettirish uchun administrator bilan "
+        "Telegram orqali bog'laning."
+    )
+
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return True
+        if not (request.user and request.user.is_authenticated):
+            return False
+        if request.user.is_staff:
+            return True
+
+        business = request.user.businesses.select_related("subscription").first()
+        if business is None:
+            return False
+
+        subscription = getattr(business, "subscription", None)
+        if subscription is None:
+            return True  # obuna hali yaratilmagan — bloklamaymiz
+        return subscription.status in ("trial", "active")

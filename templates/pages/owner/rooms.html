@@ -1,0 +1,16 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Xona / stollar</h2>
+    <button class="btn btn-primary btn-sm" id="add-room" type="button">+ Xona qo'shish</button>
+  </div>
+  <div class="grid grid-auto" id="list"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/owner/rooms.js' %}"></script>
+{% endblock %}

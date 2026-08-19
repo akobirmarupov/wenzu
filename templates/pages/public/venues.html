@@ -1,0 +1,33 @@
+{% extends "layouts/public.html" %}
+{% load static %}
+
+{% block content %}
+<section class="section container">
+  <div class="catalog-head">
+    <div>
+      <span class="eyebrow" id="result-count" data-i18n="common.loading"></span>
+      <h1 class="display h1" data-i18n="catalog.venuesTitle">To'yxonalar</h1>
+      <p class="lede small" data-i18n="catalog.venuesLead"></p>
+    </div>
+  </div>
+
+  <div class="filter-bar" style="margin-bottom:var(--sp-6)">
+    <label class="search">
+      <span aria-hidden="true">🔍</span>
+      <input id="q" data-i18n-placeholder="catalog.searchPlaceholder" data-i18n-label="home.search">
+    </label>
+    <label class="search" style="flex:0 1 190px">
+      <span aria-hidden="true">👥</span>
+      <input id="guests" type="number" min="1" data-i18n-placeholder="catalog.guestsPlaceholder" data-i18n-label="booking.guests">
+    </label>
+    <button class="chip" id="near-me" type="button">📍 <span data-i18n="home.nearMe"></span></button>
+  </div>
+
+  <div class="grid grid-auto" id="list"></div>
+  <div id="pager"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/public/catalog.js' %}" data-type="venue"></script>
+{% endblock %}

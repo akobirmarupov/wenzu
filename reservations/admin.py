@@ -135,11 +135,12 @@ class AvailabilityAdmin(ModelAdmin):
 
 @admin.register(Reservation)
 class ReservationAdmin(ModelAdmin):
-    list_display = ("user", "business", "room", "guests_count", "status", "created_at")
+    list_display = ("user", "business", "room", "hall", "guests_count", "deposit_amount", "status", "created_at")
     list_filter = ("status", "business")
     list_filter_submit = True
     search_fields = ("user__username", "user__phone_number", "business__name", "room__name")
-    autocomplete_fields = ("user", "business", "room", "availability")
+    autocomplete_fields = ("user", "business", "room", "hall", "availability")
+    list_select_related = ("user", "business", "room", "hall")
 
     class Media:
         js = ("admin/reservations/dependent_fields.js",)
@@ -167,15 +168,24 @@ class ReservationAdmin(ModelAdmin):
 
     @admin.action(description="Tanlanganlarni bekor qilish (cancelled)")
     def mark_cancelled(self, request, queryset):
+        # `is_booked` ni bu yerda QO'LDA o'zgartirmaymiz: restoranda bitta
+        # kunda bir nechta bron bo'lishi mumkin, bittasini bekor qilish
+        # butun kunni bo'shatib yubormasligi kerak. Buni post_save signali
+        # biznes turiga qarab to'g'ri hal qiladi.
+        count = 0
         for reservation in queryset:
             reservation.status = "cancelled"
             reservation.save(update_fields=["status"])
-            if reservation.availability_id:
-                reservation.availability.is_booked = False
-                reservation.availability.save(update_fields=["is_booked"])
-        self.message_user(request, f"{queryset.count()} ta bron bekor qilindi va bo'sh vaqt qayta ochildi.")
+            count += 1
+        self.message_user(request, f"{count} ta bron bekor qilindi.")
 
     @admin.action(description="Tanlanganlarni yakunlash (completed)")
     def mark_completed(self, request, queryset):
-        updated = queryset.update(status="completed")
-        self.message_user(request, f"{updated} ta bron yakunlandi.")
+        # queryset.update() signalni ishga tushirmaydi — shuning uchun
+        # bu yerda ham bittalab saqlaymiz (qolgan action'lar bilan bir xil).
+        count = 0
+        for reservation in queryset:
+            reservation.status = "completed"
+            reservation.save(update_fields=["status"])
+            count += 1
+        self.message_user(request, f"{count} ta bron yakunlandi.")

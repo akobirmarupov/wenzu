@@ -1,0 +1,14 @@
+{# Sahifa chizilishidan OLDIN temani qo'yamiz — aks holda tungi rejimda
+   bir lahza oq ekran "miltillab" ketadi (flash of wrong theme). #}
+<script>
+  (function () {
+    try {
+      var mode = localStorage.getItem("wenzu.theme");
+      if (mode === "dark" || mode === "light") {
+        document.documentElement.setAttribute("data-theme", mode);
+      }
+      var lang = localStorage.getItem("wenzu.lang");
+      if (lang) document.documentElement.lang = lang;
+    } catch (e) { /* localStorage yopiq */ }
+  })();
+</script>

@@ -1,0 +1,161 @@
+/* ===================================================================
+   Profil sahifasi.
+
+   Tuzilma: yuqorida "cover" bloki (avatar + ism + holat), ostida
+   statistika, keyin chapda bo'limlar menyusi va o'ngda mazmun.
+   Bo'limlar ro'yxati ROLGA qarab o'zgaradi — oddiy foydalanuvchi,
+   biznes egasi va admin bir xil ekranni ko'rmaydi.
+   =================================================================== */
+.profile-cover {
+  position: relative; overflow: hidden;
+  border-radius: var(--radius-l);
+  background: linear-gradient(125deg, var(--emerald-900) 0%, var(--emerald-800) 48%, #06231D 100%);
+  padding: var(--sp-8) var(--sp-8) var(--sp-6);
+  color: #FFFFFF;
+}
+:root[data-theme="dark"] .profile-cover {
+  background: linear-gradient(125deg, #0E1D30 0%, #12283E 48%, #08111C 100%);
+  border: 1px solid var(--line);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .profile-cover {
+    background: linear-gradient(125deg, #0E1D30 0%, #12283E 48%, #08111C 100%);
+    border: 1px solid var(--line);
+  }
+}
+.profile-cover::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 88% 12%, rgba(224, 192, 90, .22), transparent 46%);
+}
+/* Nozik naqsh — sharqona motiv hissi */
+.profile-cover::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .07;
+  background-image: radial-gradient(circle at 1px 1px, #FFF 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+.profile-head {
+  position: relative; z-index: 1;
+  display: flex; align-items: flex-end; gap: var(--sp-6); flex-wrap: wrap;
+}
+.profile-identity { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+.profile-identity h1 { font-size: clamp(22px, 3vw, 32px); line-height: 1.1; }
+.profile-identity .handle {
+  font-family: var(--font-mono); font-size: var(--fs-sm);
+  color: rgba(255, 255, 255, .62);
+}
+.profile-badges { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-top: var(--sp-2); }
+.profile-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px; border-radius: var(--radius-pill);
+  font-size: 11.5px; font-weight: 800; letter-spacing: .03em;
+  background: rgba(255, 255, 255, .12); color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, .18);
+}
+.profile-badge-gold {
+  background: var(--gold-shine); color: #1A1405;
+  border-color: transparent; box-shadow: var(--gold-glow);
+}
+.profile-badge-ok { background: rgba(63, 190, 134, .18); border-color: rgba(63, 190, 134, .40); }
+.profile-badge-warn { background: rgba(224, 188, 85, .16); border-color: rgba(224, 188, 85, .38); }
+
+/* Avatar ramkasi cover ustida biroz "chiqib" turadi */
+.profile-avatar { position: relative; z-index: 1; }
+.profile-avatar .avatar-ring::after { background: var(--emerald-900); }
+:root[data-theme="dark"] .profile-avatar .avatar-ring::after { background: #0E1D30; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .profile-avatar .avatar-ring::after { background: #0E1D30; }
+}
+
+/* Statistika */
+.profile-stats {
+  position: relative; z-index: 1;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--sp-3); margin-top: var(--sp-8);
+  padding-top: var(--sp-5); border-top: 1px solid rgba(255, 255, 255, .14);
+}
+.profile-stat { display: flex; flex-direction: column; gap: 2px; }
+.profile-stat .value {
+  font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  background: var(--gold-shine);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.profile-stat .label {
+  font-size: 10.5px; font-weight: 800; letter-spacing: .09em;
+  text-transform: uppercase; color: rgba(255, 255, 255, .58);
+}
+
+/* Ikki ustunli tanasi */
+.profile-body {
+  display: grid; grid-template-columns: 232px minmax(0, 1fr);
+  gap: var(--sp-6); align-items: start; margin-top: var(--sp-6);
+}
+@media (max-width: 900px) { .profile-body { grid-template-columns: 1fr; } }
+
+.profile-menu {
+  position: sticky; top: 78px;
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-m); padding: var(--sp-2);
+}
+@media (max-width: 900px) {
+  .profile-menu { position: static; flex-direction: row; overflow-x: auto; }
+  .profile-menu .nav-group-label { display: none; }
+}
+.profile-menu .nav-group-label { padding: var(--sp-3) var(--sp-3) var(--sp-1); }
+.profile-menu button {
+  display: flex; align-items: center; gap: var(--sp-3); width: 100%;
+  padding: 10px var(--sp-3); border-radius: var(--radius-s);
+  font-size: var(--fs-sm); font-weight: 600; color: var(--ink-soft);
+  text-align: left; white-space: nowrap;
+  transition: background var(--transition), color var(--transition);
+}
+.profile-menu button:hover { background: var(--surface-2); color: var(--ink); }
+.profile-menu button.active { background: var(--theme-accent); color: var(--on-accent); }
+.profile-menu .ic { width: 20px; text-align: center; }
+
+/* Biznes ochish tanlovi */
+.biz-choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--sp-4); }
+.biz-choice .opt {
+  border: 1.5px solid var(--line); border-radius: var(--radius-m);
+  padding: var(--sp-6); text-align: center; background: var(--surface);
+  transition: all var(--transition);
+}
+.biz-choice button.opt:hover {
+  border-color: var(--gold-500); transform: translateY(-2px);
+  box-shadow: var(--shadow); 
+}
+.biz-choice .ic { font-size: 34px; }
+
+/* Ma'lumot qatorlari */
+.info-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-4); padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.info-row:last-child { border-bottom: 0; }
+.info-row .k { font-size: var(--fs-sm); color: var(--ink-soft); font-weight: 600; }
+.info-row .v { font-weight: 700; text-align: right; }
+
+/* ===================================================================
+   Sahifa sarlavhasi (Bronlarim, Biznes ochish kabi alohida sahifalar)
+   =================================================================== */
+.page-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  gap: var(--sp-6); flex-wrap: wrap; margin-bottom: var(--sp-6);
+}
+
+/* Profil ichidagi qisqa yo'l kartochkalari */
+.shortcut-card {
+  position: relative;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: var(--sp-5); text-decoration: none;
+}
+.shortcut-card .ic { font-size: 26px; line-height: 1; }
+.shortcut-card b { font-size: var(--fs-md); }
+.shortcut-card .go {
+  position: absolute; top: var(--sp-4); right: var(--sp-4);
+  color: var(--ink-faint); transition: transform var(--transition), color var(--transition);
+}
+.shortcut-card:hover .go { transform: translateX(3px); color: var(--theme-accent); }

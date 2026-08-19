@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 
-from businesses.models import Business, Room
+from businesses.models import Business, Hall, Room
 from common.models import BaseModel
 
 
@@ -38,6 +38,12 @@ class Availability(BaseModel):
     class Meta:
         verbose_name_plural = "Availabilities"
         ordering = ["date", "start_time"]
+        indexes = [
+            # Mijoz "shu kunga bo'sh joyi bor" deb qidirganda ishlaydigan indeks.
+            models.Index(fields=["business", "date", "is_booked"], name="idx_avail_biz_date_booked"),
+            models.Index(fields=["room", "date"], name="idx_avail_room_date"),
+            models.Index(fields=["date", "is_booked"], name="idx_avail_date_booked"),
+        ]
         constraints = [
             # Restoran: bitta room bitta kunda bitta start_time'ga faqat bitta yozuvga ega bo'lishi mumkin
             models.UniqueConstraint(
@@ -146,17 +152,70 @@ class Reservation(BaseModel):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reservations")
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="reservations")
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="reservations", null=True, blank=True)
-    availability = models.OneToOneField(Availability, on_delete=models.CASCADE, related_name="reservation")
+    room = models.ForeignKey(
+        Room, on_delete=models.CASCADE, related_name="reservations", null=True, blank=True,
+        help_text="Faqat restoran broni uchun.",
+    )
+    hall = models.ForeignKey(
+        Hall, on_delete=models.CASCADE, related_name="reservations", null=True, blank=True,
+        help_text="Faqat to'yxona broni uchun — qaysi zal band qilingani.",
+    )
+    availability = models.ForeignKey(
+        Availability, on_delete=models.CASCADE, related_name="reservations",
+        null=True, blank=True,
+        help_text="Bron tegishli bo'lgan kunlik bo'sh vaqt yozuvi.",
+    )
+
+    # Restoran broni kun ichidagi soatlik oraliqqa tegishli (masalan 19:00-21:00).
+    # To'yxona broni butun kunga bo'lgani uchun bu maydonlar bo'sh qoladi.
+    start_time = models.TimeField(null=True, blank=True)
+    end_time = models.TimeField(null=True, blank=True)
+
     guests_count = models.PositiveIntegerField()
     special_request = models.TextField(blank=True)
+
+    # To'yxona uchun: nechta xil taom tanlangani va shundan kelib chiqqan summa.
+    dish_count = models.PositiveSmallIntegerField(null=True, blank=True)
+    price_per_person = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    total_price = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+
+    # Mijoz bron paytida tanlagan taomlar — nom va narx bilan MUZLATIB
+    # saqlanadi. FK bo'lganida, restoran keyin taomni o'chirsa yoki narxini
+    # o'zgartirsa, eski bronning tarkibi ham "o'zgarib" ketardi.
+    selected_menu = models.JSONField(default=list, blank=True)
+
+    # Depozit summasi ham bron YARATILGAN paytdagi narx bilan muzlatiladi.
+    deposit_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default="pending", db_index=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            # Biznes egasining "Bronlar" ekrani — eng ko'p so'raladigan so'rov.
+            models.Index(fields=["business", "status", "-created_at"], name="idx_resv_biz_status_created"),
+            # Mijozning "Mening bronlarim" ekrani.
+            models.Index(fields=["user", "-created_at"], name="idx_resv_user_created"),
+            # Vaqt kesishishini tekshirish (bron yaratishdagi qulflangan so'rov).
+            models.Index(fields=["room", "availability", "status"], name="idx_resv_room_avail_status"),
+            models.Index(fields=["hall", "availability", "status"], name="idx_resv_hall_avail_status"),
+        ]
 
     def __str__(self):
         return f"{self.user} — {self.business} ({self.status})"
 
-    @property
-    def deposit_amount(self):
+    def clean(self):
+        is_restaurant = self.business.business_type == Business.TYPE_RESTAURANT
+        if is_restaurant and not self.room_id:
+            raise ValidationError({"room": "Restoran broni uchun xona tanlanishi shart."})
+        if not is_restaurant and not self.hall_id:
+            raise ValidationError({"hall": "To'yxona broni uchun zal tanlanishi shart."})
+        if self.room_id and self.room.business_id != self.business_id:
+            raise ValidationError({"room": "Bu xona ushbu businessga tegishli emas."})
+        if self.hall_id and self.hall.business_id != self.business_id:
+            raise ValidationError({"hall": "Bu zal ushbu businessga tegishli emas."})
+
+    def resolve_deposit_amount(self):
         """
         Depozit narxi — tranzaksiya emas, faqat ko'rsatkich. Foydalanuvchiga
         bron ekranida "shuncha depozit to'lang, @admin bilan bog'laning"
@@ -165,4 +224,6 @@ class Reservation(BaseModel):
         """
         if self.room_id:
             return self.room.deposit_amount
-        return self.business.deposit_amount
+        if self.hall_id:
+            return self.hall.deposit_amount
+        return 0

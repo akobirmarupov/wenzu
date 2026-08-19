@@ -1,0 +1,24 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="panel">
+  <div class="panel-head"><h2 class="display h3">Biznes ma'lumotlari</h2></div>
+  <form class="stack stack-5" id="business-form"></form>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Rasm galereyasi</h2>
+    <label class="btn btn-primary btn-sm" for="photo-input">+ Rasm qo'shish
+      <input type="file" id="photo-input" accept="image/*" hidden>
+    </label>
+  </div>
+  <p class="muted small" style="margin-bottom:var(--sp-4)">Eng ko'pi 10 ta rasm. Birinchi rasm karuselda birinchi ko'rinadi.</p>
+  <div class="grid grid-auto-sm" id="gallery"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/owner/settings.js' %}"></script>
+{% endblock %}

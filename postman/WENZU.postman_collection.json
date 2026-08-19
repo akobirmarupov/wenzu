@@ -1,0 +1,3497 @@
+{
+  "info": {
+    "_postman_id": "wenzu-api-collection-v1",
+    "name": "WENZU API",
+    "description": "# WENZU — Restoran va to'yxona bron qilish platformasi\n\n## Boshlash\n\n1. **Environment** ni import qiling (`WENZU.postman_environment.json`) va tanlang\n2. `base_url` to'g'ri ekanini tekshiring (standart: `http://127.0.0.1:8000`)\n3. **01 · Autentifikatsiya** papkasidagi so'rovlarni **1 → 2 → 3 → 4** tartibida yuboring\n\nToken login'dan keyin **avtomatik saqlanadi** — Authorization sarlavhasini qo'lda yozish shart emas. `business_id`, `room_id`, `reservation_id` kabi o'zgaruvchilar ham javoblardan avtomatik olinadi.\n\n## To'liq demo oqimi\n\n```\n01 → 1,2,3,4          Ro'yxatdan o'tish + login\n03 → Biznes ochish arizasi\n01 → 4                QAYTA LOGIN (rol yangilanishi uchun!)\n04 → Xona qo'shish\n04 → Taom qo'shish\n04 → Bo'sh vaqtlarni generatsiya qilish\n02 → Bizneslar ro'yxati        (business_id oladi)\n02 → Xonaning band soatlari\n03 → Restoran broni            (boshqa foydalanuvchi bilan)\n04 → Bron holatini o'zgartirish  confirmed → completed\n03 → Sharh qoldirish\n05 → To'lovni tasdiqlash\n```\n\n## Rollar\n\n| Rol | Nima qila oladi |\n|---|---|\n| Mehmon | 02-papka (ommaviy katalog) |\n| `user` | + 03-papka (bron, sharh, ariza) |\n| `business` | + 04-papka (o'z biznesi) |\n| `is_staff` | + 05-papka (butun platforma) |\n\nLogin javobidagi `user.business.type` frontend qaysi panelni ochishini belgilaydi: `restaurant` → Xonalar paneli, `venue` → Zallar paneli.\n\n## Xato formati\n\nBarcha xatolar bir xil ko'rinishda keladi:\n\n```json\n{\n  \"success\": false,\n  \"error\": {\"code\": \"validation_error\", \"message\": \"...\", \"details\": {...}},\n  \"request_id\": \"a1b2c3d4\"\n}\n```\n\n`request_id` ni log'da qidirib, aynan shu so'rovning butun tarixini topish mumkin.\n\n## Cheklovlar (throttling)\n\n| Amal | Cheklov |\n|---|---|\n| Ro'yxatdan o'tish | 5/soat |\n| Login | 10/daqiqa |\n| SMS kod so'rash | 3/soat (bitta raqamga) |\n| SMS tasdiqlash | 10/soat |\n| Bron yaratish | 10/soat |\n| Biznes arizasi | 3/kun |\n| Sharh | 20/kun |\n| Umumiy (auth) | 120/daqiqa, 5000/kun |\n| Umumiy (mehmon) | 40/daqiqa, 1000/kun |\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// base_url o'rnatilmagan bo'lsa, standart qiymatni qo'yamiz",
+          "if (!pm.variables.get('base_url')) {",
+          "    pm.collectionVariables.set('base_url', 'http://127.0.0.1:8000');",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Har bir javobda umumiy tekshiruv",
+          "pm.test('Javob 5xx emas', () => pm.expect(pm.response.code).to.be.below(500));",
+          "if (pm.response.code === 401) {",
+          "    console.warn('401 — token eskirgan. 01 → 4-so\\'rov bilan qayta login qiling.');",
+          "}",
+          "if (pm.response.code === 403) {",
+          "    console.warn('403 — huquq yetarli emas yoki obuna tugagan. Javobdagi message ga qarang.');",
+          "}",
+          "if (pm.response.code === 429) {",
+          "    console.warn('429 — so\\'rov cheklovi. Biroz kuting.');",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refresh_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "sardor_y",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "StrongPass123!",
+      "type": "string"
+    },
+    {
+      "key": "phone_number",
+      "value": "+998901234567",
+      "type": "string"
+    },
+    {
+      "key": "sms_code",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "role",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "is_staff",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "business_type",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "my_business_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "business_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "room_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "hall_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "menu_item_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "photo_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "availability_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reservation_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "review_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "review_photo_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "application_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subscription_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "plan_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 · Tizim va sozlamalar",
+      "description": "Autentifikatsiya talab qilmaydigan xizmat endpointlari. Ishni shulardan boshlang — server tirikligini va platforma sozlamalarini tekshirasiz.",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/health/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "health"
+              ]
+            },
+            "description": "Baza va Redis ishlayaptimi. Load balancer shu javobga qarab serverga trafik yuboradi.\n\n200 = sog'lom, 503 = baza yiqilgan.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Server sog'lom\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Baza ulangan\", () => pm.expect(pm.response.json().checks.database).to.eql(\"ok\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ommaviy sozlamalar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/settings/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "settings"
+              ]
+            },
+            "description": "Admin Telegram'i, bepul sinov muddati, depozit narxlari va tarif rejalari.\n\nMobil ilova \"Biznes ochish\" ekranini shu bitta so'rov bilan to'ldiradi.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tarif rejalari",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/subscription-plans/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "subscription-plans"
+              ],
+              "query": [
+                {
+                  "key": "business_type",
+                  "value": "restaurant",
+                  "description": "restaurant | venue",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Restoran va to'yxona uchun oylik obuna narxlari.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "OpenAPI schema (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/schema/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "schema"
+              ]
+            },
+            "description": "To'liq OpenAPI 3 spetsifikatsiyasi. Brauzerda ko'rish uchun: /swagger/ yoki /redoc/",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "01 · Autentifikatsiya",
+      "description": "To'liq oqim: **1 → 2 → 3 → 4** tartibida yuboring. Login'dan keyin token avtomatik saqlanadi.",
+      "item": [
+        {
+          "name": "1. Ro'yxatdan o'tish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/register/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Yangi foydalanuvchi. Rol avtomatik `user` bo'ladi, telefon hali tasdiqlanmagan.\n\n**Username qoidasi:** faqat `a-z`, `0-9`, `_` — 3 dan 30 belgigacha. Bosh harf, defis, nuqta, probel TAQIQLANADI.\n\n**Telefon:** `+998XXXXXXXXX` ko'rinishida.\n\n**Parol:** kamida 8 belgi, oddiy parollar rad etiladi.\n\nCheklov: soatiga 5 marta (bir IP'dan).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Sardor Yusupov\",\n  \"phone_number\": \"+998901234567\",\n  \"username\": \"sardor_y\",\n  \"password\": \"StrongPass123!\",\n  \"password_confirm\": \"StrongPass123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set(\"username\", pm.request.body ? JSON.parse(pm.request.body.raw).username : \"\");",
+                  "    pm.collectionVariables.set(\"phone_number\", JSON.parse(pm.request.body.raw).phone_number);",
+                  "    pm.collectionVariables.set(\"password\", JSON.parse(pm.request.body.raw).password);",
+                  "    console.log(\"Ro'yxatdan o'tdi. Endi 2-qadam: SMS kod so'rang.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "2. SMS kod so'rash",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/send-code/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "send-code"
+              ]
+            },
+            "description": "Telefon raqamiga 6 xonali tasdiqlash kodi yuboriladi (Eskiz.uz orqali).\n\n**Muhim:** javob raqam bazada bor-yo'qligidan qat'i nazar BIR XIL bo'ladi — bu ataylab, raqam bazasini yig'ib olishning oldini olish uchun.\n\n`DEBUG=True` bo'lsa javobda `debug_code` ham keladi va u avtomatik `{{sms_code}}` o'zgaruvchisiga yoziladi.\n\nCheklov: bitta raqamga soatiga 3 marta.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_number\": \"{{phone_number}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "if (j.debug_code) {",
+                  "    pm.collectionVariables.set(\"sms_code\", j.debug_code);",
+                  "    console.log(\"SMS kod saqlandi: \" + j.debug_code);",
+                  "} else {",
+                  "    console.log(\"DEBUG o'chiq — kodni SMS'dan oling va {{sms_code}} ga qo'lda yozing.\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "3. Telefonni tasdiqlash",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/verify-phone/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "verify-phone"
+              ]
+            },
+            "description": "Kodni tekshiradi va `is_phone_verified=True` qiladi.\n\nTasdiqlanmagan foydalanuvchi **bron qila olmaydi** va **biznes arizasi yubora olmaydi**.\n\nKod 5 daqiqa yashaydi. 5 marta noto'g'ri kiritilsa kod kuydiriladi — yangisini so'rash kerak.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone_number\": \"{{phone_number}}\",\n  \"code\": \"{{sms_code}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "4. Kirish (login)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/login/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "JWT token beradi VA foydalanuvchi ma'lumotini qaytaradi.\n\n**Frontend qaysi panelni ochishini shu javobdan biladi:**\n- `user.is_staff = true` → Admin paneli\n- `user.business.type = \"restaurant\"` → Restoran paneli (Xonalar menyusi)\n- `user.business.type = \"venue\"` → To'yxona paneli (Zallar menyusi)\n- `user.business = null` → oddiy foydalanuvchi\n\nTokenlar avtomatik saqlanadi — keyingi so'rovlarga qo'lda qo'shish shart emas.\n\nCheklov: daqiqasiga 10 marta.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    const j = pm.response.json();",
+                  "    pm.collectionVariables.set(\"access_token\", j.access);",
+                  "    pm.collectionVariables.set(\"refresh_token\", j.refresh);",
+                  "    pm.collectionVariables.set(\"role\", j.user.role);",
+                  "    pm.collectionVariables.set(\"is_staff\", j.user.is_staff);",
+                  "    if (j.user.business) {",
+                  "        pm.collectionVariables.set(\"my_business_id\", j.user.business.id);",
+                  "        pm.collectionVariables.set(\"business_type\", j.user.business.type);",
+                  "        console.log(\"Panel: \" + j.user.business.type + \" egasi\");",
+                  "    } else if (j.user.is_staff) {",
+                  "        console.log(\"Panel: super-admin\");",
+                  "    } else {",
+                  "        console.log(\"Panel: oddiy foydalanuvchi\");",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tokenni yangilash",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/refresh/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Access token 1 soat yashaydi. Tugagach shu endpoint bilan yangilanadi.\n\n**Rotatsiya yoqilgan:** yangi refresh token ham keladi, eskisi qora ro'yxatga tushadi. Ya'ni o'g'irlangan tokenni cheksiz ishlatib bo'lmaydi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "    const j = pm.response.json();",
+                  "    pm.collectionVariables.set(\"access_token\", j.access);",
+                  "    if (j.refresh) pm.collectionVariables.set(\"refresh_token\", j.refresh);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mening profilim",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Joriy foydalanuvchi profili — biznes ma'lumoti bilan birga."
+          },
+          "response": []
+        },
+        {
+          "name": "Profilni tahrirlash",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Faqat `full_name` tahrirlanadi. `username`, `phone_number`, `role` o'zgartirilmaydi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"Sardor Yusupov (yangilandi)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Chiqish (logout)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/auth/logout/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Refresh tokenni qora ro'yxatga qo'shadi.\n\nBunisiz \"chiqish\" faqat mijoz tomonda bo'lardi va o'g'irlangan token 30 kun davomida ishlashda davom etardi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"205 Reset Content\", () => pm.response.to.have.status(205));",
+                  "pm.collectionVariables.set(\"access_token\", \"\");",
+                  "pm.collectionVariables.set(\"refresh_token\", \"\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Hisobni o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me"
+              ]
+            },
+            "description": "⚠️ Hisobni faolsizlantiradi va shaxsiy ma'lumotlarni anonimlashtiradi.\n\nYozuv jismonan o'chirilmaydi — bronlar va to'lov tarixi saqlanib qoladi."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02 · Ommaviy katalog (auth shart emas)",
+      "description": "Mobil ilovaning bosh sahifasi, qidiruv va detal ekranlari. Token talab qilinmaydi.",
+      "item": [
+        {
+          "name": "Bizneslar ro'yxati (qidiruv + filtr)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/businesses/?type=restaurant",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "businesses"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "restaurant",
+                  "description": "restaurant | venue",
+                  "disabled": false
+                },
+                {
+                  "key": "search",
+                  "value": "Shoxona",
+                  "description": "Nom, manzil yoki tuman bo'yicha",
+                  "disabled": true
+                },
+                {
+                  "key": "district",
+                  "value": "Yunusobod",
+                  "description": "Tuman",
+                  "disabled": true
+                },
+                {
+                  "key": "cuisine",
+                  "value": "milliy",
+                  "description": "milliy | yevropa | fusion | sharqona | fastfood | boshqa",
+                  "disabled": true
+                },
+                {
+                  "key": "min_rating",
+                  "value": "4.5",
+                  "description": "Minimal reyting",
+                  "disabled": true
+                },
+                {
+                  "key": "guests",
+                  "value": "6",
+                  "description": "Shuncha kishi sig'adigan joyi borlar",
+                  "disabled": true
+                },
+                {
+                  "key": "lat",
+                  "value": "41.311081",
+                  "description": "Foydalanuvchi kengligi",
+                  "disabled": true
+                },
+                {
+                  "key": "lng",
+                  "value": "69.240562",
+                  "description": "Foydalanuvchi uzunligi",
+                  "disabled": true
+                },
+                {
+                  "key": "radius_km",
+                  "value": "5",
+                  "description": "Qidiruv radiusi (1..100 km)",
+                  "disabled": true
+                },
+                {
+                  "key": "date",
+                  "value": "2026-09-01",
+                  "description": "Shu kunga bo'sh joyi borlar",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Sahifa raqami",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "20",
+                  "description": "Sahifadagi element soni (max 100)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "**Bosh sahifadagi asosiy endpoint.** Barcha filtrlarni birga ishlatish mumkin.\n\n`lat` + `lng` berilsa, natijalar masofa bo'yicha saralanadi va har biriga `distance_km` qo'shiladi.\n\nJavob 60 sekundga keshlanadi. Bloklangan yoki obunasi tugagan bizneslar chiqmaydi.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+                  "const j = pm.response.json();",
+                  "if (j.results && j.results.length) {",
+                  "    pm.collectionVariables.set(\"business_id\", j.results[0].id);",
+                  "    console.log(\"business_id saqlandi: \" + j.results[0].name);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Biznes to'liq profili",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/businesses/{{business_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "businesses",
+                "{{business_id}}"
+              ]
+            },
+            "description": "Detal sahifasi bitta so'rovda: galereya, xona/zallar, menyu, taom paketi narxlari.\n\nAlohida so'rov yuborish shart emas — hammasi shu javobda.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xonalar (restoran)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/businesses/{{business_id}}/rooms/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "businesses",
+                "{{business_id}}",
+                "rooms"
+              ],
+              "query": [
+                {
+                  "key": "room_type",
+                  "value": "vip",
+                  "description": "vip | standard | outdoor",
+                  "disabled": true
+                },
+                {
+                  "key": "min_capacity",
+                  "value": "4",
+                  "description": "Minimal sig'im",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Restoran xonalari/stollari. Har birida `deposit_amount` — bron uchun oldindan to'lov.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.results && j.results.length) pm.collectionVariables.set(\"room_id\", j.results[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Zallar (to'yxona)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/businesses/{{business_id}}/halls/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "businesses",
+                "{{business_id}}",
+                "halls"
+              ],
+              "query": [
+                {
+                  "key": "min_people",
+                  "value": "200",
+                  "description": "Minimal sig'im",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "To'yxona zallari.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.results && j.results.length) pm.collectionVariables.set(\"hall_id\", j.results[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Restoran menyusi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/businesses/{{business_id}}/menu/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "businesses",
+                "{{business_id}}",
+                "menu"
+              ],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "main",
+                  "description": "starter | soup | main | salad | dessert | drink | other",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "osh",
+                  "description": "Taom nomi",
+                  "disabled": true
+                },
+                {
+                  "key": "max_price",
+                  "value": "100000",
+                  "description": "Maksimal narx",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Faqat `is_available=true` taomlar chiqadi.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.results && j.results.length) pm.collectionVariables.set(\"menu_item_id\", j.results[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "To'yxona menyusi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/businesses/{{business_id}}/venue-menu/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "businesses",
+                "{{business_id}}",
+                "venue-menu"
+              ]
+            },
+            "description": "To'yxona taomlari. **Narxi yo'q** — to'yxonada narx alohida taomga emas, taom soniga (`/pricing/`) bog'lanadi.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Taom paketi narxlari (to'yxona)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/businesses/{{business_id}}/pricing/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "businesses",
+                "{{business_id}}",
+                "pricing"
+              ]
+            },
+            "description": "1, 2 yoki 3 xil taom uchun **kishi boshiga** narx.\n\nUmumiy summa = `price_per_person` × mehmonlar soni.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Rasm galereyasi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/businesses/{{business_id}}/photos/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "businesses",
+                "{{business_id}}",
+                "photos"
+              ]
+            },
+            "description": "Detal sahifasidagi rasm karuseli.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sharhlar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/businesses/{{business_id}}/reviews/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "businesses",
+                "{{business_id}}",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "min_rating",
+                  "value": "4",
+                  "description": "Minimal baho",
+                  "disabled": true
+                },
+                {
+                  "key": "page_size",
+                  "value": "10",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Biznes sharhlari (rasmlari bilan).",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bo'sh vaqtlar jadvali",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/businesses/{{business_id}}/availability/?date=2026-09-01",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "businesses",
+                "{{business_id}}",
+                "availability"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-09-01",
+                  "description": "Aniq sana (YYYY-MM-DD)",
+                  "disabled": false
+                },
+                {
+                  "key": "date_from",
+                  "value": "2026-09-01",
+                  "description": "Sanadan boshlab",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "2026-09-30",
+                  "description": "Sanagacha",
+                  "disabled": true
+                },
+                {
+                  "key": "room",
+                  "value": "{{room_id}}",
+                  "description": "Xona bo'yicha (restoran)",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Biznesning ish jadvali. Restoranda har bir xona uchun, to'yxonada butun kun uchun.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xonaning band soatlari",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/rooms/{{room_id}}/busy-hours/?date=2026-09-01",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "rooms",
+                "{{room_id}}",
+                "busy-hours"
+              ],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2026-09-01",
+                  "description": "MAJBURIY (YYYY-MM-DD)",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "**Bron ekranidagi soat gridini bo'yash uchun.**\n\nQaytaradi: `open_time`, `close_time` (ish vaqti) va `busy_ranges` (allaqachon band qilingan oraliqlar).\n\nFrontend shu ma'lumot bilan qaysi soat bo'sh, qaysi band ekanini ko'rsatadi.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Zalning band kunlari",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/halls/{{hall_id}}/busy-dates/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "halls",
+                "{{hall_id}}",
+                "busy-dates"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "2026-09-01",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "2026-12-31",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "To'yxonada bir kunda faqat bitta to'y bo'ladi — shuning uchun kalendarda band kunlarni ko'rsatish kifoya.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03 · Mijoz (oddiy foydalanuvchi)",
+      "description": "Bron qilish, sharh qoldirish va biznes ochish arizasi. **Telefon tasdiqlangan bo'lishi shart.**",
+      "item": [
+        {
+          "name": "Restoran broni",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reservations/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reservations"
+              ]
+            },
+            "description": "**Restoran broni** — sana + soat oralig'i.\n\n- `menu_items`: taom ID'lari (ixtiyoriy — joyga borib ham buyurtma berish mumkin)\n- Vaqt ish soatlari ichida bo'lishi kerak (`busy-hours` dan oling)\n- Kesishgan vaqt band bo'lsa **409 Conflict** qaytadi\n- Mehmonlar soni xona sig'imidan oshmasligi kerak\n\nJavobda `deposit_amount` va admin Telegram'i keladi — to'lov Telegram orqali qo'lda.\n\nCheklov: soatiga 10 marta.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"room\": \"{{room_id}}\",\n  \"date\": \"2026-09-01\",\n  \"start_time\": \"19:00\",\n  \"end_time\": \"21:00\",\n  \"guests_count\": 4,\n  \"menu_items\": [],\n  \"special_request\": \"Deraza yonidagi stol bo'lsa\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 yoki 409\", () => pm.expect([201, 409]).to.include(pm.response.code));",
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set(\"reservation_id\", pm.response.json().id);",
+                  "    console.log(\"Bron yaratildi. Depozit: \" + pm.response.json().deposit_amount);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "To'yxona broni",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reservations/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reservations"
+              ]
+            },
+            "description": "**To'yxona broni** — butun kunga, bitta zal.\n\n- `dish_count`: 1, 2 yoki 3 xil taom → narx shunga qarab o'zgaradi\n- `menu_items`: aynan `dish_count` ta taom ID'si bo'lishi kerak (yoki bo'sh)\n- Umumiy summa avtomatik hisoblanadi: kishi boshiga narx × mehmonlar\n- Bir kunda bitta to'y — band kunga urinish **409 Conflict**\n\nSo'rovda `hall` maydoni borligi tizimga \"bu to'yxona broni\" deb aytadi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hall\": \"{{hall_id}}\",\n  \"date\": \"2026-09-14\",\n  \"guests_count\": 250,\n  \"dish_count\": 2,\n  \"menu_items\": [],\n  \"special_request\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 yoki 409\", () => pm.expect([201, 409]).to.include(pm.response.code));",
+                  "if (pm.response.code === 201) {",
+                  "    pm.collectionVariables.set(\"reservation_id\", pm.response.json().id);",
+                  "    const j = pm.response.json();",
+                  "    console.log(\"Umumiy summa: \" + j.total_price + \", depozit: \" + j.deposit_amount);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mening bronlarim",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reservations/my/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reservations",
+                "my"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "pending | confirmed | cancelled | completed",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "2026-09-01",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Foydalanuvchining bron tarixi."
+          },
+          "response": []
+        },
+        {
+          "name": "Bitta bron",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reservations/{{reservation_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reservations",
+                "{{reservation_id}}"
+              ]
+            },
+            "description": "Faqat bron egasi, biznes egasi yoki admin ko'ra oladi."
+          },
+          "response": []
+        },
+        {
+          "name": "Bronni bekor qilish",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reservations/{{reservation_id}}/cancel/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reservations",
+                "{{reservation_id}}",
+                "cancel"
+              ]
+            },
+            "description": "Mijoz o'z bronini bekor qiladi. Allaqachon bekor qilingan yoki yakunlangan bronni qayta bekor qilib bo'lmaydi."
+          },
+          "response": []
+        },
+        {
+          "name": "Sharh qoldirish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews"
+              ]
+            },
+            "description": "⚠️ **Faqat YAKUNLANGAN (`completed`) bron uchun.**\n\nBu ataylab: shunda sharhlar haqiqatan tashrif buyurganlardan keladi va soxta reyting yozib bo'lmaydi.\n\nBron `completed` bo'lishi uchun: biznes egasi qo'lda yakunlaydi, yoki sanasi o'tgach Celery avtomatik yakunlaydi.\n\nBitta bronga bitta sharh. Sharhdan keyin biznes reytingi avtomatik qayta hisoblanadi.\n\nCheklov: kuniga 20 marta.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservation\": \"{{reservation_id}}\",\n  \"rating\": 5,\n  \"comment\": \"Xizmat a'lo darajada, ovqatlar mazali!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"review_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sharhga rasm qo'shish",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/{{review_id}}/photos/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{review_id}}",
+                "photos"
+              ]
+            },
+            "description": "Bitta sharhga eng ko'pi bilan 5 ta rasm.\n\n**Postmanda:** Body → form-data → `image` maydoniga fayl tanlang.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": [],
+                  "description": "JPG/PNG/WEBP, max 5 MB"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mening sharhlarim",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/my/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "my"
+              ]
+            },
+            "description": "Foydalanuvchining o'z sharhlari."
+          },
+          "response": []
+        },
+        {
+          "name": "Bitta sharh",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/{{review_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{review_id}}"
+              ]
+            },
+            "description": "Sharhni rasmlari bilan ko'rish."
+          },
+          "response": []
+        },
+        {
+          "name": "Sharhni tahrirlash",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/{{review_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{review_id}}"
+              ]
+            },
+            "description": "Faqat sharh egasi. Reyting avtomatik qayta hisoblanadi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 4,\n  \"comment\": \"Fikrimni o'zgartirdim\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sharhni o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/reviews/{{review_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "reviews",
+                "{{review_id}}"
+              ]
+            },
+            "description": "Faqat sharh egasi yoki admin."
+          },
+          "response": []
+        },
+        {
+          "name": "Sharh rasmini o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/review-photos/{{review_photo_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "review-photos",
+                "{{review_photo_id}}"
+              ]
+            },
+            "description": "Faqat sharh egasi."
+          },
+          "response": []
+        },
+        {
+          "name": "Biznes ochish arizasi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/business-applications/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "business-applications"
+              ]
+            },
+            "description": "**Loyihaning eng muhim biznes-jarayoni.**\n\nAriza yuborilgan zahoti avtomatik ravishda:\n1. Rolingiz `user` → `business` ga o'tadi\n2. Biznes profili yaratiladi\n3. **7 kunlik BEPUL sinov** ochiladi\n\nShu 7 kun ichida to'liq huquqda ishlaysiz. Davom ettirish uchun javobda kelgan Telegram admin bilan bog'lanib to'lov qilasiz.\n\n⚠️ Ariza yuborgandan keyin **qayta login qiling** — token ichidagi rol yangilanishi kerak.\n\n`business_type`: `restaurant` yoki `venue`.\nCheklov: kuniga 3 marta. Telefon tasdiqlangan bo'lishi shart.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"business_type\": \"restaurant\",\n  \"business_name\": \"Shoxona Restorani\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) {",
+                  "    const j = pm.response.json();",
+                  "    pm.collectionVariables.set(\"application_id\", j.application.id);",
+                  "    pm.collectionVariables.set(\"my_business_id\", j.business_id);",
+                  "    console.log(\"Trial tugaydi: \" + j.trial_ends_at);",
+                  "    console.log(\"MUHIM: endi qayta login qiling (01 → 4-so'rov)\");",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mening arizalarim",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/business-applications/my/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "business-applications",
+                "my"
+              ]
+            },
+            "description": "Ariza holati: `pending_payment` | `approved` | `rejected`."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04 · Biznes egasi paneli",
+      "description": "`role=business` bo'lgan foydalanuvchi uchun. **Qaysi biznes ekani URL'dan emas, tokendan aniqlanadi** — shuning uchun bu yerda hech qayerda `business_id` yo'q.\n\n⚠️ **Xonalar** bo'limi faqat restoran egasiga, **Zallar** faqat to'yxona egasiga ochiq. Noto'g'ri rol → 403.\n\n⚠️ Obuna tugasa: **o'qish ochiq qoladi, yozish taqiqlanadi** (403) — shunda egasi \"obunangiz tugadi\" ekranini ko'rib, to'lov qila oladi.",
+      "item": [
+        {
+          "name": "Dashboard — umumiy ko'rinish",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/overview/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "overview"
+              ]
+            },
+            "description": "Boshqaruv panelining bosh ekrani: statistika kartochkalari, obuna holati va so'nggi 5 ta bron."
+          },
+          "response": []
+        },
+        {
+          "name": "Biznes sozlamalari (ko'rish)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/business/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "business"
+              ]
+            },
+            "description": "Egasining \"Sozlamalar\" ekrani."
+          },
+          "response": []
+        },
+        {
+          "name": "Biznes sozlamalari (tahrirlash)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/business/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "business"
+              ]
+            },
+            "description": "`business_type`, `rating_avg`, `is_visible` o'zgartirilmaydi.\n\n`cuisine`: `milliy | yevropa | fusion | sharqona | fastfood | boshqa`\n`telegram_username`: @ belgisiz — mijoz depozit uchun shu manzilga yozadi.\n\nRasm yuklash uchun form-data ishlating (`cover_photo`).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Shoxona Restorani\",\n  \"district\": \"Yunusobod\",\n  \"address\": \"Amir Temur ko'chasi 15\",\n  \"description\": \"Zamonaviy oshxona, VIP xonalar\",\n  \"cuisine\": \"yevropa\",\n  \"open_time\": \"08:00\",\n  \"close_time\": \"23:00\",\n  \"latitude\": 41.311081,\n  \"longitude\": 69.240562,\n  \"telegram_username\": \"shoxona_admin\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xonalar ro'yxati",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/rooms/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "rooms"
+              ]
+            },
+            "description": "🍽️ **Faqat restoran egasiga.** To'yxona egasi so'rasa → 403."
+          },
+          "response": []
+        },
+        {
+          "name": "Xona qo'shish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/rooms/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "rooms"
+              ]
+            },
+            "description": "🍽️ **Faqat restoran egasiga.**\n\n`room_type`: `vip` | `standard` | `outdoor`\n`deposit_tier`: `premium` yoki `pro` — depozit narxi platforma sozlamalaridan olinadi.\n`deposit_price` (ixtiyoriy): o'z narxingizni kiritish uchun.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"VIP xona — 6 kishilik\",\n  \"room_type\": \"vip\",\n  \"capacity\": 6,\n  \"deposit_tier\": \"premium\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"room_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bitta xona",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/rooms/{{room_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "rooms",
+                "{{room_id}}"
+              ]
+            },
+            "description": "🍽️ Faqat restoran egasiga."
+          },
+          "response": []
+        },
+        {
+          "name": "Xonani tahrirlash",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/rooms/{{room_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "rooms",
+                "{{room_id}}"
+              ]
+            },
+            "description": "🍽️ Faqat restoran egasiga.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"capacity\": 8,\n  \"deposit_tier\": \"pro\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Xonani o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/rooms/{{room_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "rooms",
+                "{{room_id}}"
+              ]
+            },
+            "description": "🍽️ Faol bronlari bor xonani o'chirib bo'lmaydi (400)."
+          },
+          "response": []
+        },
+        {
+          "name": "Zallar ro'yxati",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/halls/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "halls"
+              ]
+            },
+            "description": "🎉 **Faqat to'yxona egasiga.** Restoran egasi so'rasa → 403."
+          },
+          "response": []
+        },
+        {
+          "name": "Zal qo'shish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/halls/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "halls"
+              ]
+            },
+            "description": "🎉 **Faqat to'yxona egasiga.**\n\n`all_price` ixtiyoriy — odatda narx `/api/owner/pricing/` orqali kishi boshiga belgilanadi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Katta zal\",\n  \"people\": 500,\n  \"package\": \"Standart bezak\",\n  \"all_price\": \"9000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"hall_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bitta zal",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/halls/{{hall_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "halls",
+                "{{hall_id}}"
+              ]
+            },
+            "description": "🎉 Faqat to'yxona egasiga."
+          },
+          "response": []
+        },
+        {
+          "name": "Zalni tahrirlash",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/halls/{{hall_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "halls",
+                "{{hall_id}}"
+              ]
+            },
+            "description": "🎉 Faqat to'yxona egasiga.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"people\": 600\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Zalni o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/halls/{{hall_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "halls",
+                "{{hall_id}}"
+              ]
+            },
+            "description": "🎉 Faqat to'yxona egasiga."
+          },
+          "response": []
+        },
+        {
+          "name": "Taom paketi narxlari (ko'rish)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/pricing/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "pricing"
+              ]
+            },
+            "description": "🎉 **Faqat to'yxona egasiga.** 1/2/3 xil taom uchun kishi boshiga narx."
+          },
+          "response": []
+        },
+        {
+          "name": "Taom paketi narxlarini saqlash",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/pricing/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "pricing"
+              ]
+            },
+            "description": "🎉 **Faqat to'yxona egasiga.**\n\nUchala paket bir vaqtda saqlanadi (ekranda ham bitta forma). Yuborilmagan paketlar o'chiriladi.\n\nMijoz bron qilganda: umumiy summa = shu narx × mehmonlar soni.",
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"dish_count\": 1,\n    \"price_per_person\": \"100000\"\n  },\n  {\n    \"dish_count\": 2,\n    \"price_per_person\": \"120000\"\n  },\n  {\n    \"dish_count\": 3,\n    \"price_per_person\": \"150000\"\n  }\n]",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Menyu ro'yxati (restoran)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/menu/restaurant/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "menu",
+                "restaurant"
+              ]
+            },
+            "description": "🍽️ Egasi mavjud bo'lmagan taomlarni ham ko'radi (ommaviy ro'yxatdan farqi)."
+          },
+          "response": []
+        },
+        {
+          "name": "Taom qo'shish (restoran)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/menu/restaurant/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "menu",
+                "restaurant"
+              ]
+            },
+            "description": "🍽️ `category`: `starter | soup | main | salad | dessert | drink | other`\n\nRasm bilan: form-data → `photo`.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Steyk Ribay\",\n  \"category\": \"main\",\n  \"price\": \"140000\",\n  \"description\": \"Avstraliya mol go'shti\",\n  \"is_available\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"menu_item_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bitta taom (restoran)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/menu/restaurant/{{menu_item_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "menu",
+                "restaurant",
+                "{{menu_item_id}}"
+              ]
+            },
+            "description": "🍽️ Restoran egasiga."
+          },
+          "response": []
+        },
+        {
+          "name": "Taomni tahrirlash (restoran)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/menu/restaurant/{{menu_item_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "menu",
+                "restaurant",
+                "{{menu_item_id}}"
+              ]
+            },
+            "description": "🍽️ Restoran egasiga.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": \"150000\",\n  \"is_available\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Taomni o'chirish (restoran)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/menu/restaurant/{{menu_item_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "menu",
+                "restaurant",
+                "{{menu_item_id}}"
+              ]
+            },
+            "description": "🍽️ Restoran egasiga."
+          },
+          "response": []
+        },
+        {
+          "name": "Menyu ro'yxati (to'yxona)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/menu/venue/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "menu",
+                "venue"
+              ]
+            },
+            "description": "🎉 To'yxona egasiga."
+          },
+          "response": []
+        },
+        {
+          "name": "Taom qo'shish (to'yxona)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/menu/venue/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "menu",
+                "venue"
+              ]
+            },
+            "description": "🎉 **Narx maydoni yo'q** — to'yxonada narx `/api/owner/pricing/` orqali belgilanadi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Palov (to'y oshi)\",\n  \"category\": \"main\",\n  \"description\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"menu_item_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bitta taom (to'yxona)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/menu/venue/{{menu_item_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "menu",
+                "venue",
+                "{{menu_item_id}}"
+              ]
+            },
+            "description": "🎉 To'yxona egasiga."
+          },
+          "response": []
+        },
+        {
+          "name": "Taomni tahrirlash (to'yxona)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/menu/venue/{{menu_item_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "menu",
+                "venue",
+                "{{menu_item_id}}"
+              ]
+            },
+            "description": "🎉 To'yxona egasiga.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Palov (maxsus)\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Taomni o'chirish (to'yxona)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/menu/venue/{{menu_item_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "menu",
+                "venue",
+                "{{menu_item_id}}"
+              ]
+            },
+            "description": "🎉 To'yxona egasiga."
+          },
+          "response": []
+        },
+        {
+          "name": "Galereya ro'yxati",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/photos/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "photos"
+              ]
+            },
+            "description": "Biznes rasmlari."
+          },
+          "response": []
+        },
+        {
+          "name": "Galereyaga rasm qo'shish",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/photos/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "photos"
+              ]
+            },
+            "description": "Eng ko'pi bilan 10 ta rasm.\n\n**Postmanda:** Body → form-data.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": [],
+                  "description": "JPG/PNG/WEBP, max 5 MB"
+                },
+                {
+                  "key": "order",
+                  "value": "0",
+                  "type": "text",
+                  "description": "Karuseldagi tartib"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"photo_id\", pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rasm tartibini o'zgartirish",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/photos/{{photo_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "photos",
+                "{{photo_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order\": 2\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Rasmni o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/photos/{{photo_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "photos",
+                "{{photo_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Bo'sh vaqtlarni generatsiya qilish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/availability/generate/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "availability",
+                "generate"
+              ]
+            },
+            "description": "⭐ **Eng qulay endpoint:** tanlangan oylarning BARCHA kunlari uchun ish jadvalini bir zumda yaratadi.\n\n- **Restoran:** `room` MAJBURIY (har bir xona uchun alohida yuboriladi)\n- **To'yxona:** `room` yubormang (butun biznes darajasida bitta yozuv)\n- To'yxona uchun `end_time: \"00:00\"` = yarim tungacha (butun kun)\n\nAllaqachon mavjud kunlar qayta yozilmaydi — band qilingan kun tasodifan bo'shatib yuborilmaydi. Javobda `created` va `skipped` keladi.\n\n**Bu qilinmasa mijozlar bron qila olmaydi** — jadval bo'sh bo'ladi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"room\": \"{{room_id}}\",\n  \"start_time\": \"08:00\",\n  \"end_time\": \"23:00\",\n  \"year\": 2026,\n  \"months\": [\n    9,\n    10,\n    11\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bo'sh vaqtlar ro'yxati",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/availability/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "availability"
+              ],
+              "query": [
+                {
+                  "key": "date_from",
+                  "value": "2026-09-01",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "date_to",
+                  "value": "2026-09-30",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "is_booked",
+                  "value": "false",
+                  "description": "true | false",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.results && j.results.length) pm.collectionVariables.set(\"availability_id\", j.results[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kunni tahrirlash",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/availability/{{availability_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "availability",
+                "{{availability_id}}"
+              ]
+            },
+            "description": "Bitta kunning ish vaqtini o'zgartirish.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"start_time\": \"10:00\",\n  \"end_time\": \"22:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Kunni o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/availability/{{availability_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "availability",
+                "{{availability_id}}"
+              ]
+            },
+            "description": "Faol bronlari bor kunni o'chirib bo'lmaydi (400)."
+          },
+          "response": []
+        },
+        {
+          "name": "Bronlar ro'yxati",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/reservations/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "reservations"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "pending | confirmed | cancelled | completed",
+                  "disabled": true
+                },
+                {
+                  "key": "date",
+                  "value": "2026-09-01",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Egasining \"Bronlar\" ekrani. Mijoz ismi va telefoni bilan."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.results && j.results.length) pm.collectionVariables.set(\"reservation_id\", j.results[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bron holatini o'zgartirish",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/reservations/{{reservation_id}}/status/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "reservations",
+                "{{reservation_id}}",
+                "status"
+              ]
+            },
+            "description": "Mijoz depozitni to'lagach egasi bronni tasdiqlaydi.\n\n`status`: `confirmed` | `cancelled` | `completed`\n\n⚠️ Sharh qoldirish uchun bron `completed` bo'lishi kerak.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"confirmed\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Sharhlar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/reviews/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "min_rating",
+                  "value": "1",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Mijozlar sharhlari."
+          },
+          "response": []
+        },
+        {
+          "name": "Obuna holati",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/subscription/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "subscription"
+              ]
+            },
+            "description": "Holat, oylik narx, qolgan kun (`days_left`), to'lov tarixi va admin Telegram'i."
+          },
+          "response": []
+        },
+        {
+          "name": "To'lovlar tarixi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/payments/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "payments"
+              ]
+            },
+            "description": "Admin tasdiqlagan to'lovlar jurnali."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05 · Super-admin paneli",
+      "description": "`is_staff=True` bo'lgan foydalanuvchi uchun. Superuser yaratish:\n\n```\npython manage.py createsuperuser\n```\n\nKeyin **01 → 4-so'rov** bilan shu hisob ostida login qiling.",
+      "item": [
+        {
+          "name": "Dashboard statistikasi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/overview/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "overview"
+              ]
+            },
+            "description": "Foydalanuvchilar, bizneslar, arizalar, bronlar va obunalar bo'yicha umumiy raqamlar."
+          },
+          "response": []
+        },
+        {
+          "name": "Arizalar ro'yxati",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/applications/?status=pending_payment",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "applications"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending_payment",
+                  "description": "pending_payment | approved | rejected",
+                  "disabled": false
+                },
+                {
+                  "key": "business_type",
+                  "value": "restaurant",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "Shoxona",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Kutilayotgan arizalar. Har birida arizachi ismi, telefoni va username'i."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.results && j.results.length) pm.collectionVariables.set(\"application_id\", j.results[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "To'lovni tasdiqlash (arizani ma'qullash)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/applications/{{application_id}}/approve/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "applications",
+                "{{application_id}}",
+                "approve"
+              ]
+            },
+            "description": "⭐ **Asosiy admin amali.** Telegram orqali to'lov kelganini ko'rgach bosiladi.\n\nNatijasi:\n1. Ariza → `approved`\n2. Obuna → `active`, muddat +30 kun\n3. To'lov jurnaliga yozuv tushadi\n4. Biznes profili ommaviy qidiruvda ko'rinadi"
+          },
+          "response": []
+        },
+        {
+          "name": "Arizani rad etish",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/applications/{{application_id}}/reject/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "applications",
+                "{{application_id}}",
+                "reject"
+              ]
+            },
+            "description": "Biznes profili yashiriladi, lekin o'chirilmaydi — egasi keyin to'lov qilib qayta faollashtirishi mumkin."
+          },
+          "response": []
+        },
+        {
+          "name": "Bizneslar ro'yxati",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/businesses/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "businesses"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "restaurant",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "is_visible",
+                  "value": "true",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "Shoxona",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Barcha bizneslar — bloklanganlari ham. Har birida obuna holati."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.results && j.results.length) pm.collectionVariables.set(\"business_id\", j.results[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Biznesni bloklash/blokdan chiqarish",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/businesses/{{business_id}}/toggle-block/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "businesses",
+                "{{business_id}}",
+                "toggle-block"
+              ]
+            },
+            "description": "`is_visible` ni teskarisiga o'zgartiradi. Bloklangan biznes ommaviy qidiruvda chiqmaydi."
+          },
+          "response": []
+        },
+        {
+          "name": "Foydalanuvchilar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/users/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "business",
+                  "description": "user | business | admin",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "sardor",
+                  "description": "Ism, username yoki telefon",
+                  "disabled": true
+                },
+                {
+                  "key": "is_active",
+                  "value": "true",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.results && j.results.length) pm.collectionVariables.set(\"user_id\", j.results[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Foydalanuvchi (ko'rish)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/users/{{user_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{user_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Foydalanuvchini tahrirlash",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/users/{{user_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users",
+                "{{user_id}}"
+              ]
+            },
+            "description": "Tahrirlash mumkin: `is_active`, `is_confirmed`, `is_phone_verified`, `role`.\n\n⚠️ `is_staff` va `is_superuser` **ataylab** bu yerda yo'q — huquq berish faqat Django admin paneli orqali. Shunda admin tokeni o'g'irlansa ham hujumchi o'ziga doimiy super-admin huquqi yoza olmaydi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": true,\n  \"is_confirmed\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obunalar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/subscriptions/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscriptions"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "trial",
+                  "description": "trial | active | expired",
+                  "disabled": true
+                },
+                {
+                  "key": "business_type",
+                  "value": "venue",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "Shoxona",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.results && j.results.length) pm.collectionVariables.set(\"subscription_id\", j.results[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obunani faollashtirish (to'lov tasdig'i)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/subscriptions/{{subscription_id}}/activate/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscriptions",
+                "{{subscription_id}}",
+                "activate"
+              ]
+            },
+            "description": "Obunani 30 kunga uzaytiradi va to'lov jurnaliga yozuv qo'shadi.\n\n`amount` berilmasa tarif narxi olinadi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"255000\",\n  \"note\": \"Telegram orqali karta-kartaga\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obunani tugatish",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/subscriptions/{{subscription_id}}/expire/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscriptions",
+                "{{subscription_id}}",
+                "expire"
+              ]
+            },
+            "description": "Obunani qo'lda `expired` qiladi va biznesni qidiruvdan yashiradi."
+          },
+          "response": []
+        },
+        {
+          "name": "Tarif rejalari",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/subscription-plans/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscription-plans"
+              ]
+            },
+            "description": ""
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "if (j.results && j.results.length) pm.collectionVariables.set(\"plan_id\", j.results[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Tarif qo'shish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/subscription-plans/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscription-plans"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"business_type\": \"restaurant\",\n  \"monthly_price\": \"255000\",\n  \"trial_days\": 7\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bitta tarif",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/subscription-plans/{{plan_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscription-plans",
+                "{{plan_id}}"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Tarifni tahrirlash",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/subscription-plans/{{plan_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscription-plans",
+                "{{plan_id}}"
+              ]
+            },
+            "description": "",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monthly_price\": \"300000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Tarifni o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/subscription-plans/{{plan_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscription-plans",
+                "{{plan_id}}"
+              ]
+            },
+            "description": "Bog'langan obunalari bor tarifni o'chirib bo'lmaydi (400)."
+          },
+          "response": []
+        },
+        {
+          "name": "To'lovlar jurnali",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/payments/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payments"
+              ],
+              "query": [
+                {
+                  "key": "business",
+                  "value": "{{business_id}}",
+                  "description": "Biznes bo'yicha",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Qo'lda to'lov qo'shish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/payments/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "payments"
+              ]
+            },
+            "description": "`confirmed_by` avtomatik joriy admindan olinadi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscription\": \"{{subscription_id}}\",\n  \"amount\": \"255000\",\n  \"note\": \"Payme orqali to'landi\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Barcha bronlar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reservations/?",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "reservations"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "description": "",
+                  "disabled": true
+                },
+                {
+                  "key": "business",
+                  "value": "{{business_id}}",
+                  "description": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Platformadagi barcha bronlar."
+          },
+          "response": []
+        },
+        {
+          "name": "Platforma sozlamalari (ko'rish)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/settings/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "settings"
+              ]
+            },
+            "description": ""
+          },
+          "response": []
+        },
+        {
+          "name": "Platforma sozlamalarini o'zgartirish",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/settings/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "settings"
+              ]
+            },
+            "description": "⭐ **Depozit narxlari va obuna muddatlari shu yerdan boshqariladi** — kodga tegmasdan, deploy qilmasdan.\n\nO'zgarish darhol kuchga kiradi (kesh tozalanadi).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"admin_telegram_username\": \"uvente\",\n  \"support_phone\": \"+998712000000\",\n  \"room_deposit_premium\": \"99000\",\n  \"room_deposit_pro\": \"49000\",\n  \"venue_deposit\": \"599000\",\n  \"trial_days\": 7,\n  \"subscription_days\": 30\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
