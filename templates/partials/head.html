@@ -1,12 +1,29 @@
 {% load static %}
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0B3B2E">
 <meta name="description" content="WENZU — Toshkentdagi restoran va to'yxonalarni onlayn qidiring, bo'sh vaqtni ko'ring va bir necha bosishda bron qiling.">
 
 <title>{% if page_title %}{{ page_title }} · {% endif %}WENZU</title>
 
 <link rel="icon" href="{% static 'images/logo.png' %}">
+
+{% comment %}
+  TELEFONGA O'RNATISH.
+
+  `manifest` — Android'ga ilovaning nomi, ikonkasi va rangini aytadi;
+  usiz "Bosh ekranga qo'shish" oddiy yorliq yasaydi, ilova emas.
+
+  iOS bu maydonlarning ko'pini o'qimaydi, shuning uchun unga alohida
+  `apple-*` teglari kerak — aks holda ikonka o'rniga ekran surati
+  qo'yiladi va sahifa Safari oynasida ochilaveradi.
+{% endcomment %}
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="{% static 'images/pwa/apple-touch-icon.png' %}">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="WENZU">
+<meta name="mobile-web-app-capable" content="yes">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

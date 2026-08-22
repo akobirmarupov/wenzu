@@ -13,7 +13,7 @@ from rest_framework.views import APIView
 
 from common.models import PlatformSettings
 from common.pagination import StandardResultsPagination
-from common.permissions import IsBusinessRole, IsCustomer, IsPhoneVerified, IsSuperAdmin
+from common.permissions import HasContactPhone, IsBusinessRole, IsCustomer, IsSuperAdmin
 from common.queue import enqueue
 from common.services import get_owner_business
 from common.throttles import ReservationCreateThrottle
@@ -49,7 +49,11 @@ class ReservationCreateAPIView(APIView):
     bajariladi (TZ 9-bo'lim talabi).
     """
 
-    permission_classes = [IsAuthenticated, IsPhoneVerified, IsCustomer]
+    permission_classes = [IsAuthenticated, HasContactPhone, IsCustomer]
+    phone_message = (
+        "Bron qilish uchun aloqa raqamingizni kiriting — "
+        "joy egasi bronni tasdiqlash uchun sizga qo'ng'iroq qiladi."
+    )
     throttle_classes = [ReservationCreateThrottle]
 
     @extend_schema(

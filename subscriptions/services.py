@@ -45,11 +45,11 @@ def get_or_create_plan(business_type, duration_months=1):
     return plan
 
 
-@transaction.atomic
 class TrialAlreadyUsed(Exception):
     """Bepul sinov allaqachon ishlatilgan — ikkinchi marta berilmaydi."""
 
 
+@transaction.atomic
 def start_trial(*, business):
     """
     7 kunlik bepul sinovni ochadi (admin arizani tasdiqlagach).

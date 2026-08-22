@@ -87,6 +87,39 @@ class BusinessApplicationAdmin(ModelAdmin):
 
     actions = ["approve_payment", "reject"]
 
+    def save_model(self, request, obj, form, change):
+        """
+        Shakl orqali `status` o'zgartirilsa ham SERVIS chaqiriladi.
+
+        Nega kerak: ilgari faqat ro'yxatdagi "amal" (action) servisga
+        borardi. Admin esa arizani ochib, `status` ni "Tasdiqlangan"ga
+        qo'yib saqlashi mumkin edi — bu eng tabiiy yo'l. Shunda maydon
+        o'zgarardi, lekin obuna OCHILMASDI va joy ko'rinmasdi: egasi
+        "tasdiqlandi" degan yozuvni ko'rib turib, boshqaruv paneliga
+        kira olmasdi. Aynan shu holat sodir bo'lgan.
+
+        Endi ikkala yo'l ham bitta joyga — `approve_application` /
+        `reject_application` ga olib boradi.
+        """
+        from businesses.services import approve_application, reject_application
+
+        previous_status = (
+            BusinessApplication.objects.filter(pk=obj.pk)
+            .values_list("status", flat=True)
+            .first()
+            if change else None
+        )
+        super().save_model(request, obj, form, change)
+
+        if obj.status == previous_status:
+            return
+        if obj.status == BusinessApplication.STATUS_APPROVED:
+            approve_application(application=obj, approved_by=request.user)
+            self.message_user(request, "Ariza tasdiqlandi: obuna ochildi va joy ommaga chiqdi.")
+        elif obj.status == BusinessApplication.STATUS_REJECTED:
+            reject_application(application=obj, rejected_by=request.user)
+            self.message_user(request, "Ariza rad etildi: joy qidiruvdan yashirildi.")
+
     @admin.action(description=_("To'lovni tasdiqlash (obuna 30 kunga faollashadi)"))
     def approve_payment(self, request, queryset):
         # API va admin panel bir xil servis funksiyasini chaqiradi —

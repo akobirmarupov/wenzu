@@ -7,13 +7,12 @@ ketma-ket bog'liq (ariza bo'lmasa biznes yo'q, biznes bo'lmasa bron yo'q).
 """
 
 import datetime
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.core.cache import cache
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from account.routes.user import SMS_CACHE_KEY
 from businesses.models import Business, Room
 from businesses.services import approve_application
 from reservations.models import Availability, Reservation
@@ -31,50 +30,70 @@ class FullFlowTest(TestCase):
         return client
 
     def test_full_flow(self):
-        # --- 1. Ro'yxatdan o'tish -------------------------------------
-        response = self.client.post("/api/auth/register/", {
-            "full_name": "Sardor Yusupov",
-            "phone_number": "+998901234567",
-            "username": "sardor_y",
-            "password": "StrongPass123!",
-            "password_confirm": "StrongPass123!",
-        }, format="json")
-        self.assertEqual(response.status_code, 201, response.data)
+        # --- 1. Google orqali ro'yxatdan o'tish ------------------------
+        #
+        # Google imzosini test ichida yasab bo'lmaydi, shuning uchun
+        # tekshiruv qadami almashtiriladi. Uning O'ZI alohida testda
+        # sinaladi (`account/tests.py`) — bu yerda undan KEYINGI oqim
+        # muhim.
+        with patch("account.routes.user.verify_google_token") as verify:
+            verify.return_value = {
+                "sub": "google-sardor-1",
+                "email": "sardor.y@gmail.com",
+                "name": "Sardor Yusupov",
+                "picture": "",
+            }
+            response = self.client.post("/api/auth/google/", {
+                "credential": "test-token",
+            }, format="json")
 
-        owner = User.objects.get(username="sardor_y")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertTrue(response.data["created"], "Birinchi kirishda hisob yaratilsin")
+
+        # Username pochtaning @ belgisigacha bo'lgan qismidan, nuqtasiz.
+        owner = User.objects.get(email="sardor.y@gmail.com")
+        self.assertEqual(owner.username, "sardor_y")
+        self.assertEqual(owner.full_name, "Sardor Yusupov")
         self.assertEqual(owner.role, "user")
+        self.assertTrue(owner.is_confirmed, "Google pochtani tekshirgan")
+        self.assertIsNone(owner.phone_number, "Google raqam bermaydi")
 
-        # --- 2. Telefonni tasdiqlash (SMS kodi cache'dan) -------------
-        response = self.client.post("/api/auth/send-code/", {
-            "phone_number": "+998901234567",
-        }, format="json")
-        self.assertEqual(response.status_code, 200, response.data)
-        # Test rejimida DEBUG=False, shuning uchun kod javobda emas —
-        # uni to'g'ridan-to'g'ri cache'dan olamiz (haqiqiy oqimda SMS bilan keladi).
-        code = cache.get(SMS_CACHE_KEY % "+998901234567")
-        self.assertIsNotNone(code, "Kod cache'ga yozilishi kerak")
+        # --- 2. Ikkinchi kirish: YANGI hisob yaratilmaydi --------------
+        with patch("account.routes.user.verify_google_token") as verify:
+            verify.return_value = {
+                "sub": "google-sardor-1",
+                "email": "sardor.y@gmail.com",
+                "name": "Sardor Yusupov",
+                "picture": "",
+            }
+            response = self.client.post("/api/auth/google/", {
+                "credential": "test-token",
+            }, format="json")
 
-        response = self.client.post("/api/auth/verify-phone/", {
-            "phone_number": "+998901234567", "code": "000000" if code != "000000" else "111111",
-        }, format="json")
-        self.assertEqual(response.status_code, 400, "Noto'g'ri kod qabul qilinmasligi kerak")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data["created"], "Mavjud hisobga kiritilsin")
+        self.assertEqual(User.objects.filter(email="sardor.y@gmail.com").count(), 1)
 
-        response = self.client.post("/api/auth/verify-phone/", {
-            "phone_number": "+998901234567", "code": code,
-        }, format="json")
-        self.assertEqual(response.status_code, 200, response.data)
-        owner.refresh_from_db()
-        self.assertTrue(owner.is_phone_verified)
-
-        # --- 3. Login: hali biznes yo'q -------------------------------
-        response = self.client.post("/api/auth/login/", {
-            "username": "sardor_y", "password": "StrongPass123!",
-        }, format="json")
-        self.assertEqual(response.status_code, 200, response.data)
+        # --- 3. Hali biznes yo'q --------------------------------------
         self.assertEqual(response.data["user"]["role"], "user")
         self.assertIsNone(response.data["user"]["business"])
 
         # --- 4. "Restoran ochish" arizasi -----------------------------
+        #
+        # Avval RAQAMSIZ urinib ko'ramiz. Google orqali kelgan odamda
+        # raqam bo'lmaydi va ariza o'tmasligi kerak: administrator uni
+        # ko'rib chiqib, egasi bilan bog'lanadi.
+        blocked = self.auth(owner).post("/api/business-applications/", {
+            "business_type": "restaurant", "business_name": "Shoxona Restorani",
+        }, format="json")
+        self.assertEqual(blocked.status_code, 403, "Raqamsiz ariza o'tmasin")
+
+        # Raqam kiritiladi — haqiqiy oqimda buni kichik oyna so'raydi.
+        added = self.auth(owner).patch(
+            "/api/auth/me/", {"phone_number": "+998901234567"}, format="json",
+        )
+        self.assertEqual(added.status_code, 200, added.data)
+
         response = self.auth(owner).post("/api/business-applications/", {
             "business_type": "restaurant", "business_name": "Shoxona Restorani",
         }, format="json")
@@ -112,10 +131,17 @@ class FullFlowTest(TestCase):
         self.assertTrue(business.is_visible, "Tasdiqdan keyin biznes qidiruvga chiqadi")
         self.assertEqual(business.subscription.status, "trial")
 
-        # --- 5. Qayta login: endi business.type qaytadi ---------------
-        response = self.client.post("/api/auth/login/", {
-            "username": "sardor_y", "password": "StrongPass123!",
-        }, format="json")
+        # --- 5. Qayta kirish: endi business.type qaytadi ---------------
+        with patch("account.routes.user.verify_google_token") as verify:
+            verify.return_value = {
+                "sub": "google-sardor-1",
+                "email": "sardor.y@gmail.com",
+                "name": "Sardor Yusupov",
+                "picture": "",
+            }
+            response = self.client.post("/api/auth/google/", {
+                "credential": "test-token",
+            }, format="json")
         self.assertEqual(response.data["user"]["business"]["type"], "restaurant",
                          "Frontend shu maydonga qarab restoran panelini ochadi")
 

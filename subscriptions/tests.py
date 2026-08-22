@@ -463,6 +463,28 @@ class ApprovalFlagInLoginTest(TestCase):
 
         self.assertTrue(response.data["business"]["is_approved"])
 
+    def test_flag_follows_the_application_not_the_subscription(self):
+        """
+        Ariza tasdiqlangan, lekin obuna ochilmagan — egasi baribir
+        panelga kira olishi kerak.
+
+        Bu holat amalda uchraydi: admin `status` ni Django panelidagi
+        shakl orqali o'zgartiradi, yoki egasi bepul sinovni avval
+        ishlatgan bo'ladi (`approve_application` buni ataylab kechiradi).
+        Ilgari bayroq obunaga qarardi va bunday odam tasdiqlangan biznes
+        egasi bo'lib turib panelga umuman kira olmasdi.
+        """
+        self.application.status = "approved"
+        self.application.save(update_fields=["status"])
+
+        business = self._login()
+
+        self.assertTrue(business["is_approved"])
+        self.assertIsNone(
+            business["subscription_status"],
+            "Obuna alohida maydonda ko'rinadi — tasdiq bilan aralashmasin",
+        )
+
 
 class TrialOncePerUserTest(TestCase):
     """

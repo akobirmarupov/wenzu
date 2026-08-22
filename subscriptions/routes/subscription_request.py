@@ -21,7 +21,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from common.pagination import StandardResultsPagination
-from common.permissions import IsBusinessRole, IsSuperAdmin
+from common.permissions import HasContactPhone, IsBusinessRole, IsSuperAdmin
 from common.services import get_owner_business
 from subscriptions.models import SubscriptionPlan, SubscriptionRequest
 from subscriptions.routes.serializers import (
@@ -47,7 +47,13 @@ class OwnerSubscriptionRequestAPIView(APIView):
     bo'lmasdi.
     """
 
-    permission_classes = [IsBusinessRole]
+    # Raqamsiz obuna so'rovi yuborilmaydi: administrator to'lovni
+    # tasdiqlash uchun egasi bilan bog'lanadi.
+    permission_classes = [IsBusinessRole, HasContactPhone]
+    phone_message = (
+        "Obuna so'rovi uchun aloqa raqamingizni kiriting — "
+        "administrator to'lovni siz bilan kelishadi."
+    )
     pagination_class = StandardResultsPagination
 
     @extend_schema(responses=SubscriptionRequestSerializer(many=True))

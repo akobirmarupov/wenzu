@@ -82,6 +82,9 @@ function formHtml(business) {
       <div class="field">
         <label for="cover">Asosiy rasm</label>
         <input class="input" id="cover" name="cover_photo" type="file" accept="image/*">
+        ${business.cover_photo ? `
+          <img class="field-preview" src="${esc(business.cover_photo)}" alt="Asosiy rasm">
+        ` : `<span class="field-hint">Hali yuklanmagan — qidiruvda joyingiz shu rasm bilan chiqadi</span>`}
       </div>
     </div>
 
@@ -164,9 +167,16 @@ function init() {
       await api.owner.updateBusiness(values);
 
       if (file) {
+        // Rasm ALOHIDA so'rovda: matn maydonlari JSON bilan ketadi,
+        // fayl esa multipart bilan. Ikkalasini aralashtirsak, har
+        // saqlashda butun forma multipart bo'lib ketardi.
         const formData = new FormData();
         formData.append("cover_photo", file);
         await api.owner.updateBusiness(formData);
+        // Formani qayta o'qiymiz — egasi yuklangan rasmni DARHOL
+        // ko'rsin. Aks holda "saqlandi" yozuvidan boshqa dalil
+        // qolmaydi va odam rasm tushdimi-yo'qmi bilmaydi.
+        await loadBusiness();
       }
       toast.ok("Sozlamalar saqlandi.");
     } catch (error) {

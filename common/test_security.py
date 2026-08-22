@@ -5,10 +5,11 @@ Bular "ishlaydimi" emas, "buzib bo'ladimi" degan savolga javob beradi.
 """
 
 import datetime
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -109,64 +110,94 @@ class AuthorizationTest(TestCase):
             self.assertEqual(client.get(url).status_code, 401, url)
 
 
-class PhoneVerificationSecurityTest(TestCase):
-    """SMS tasdiqlash oqimining zaif joylari."""
+class GoogleAuthSecurityTest(TestCase):
+    """
+    Google orqali kirishning zaif joylari.
+
+    Eng muhimi bitta: token TEKSHIRILMASDAN ishlatilmasin. Aks holda
+    istalgan odam o'zi yozgan "token" bilan boshqa birov bo'lib kirib
+    olardi — bu butun tizimni ochib qo'yardi.
+    """
 
     def setUp(self):
         cache.clear()
-        self.user = make_user("smsuser", "+998901111111")
-        self.user.is_phone_verified = False
-        self.user.save(update_fields=["is_phone_verified"])
         self.client = APIClient()
 
-    def test_send_code_does_not_leak_whether_phone_exists(self):
+    def test_forged_token_is_rejected(self):
+        """O'zi yozilgan token qabul qilinmasin."""
+        response = self.client.post("/api/auth/google/", {
+            "credential": "men.ozim.yozdim",
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(User.objects.count(), 0, "Yaroqsiz token hisob yaratmasin")
+
+    def test_credential_is_required(self):
+        response = self.client.post("/api/auth/google/", {}, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("success", response.data)
+
+    def test_blocked_account_cannot_get_in(self):
         """
-        Ro'yxatdan o'tgan va o'tmagan raqamga javob BIR XIL bo'lishi kerak —
-        aks holda bu endpoint raqam bazasini yig'ish vositasiga aylanadi.
+        Bloklangan hisob Google orqali ham kira olmasligi kerak.
+
+        Bu oson unutiladigan joy: administrator hisobni bloklaydi,
+        lekin kirishning YANGI yo'li bu bayroqni tekshirmasa, blok
+        hech qanday kuchga ega bo'lmaydi.
         """
-        known = self.client.post(
-            "/api/auth/send-code/", {"phone_number": "+998901111111"}, format="json"
-        )
-        cache.clear()
-        unknown = self.client.post(
-            "/api/auth/send-code/", {"phone_number": "+998909999999"}, format="json"
-        )
-        self.assertEqual(known.status_code, unknown.status_code)
-        self.assertEqual(known.data["detail"], unknown.data["detail"])
+        user = make_user("blocked_g", "+998901111222")
+        user.email = "blocked@gmail.com"
+        user.is_active = False
+        user.save(update_fields=["email", "is_active"])
 
-    def test_wrong_code_is_rejected(self):
-        self.client.post("/api/auth/send-code/", {"phone_number": "+998901111111"}, format="json")
-        response = self.client.post(
-            "/api/auth/verify-phone/",
-            {"phone_number": "+998901111111", "code": "000000"},
-            format="json",
-        )
-        self.assertIn(response.status_code, (400, 429))
-        self.user.refresh_from_db()
-        self.assertFalse(self.user.is_phone_verified)
+        with patch("account.routes.user.verify_google_token") as verify:
+            verify.return_value = {
+                "sub": "g-blocked", "email": "blocked@gmail.com",
+                "name": "Blocked", "picture": "",
+            }
+            response = self.client.post("/api/auth/google/", {
+                "credential": "token",
+            }, format="json")
 
-    @override_settings(SMS_MAX_VERIFY_ATTEMPTS=3)
-    def test_code_is_burned_after_too_many_attempts(self):
-        """Kodni cheksiz taxmin qilib bo'lmasligi kerak."""
-        self.client.post("/api/auth/send-code/", {"phone_number": "+998901111111"}, format="json")
-        real_code = cache.get("sms_code:+998901111111")
+        self.assertEqual(response.status_code, 403)
 
-        for _ in range(3):
-            self.client.post(
-                "/api/auth/verify-phone/",
-                {"phone_number": "+998901111111", "code": "111111"},
-                format="json",
-            )
+    def test_username_is_derived_and_never_collides(self):
+        """
+        Ikki xil pochtaning @ gacha qismi bir xil bo'lishi mumkin
+        (ali@gmail.com va ali@mail.ru). Ikkinchisiga boshqa username
+        berilishi kerak, aks holda hisob yaratilmay xato bo'lardi.
+        """
+        for index, email in enumerate(["ali@gmail.com", "ali@mail.ru"]):
+            with patch("account.routes.user.verify_google_token") as verify:
+                verify.return_value = {
+                    "sub": f"g-{index}", "email": email, "name": "Ali", "picture": "",
+                }
+                response = self.client.post("/api/auth/google/", {
+                    "credential": "token",
+                }, format="json")
+            self.assertEqual(response.status_code, 200, response.data)
 
-        # 4-urinish — hatto TO'G'RI kod bilan ham o'tmasligi kerak.
-        response = self.client.post(
-            "/api/auth/verify-phone/",
-            {"phone_number": "+998901111111", "code": real_code},
-            format="json",
-        )
-        self.assertEqual(response.status_code, 429)
-        self.user.refresh_from_db()
-        self.assertFalse(self.user.is_phone_verified)
+        names = set(User.objects.values_list("username", flat=True))
+        self.assertEqual(len(names), 2, f"Username takrorlanmasin: {names}")
+        self.assertIn("ali", names)
+
+    def test_phone_cannot_be_changed_once_set(self):
+        """
+        Raqam bir marta yoziladi. Aks holda mehmon bron yuborib, keyin
+        raqamni almashtirib qo'yardi va joy egasi bog'lana olmasdi.
+        """
+        user = make_user("phoneowner", "+998903333444")
+        client = APIClient()
+        client.force_authenticate(user=user)
+
+        response = client.patch("/api/auth/me/", {
+            "phone_number": "+998904444555",
+        }, format="json")
+
+        self.assertEqual(response.status_code, 400)
+        user.refresh_from_db()
+        self.assertEqual(user.phone_number, "+998903333444")
 
 
 class ValidationSecurityTest(TestCase):
@@ -176,41 +207,21 @@ class ValidationSecurityTest(TestCase):
         cache.clear()
         self.client = APIClient()
 
-    def test_weak_password_rejected(self):
-        response = self.client.post("/api/auth/register/", {
-            "full_name": "Test User", "phone_number": "+998902222222",
-            "username": "weakpass", "password": "12345", "password_confirm": "12345",
-        }, format="json")
-        self.assertEqual(response.status_code, 400)
-
-    def test_password_mismatch_rejected(self):
-        response = self.client.post("/api/auth/register/", {
-            "full_name": "Test User", "phone_number": "+998902222223",
-            "username": "mismatch", "password": "StrongPass123!",
-            "password_confirm": "OtherPass123!",
-        }, format="json")
-        self.assertEqual(response.status_code, 400)
-
-    def test_invalid_username_rejected(self):
-        for bad in ["Shohona", "dilmurod-ota", "sh", "shoh.ona", "a" * 31]:
-            response = self.client.post("/api/auth/register/", {
-                "full_name": "Test", "phone_number": "+998902222224",
-                "username": bad, "password": "StrongPass123!",
-                "password_confirm": "StrongPass123!",
-            }, format="json")
-            self.assertEqual(response.status_code, 400, f"'{bad}' qabul qilinmasligi kerak")
-
     def test_invalid_phone_rejected(self):
+        """Bron uchun kiritiladigan raqam formati tekshirilsin."""
+        user = make_user("phonevalid", "+998902222225")
+        user.phone_number = None
+        user.save(update_fields=["phone_number"])
+
+        client = APIClient()
+        client.force_authenticate(user=user)
+
         for bad in ["901234567", "+7901234567", "+99890123", "salom"]:
-            response = self.client.post("/api/auth/register/", {
-                "full_name": "Test", "phone_number": bad,
-                "username": "phonetest", "password": "StrongPass123!",
-                "password_confirm": "StrongPass123!",
-            }, format="json")
+            response = client.patch("/api/auth/me/", {"phone_number": bad}, format="json")
             self.assertEqual(response.status_code, 400, f"'{bad}' qabul qilinmasligi kerak")
 
     def test_error_response_has_consistent_shape(self):
-        response = self.client.post("/api/auth/register/", {}, format="json")
+        response = self.client.post("/api/auth/google/", {}, format="json")
         self.assertEqual(response.status_code, 400)
         self.assertIn("success", response.data)
         self.assertFalse(response.data["success"])
@@ -356,14 +367,87 @@ class BookingIntegrityTest(TestCase):
             other_client.get(f"/api/reservations/{reservation_id}/").status_code, 403
         )
 
-    def test_unverified_phone_cannot_book(self):
-        """SMS tasdiqlanmagan foydalanuvchi bron qila olmasligi kerak."""
-        unverified = make_user("unverified", "+998908888888")
-        unverified.is_phone_verified = False
-        unverified.save(update_fields=["is_phone_verified"])
+    def test_user_without_phone_cannot_book(self):
+        """
+        Aloqa raqamisiz bron qabul qilinmasligi kerak.
+
+        Google orqali kirgan yangi foydalanuvchida raqam bo'lmaydi —
+        u birinchi bron paytida so'raladi. Server shu talabni ushlab
+        turmasa, joy egasi bog'lana olmaydigan bron kelib qolardi.
+        """
+        no_phone = make_user("nophone", "+998908888888")
+        no_phone.phone_number = None
+        no_phone.save(update_fields=["phone_number"])
 
         client = APIClient()
-        client.force_authenticate(user=unverified)
+        client.force_authenticate(user=no_phone)
         self.assertEqual(
             client.post("/api/reservations/", self.payload(), format="json").status_code, 403
         )
+
+    def test_booking_works_once_the_phone_is_added(self):
+        """Raqam kiritilgach o'sha odam bron qila olsin."""
+        guest = make_user("withphone", "+998908888777")
+        guest.phone_number = None
+        guest.save(update_fields=["phone_number"])
+
+        client = APIClient()
+        client.force_authenticate(user=guest)
+
+        added = client.patch("/api/auth/me/", {"phone_number": "+998908888777"}, format="json")
+        self.assertEqual(added.status_code, 200, added.data)
+
+        response = client.post("/api/reservations/", self.payload(), format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+
+class PhoneRequiredEverywhereTest(TestCase):
+    """
+    Aloqa raqami qayerda SHART.
+
+    Google orqali kirgan odam raqamsiz keladi va u saytni bemalol
+    KO'RADI. Lekin administrator yoki joy egasi u bilan BOG'LANISHI
+    kerak bo'lgan har bir amal raqamni talab qiladi:
+
+      · bron           — joy egasi mehmonga qo'ng'iroq qiladi
+      · biznes arizasi — admin joyni tekshirib, egasi bilan gaplashadi
+      · obuna so'rovi  — admin to'lovni kelishadi
+
+    Bu ro'yxat frontendda ham takrorlanadi (kichik oyna ochiladi),
+    lekin ASOSIY to'siq shu yerda: frontend chetlab o'tilsa ham
+    raqamsiz o'tmasin.
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient()
+        self.user = make_user("nophone_gate", "+998900123400")
+        self.user.phone_number = None
+        self.user.save(update_fields=["phone_number"])
+        self.client.force_authenticate(self.user)
+
+    def test_business_application_needs_a_phone(self):
+        response = self.client.post("/api/business-applications/", {
+            "business_type": "restaurant", "business_name": "Raqamsiz joy",
+        }, format="json")
+
+        self.assertEqual(response.status_code, 403, response.data)
+
+    def test_application_works_once_the_phone_is_added(self):
+        self.client.patch("/api/auth/me/", {"phone_number": "+998900123400"}, format="json")
+
+        response = self.client.post("/api/business-applications/", {
+            "business_type": "restaurant", "business_name": "Raqamli joy",
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201, response.data)
+
+    def test_browsing_stays_open_without_a_phone(self):
+        """
+        Raqam faqat AMALLARNI to'sadi. Ko'rish — restoranlar ro'yxati,
+        joy sahifasi, menyu — hamma uchun ochiq qoladi, aks holda
+        odam saytni umuman ko'ra olmay, raqam so'ralganda ham nima
+        uchun kerakligini bilmasdi.
+        """
+        for url in ["/api/businesses/", "/api/auth/me/"]:
+            self.assertEqual(self.client.get(url).status_code, 200, url)

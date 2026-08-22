@@ -135,6 +135,13 @@ export default {
   },
 
   auth: {
+    googleTitle: "Sign in with one tap",
+    googleLead: "Continue with your Google account — no password to invent, no SMS to wait for.",
+    perkFast: "One tap and your account is ready",
+    perkSafe: "We never store your password",
+    perkPhoto: "Name and photo are filled in for you",
+    passwordLogin: "Sign in with a password",
+    passwordHint: "For legacy accounts and the administrator only.",
     loginTitle: "Sign in", loginLead: "Sign in and manage your bookings.",
     registerTitle: "Sign up", verifyTitle: "Verify your phone",
     fullName: "Full name", phone: "Phone number", username: "Username",
@@ -153,6 +160,8 @@ export default {
     bookings: "My bookings",
     business: "Open a business",
     personalInfo: "Personal details",
+    edit: "Edit",
+    editTitle: "Edit your details",
     account: "Account details",
     groupAccount: "My account",
     groupManage: "Management",
@@ -225,6 +234,10 @@ export default {
   admin: {
     title: "Platform management",
     shortcuts: "Quick access",
+  },
+
+  news: {
+    open: "Open link",
   },
 
   common: {

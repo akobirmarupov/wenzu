@@ -87,16 +87,35 @@ function row(item) {
     </tr>`;
 }
 
+/**
+ * Sarlavha ostidagi hisoblagich.
+ *
+ * Ikki xil raqam bor va ularni chalkashtirmaslik kerak:
+ *   `total` — platformadagi BARCHA foydalanuvchi
+ *   `count` — hozirgi filtrga tushganlar
+ * Filtr yo'q bo'lsa ikkalasi teng va bitta raqam yozamiz; filtr bor
+ * bo'lsa ikkalasi ham ko'rsatiladi, aks holda "20 ta foydalanuvchi"
+ * degan yozuv butun platformaning soni deb tushunilardi.
+ */
+function countLabel(data) {
+  const total = data.total ?? data.count;
+  return data.count !== total
+    ? `Topildi: ${data.count} ta · Platformada jami: ${total} ta foydalanuvchi`
+    : `Platformada jami: ${total} ta foydalanuvchi`;
+}
+
 async function load() {
   $("#list").innerHTML = `<tr><td colspan="6">${skeletonRows(4)}</td></tr>`;
   $("#pager").innerHTML = "";
   try {
     const data = await api.admin.users({ ...filters, page_size: 20 });
+    $("#user-count").textContent = countLabel(data);
     $("#list").innerHTML = data.results.length
       ? data.results.map(row).join("")
       : `<tr><td colspan="6"><p class="muted center" style="padding:var(--sp-8)">Hech kim topilmadi</p></td></tr>`;
     $("#pager").innerHTML = paginationHtml(data);
   } catch (error) {
+    $("#user-count").textContent = "";
     $("#list").innerHTML = `<tr><td colspan="6">${errorState(error.message)}</td></tr>`;
   }
 }

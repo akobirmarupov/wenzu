@@ -63,6 +63,12 @@ STYLESHEETS = [
     "css/pages/_auth.css",
     "css/pages/_profile.css",
     "css/pages/_premium.css",
+    # 4. Telefon ko'rinishi — ENG OXIRIDA.
+    #
+    # Kaskadda oxirgi qatlam ustun turadi, shuning uchun mobil qoidalar
+    # `!important` siz ham ishlaydi. Ro'yxat o'rtasiga qo'yilsa, keyingi
+    # sahifa uslublari ularni bosib ketardi.
+    "css/base/_mobile.css",
 ]
 
 _cached_version = None
@@ -106,4 +112,7 @@ def asset_version(request):
             _cached_version = _compute_version()
         version = _cached_version
 
-    return {"asset_version": version, "stylesheets": STYLESHEETS}
+    return {
+        "asset_version": version,
+        "stylesheets": STYLESHEETS,
+    }

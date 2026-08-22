@@ -49,11 +49,6 @@ export const storage = {
     write(STORAGE_KEYS.user, user ? JSON.stringify(user) : null);
   },
 
-  setPendingPhone(phone) {
-    write(STORAGE_KEYS.pendingPhone, phone);
-  },
-  getPendingPhone: () => read(STORAGE_KEYS.pendingPhone),
-
   clear() {
     Object.values(STORAGE_KEYS).forEach((key) => write(key, null));
   },

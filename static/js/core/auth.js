@@ -18,10 +18,20 @@ export const auth = {
     return data.user;
   },
 
-  async register(payload) {
-    const user = await api.auth.register(payload);
-    storage.setPendingPhone(payload.phone_number);
-    return user;
+  /**
+   * Google orqali kirish yoki ro'yxatdan o'tish — bitta amal.
+   *
+   * `credential` — Google Identity Services bergan imzolangan token.
+   * Server uni tekshirib, hisob bo'lmasa yaratadi. Shuning uchun
+   * alohida `register()` yo'q: foydalanuvchi uchun ikkalasi ham
+   * "Google bilan davom etish" degan bitta tugma.
+   *
+   * @returns {{user, created}} — `created` yangi hisobmi.
+   */
+  async google(credential) {
+    const data = await api.auth.google(credential);
+    storage.setSession({ access: data.access, refresh: data.refresh, user: data.user });
+    return { user: data.user, created: Boolean(data.created) };
   },
 
   async logout() {

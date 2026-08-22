@@ -1,58 +1,33 @@
 """account ilovasining BARCHA serializerlari shu faylda."""
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from businesses.models import BusinessApplication
 
 User = get_user_model()
 
 
-class RegisterSerializer(serializers.ModelSerializer):
-    """Vazifasi: /api/auth/register/ — yangi foydalanuvchini yaratadi."""
+class GoogleAuthSerializer(serializers.Serializer):
+    """
+    Vazifasi: /api/auth/google/ — brauzer Google'dan olgan `id_token`.
 
-    password = serializers.CharField(
-        write_only=True, validators=[validate_password], style={"input_type": "password"}
+    Bu token IMZOLANGAN: uni server Google kalitlari bilan tekshiradi
+    (`account.services.verify_google_token`). Shuning uchun ichidagi
+    pochta va ismga ishonish mumkin — brauzer ularni o'zgartira olmaydi.
+    """
+
+    credential = serializers.CharField(
+        write_only=True,
+        help_text="Google Identity Services bergan id_token.",
     )
-    password_confirm = serializers.CharField(write_only=True, style={"input_type": "password"})
-
-    class Meta:
-        model = User
-        fields = ["id", "full_name", "phone_number", "username", "password", "password_confirm"]
-        read_only_fields = ["id"]
-
-    def validate(self, attrs):
-        if attrs["password"] != attrs.pop("password_confirm"):
-            raise serializers.ValidationError({"password_confirm": "Parollar mos kelmadi."})
-        return attrs
-
-    def create(self, validated_data):
-        password = validated_data.pop("password")
-        user = User(**validated_data)
-        user.set_password(password)
-        # role alohida yozish shart emas — model maydonida
-        # default=Role.USER o'rnatilgan, avtomatik shu bo'ladi.
-        user.save()
-        return user
 
 
 class LogoutSerializer(serializers.Serializer):
     """Chiqishda qora ro'yxatga qo'shiladigan refresh token."""
 
     refresh = serializers.CharField()
-
-
-class SendCodeSerializer(serializers.Serializer):
-    """Vazifasi: /api/auth/send-code/ — shu raqamga SMS-kod yuborish so'rovi."""
-
-    phone_number = serializers.CharField(max_length=13)
-
-
-class VerifyPhoneSerializer(serializers.Serializer):
-    """Vazifasi: /api/auth/verify-phone/ — SMS-kodni tekshirish uchun input."""
-
-    phone_number = serializers.CharField(max_length=13)
-    code = serializers.CharField(max_length=6)
 
 
 class BusinessBriefSerializer(serializers.Serializer):
@@ -72,15 +47,31 @@ class BusinessBriefSerializer(serializers.Serializer):
 
     # Ariza tasdiqlanganmi.
     #
-    # Obuna faqat admin tasdig'idan keyin ochiladi, ya'ni obunaning
-    # MAVJUDLIGI — "tasdiqlangan"ning o'zi. Frontend shu bayroqqa qarab
-    # boshqaruv paneliga kiritadi yoki "ariza ko'rib chiqilmoqda"
-    # sahifasiga qaytaradi.
+    # MANBA — ARIZANING O'Z HOLATI, obuna emas.
+    #
+    # Ilgari bu bayroq "obunasi bormi?" degan savolga qarardi, chunki
+    # obuna faqat tasdiqdan keyin ochilardi. Lekin tasdiq bilan obuna
+    # bir xil narsa emas va ular ajralib qoladigan haqiqiy holatlar bor:
+    #   · admin arizani Django panelidagi shakl orqali "approved" qilsa
+    #   · egasi bepul sinovni oldin ishlatgan bo'lsa — `approve_application`
+    #     buni ataylab kechiradi: joy ochiladi, obuna esa ochilmaydi
+    #   · obuna muddati tugab, `expired` holatida o'chirib tashlansa
+    # Har uchalasida ham odam tasdiqlangan biznes egasi bo'lib turib,
+    # panelga umuman kira olmasdi — aynan shu xato kuzatilgan.
+    #
+    # Endi: tasdiq — panelga KIRISH huquqi, obuna esa MA'LUMOT YOZISH
+    # huquqi (`HasActiveSubscription`). Frontend ikkinchisini alohida
+    # `subscription_status` orqali biladi.
     is_approved = serializers.SerializerMethodField()
     subscription_status = serializers.SerializerMethodField()
 
     def get_is_approved(self, obj) -> bool:
-        return hasattr(obj, "subscription")
+        application = getattr(obj, "application", None)
+        if application is not None:
+            return application.status == BusinessApplication.STATUS_APPROVED
+        # Ariza yo'q biznes — faqat admin qo'lda ochgan holat. Uni
+        # tasdiqlangan deb hisoblaymiz: admin o'zi yaratgan.
+        return True
 
     def get_subscription_status(self, obj) -> str | None:
         subscription = getattr(obj, "subscription", None)
@@ -90,7 +81,7 @@ class BusinessBriefSerializer(serializers.Serializer):
 def build_user_payload(user, request=None):
     """Login va /me/ javoblarida bir xil ko'rinishdagi user obyektini quradi."""
     business = (
-        user.businesses.select_related("subscription").first()
+        user.businesses.select_related("application", "subscription").first()
         if user.role == "business" else None
     )
 
@@ -147,9 +138,20 @@ class UserSerializer(serializers.ModelSerializer):
     """
     /api/auth/me/ — profilni ko'rsatish va tahrirlash.
 
-    `username`, `phone_number` va `role` ataylab read-only: ular
-    identifikator vazifasini bajaradi va o'zgarsa, eski bronlar
-    kimga tegishli ekani chalkashib ketardi.
+    `username` va `role` ataylab read-only: ular identifikator
+    vazifasini bajaradi va o'zgarsa, eski bronlar kimga tegishli
+    ekani chalkashib ketardi.
+
+    `phone_number` — YARIM ochiq: BIR MARTA yoziladi, keyin qulflanadi.
+
+    Sababi ro'yxatdan o'tish oqimida. Google raqam bermaydi, shuning
+    uchun yangi hisobda u bo'sh bo'ladi va birinchi bron paytida
+    so'raladi (`components/phone-gate.js`). Bir marta yozilgach esa
+    o'zgartirib bo'lmaydi: joy egasi o'sha raqamga qo'ng'iroq qiladi
+    va mehmon bronni yuborib, keyin raqamni almashtirib qo'ysa,
+    egasi bog'lana olmasdi.
+
+    Almashtirish kerak bo'lsa — administrator orqali.
     """
 
     business = serializers.SerializerMethodField()
@@ -165,15 +167,32 @@ class UserSerializer(serializers.ModelSerializer):
             "has_used_trial", "business", "stats", "date_joined",
         ]
         read_only_fields = [
-            "id", "username", "phone_number", "role", "is_staff",
+            "id", "username", "role", "is_staff",
             "is_phone_verified", "is_confirmed", "has_used_trial", "business", "stats",
             "initials", "date_joined",
         ]
 
+    def validate_phone_number(self, value):
+        """Raqam faqat BO'SH bo'lsa yoziladi."""
+        if self.instance and self.instance.phone_number:
+            raise serializers.ValidationError(
+                "Raqam allaqachon kiritilgan. O'zgartirish uchun administrator "
+                "bilan bog'laning."
+            )
+        return value
+
+    def update(self, instance, validated_data):
+        # Raqam kiritilgan bo'lsa, eski `is_phone_verified` bayrog'i ham
+        # yoqiladi: admin panelidagi filtr va eski kod shunga qaraydi,
+        # ma'nosi endi "raqami bor" degani.
+        if validated_data.get("phone_number"):
+            instance.is_phone_verified = True
+        return super().update(instance, validated_data)
+
     def get_business(self, obj) -> dict | None:
-        # `select_related` — `is_approved` obunaga qaraydi, alohida
-        # so'rov bo'lmasin.
-        business = obj.businesses.select_related("subscription").first()
+        # `select_related` — `is_approved` arizaga, `subscription_status`
+        # obunaga qaraydi; ikkalasi ham alohida so'rov bo'lmasin.
+        business = obj.businesses.select_related("application", "subscription").first()
         return BusinessBriefSerializer(business).data if business else None
 
     def get_stats(self, obj) -> dict:

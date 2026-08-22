@@ -220,11 +220,16 @@ REST_FRAMEWORK = {
         "burst_anon": "40/min",
         "sustained_anon": "1000/day",
 
-        # Og'ir yoki xavfli amallar uchun aniq cheklovlar
-        "register": "5/hour",
+        # Og'ir yoki xavfli amallar uchun aniq cheklovlar.
+        #
+        # `login` — Google orqali kirishga ham tegishli. Cheklov o'sha
+        # yerda ham kerak: Google tokeni har safar tarmoq orqali
+        # tekshiriladi, ya'ni cheksiz so'rov Google kvotasini yeb
+        # qo'yardi.
+        #
+        # `register`, `sms_send`, `sms_verify` olib tashlandi —
+        # bunday endpointlar endi yo'q.
         "login": "10/min",
-        "sms_send": "3/hour",
-        "sms_verify": "10/hour",
         "reservation_create": "10/hour",
         "business_application": "3/day",
         "review_create": "20/day",
@@ -370,15 +375,29 @@ if not DEBUG:
 # ===================================================================
 TRIAL_DAYS = config("TRIAL_DAYS", default=7, cast=int)
 SUBSCRIPTION_DAYS = config("SUBSCRIPTION_DAYS", default=30, cast=int)
-SMS_CODE_TTL_SECONDS = config("SMS_CODE_TTL_SECONDS", default=300, cast=int)
-SMS_MAX_VERIFY_ATTEMPTS = config("SMS_MAX_VERIFY_ATTEMPTS", default=5, cast=int)
 
 TELEGRAM_BOT_TOKEN = config("TELEGRAM_BOT_TOKEN", default="")
 TELEGRAM_ADMIN_CHAT_ID = config("TELEGRAM_ADMIN_CHAT_ID", default="")
 
-ESKIZ_EMAIL = config("ESKIZ_EMAIL", default="")
-ESKIZ_PASSWORD = config("ESKIZ_PASSWORD", default="")
-ESKIZ_FROM = config("ESKIZ_FROM", default="4546")
+# ===================================================================
+# GOOGLE ORQALI KIRISH
+#
+# Ro'yxatdan o'tishning YAGONA yo'li. Client ID Google Cloud Console'da
+# olinadi (APIs & Services → Credentials → OAuth client ID → Web).
+#
+# Bo'sh qoldirilsa kirish tugmasi ishlamaydi va aniq xato beradi —
+# jimgina "nimadir noto'g'ri" holati bo'lmasin.
+#
+# Bu qiymat MAXFIY EMAS: u brauzerdagi sahifaga ham tushadi. Maxfiysi
+# `client_secret` bo'lib, bizga u umuman kerak emas — biz Google
+# bergan `id_token` ni tekshiramiz, almashtirmaymiz.
+# ===================================================================
+GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
+
+# `client_secret` — SERVER tomonida `code` ni token'ga almashtirish
+# uchun. Bu qiymat MAXFIY: brauzerga hech qachon yuborilmaydi.
+GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET", default="")
+
 
 
 # ===================================================================

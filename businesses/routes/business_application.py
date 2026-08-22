@@ -25,7 +25,7 @@ from businesses.services import (
 )
 from common.models import PlatformSettings
 from common.pagination import StandardResultsPagination
-from common.permissions import IsPhoneVerified, IsSuperAdmin
+from common.permissions import HasContactPhone, IsSuperAdmin
 from common.throttles import BusinessApplicationThrottle
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,21 @@ class BusinessApplicationCreateAPIView(APIView):
     Javobda foydalanuvchiga ko'rsatiladigan matn va admin Telegram'i qaytadi.
     """
 
-    permission_classes = [IsAuthenticated, IsPhoneVerified]
+    # ALOQA RAQAMI SHART.
+    #
+    # Hisob Google orqali ochiladi va unda raqam bo'lmaydi. Ariza
+    # esa administrator BOG'LANADIGAN hujjat: u joyni tekshiradi,
+    # savol beradi, to'lovni kelishadi. Raqamsiz ariza — javobsiz
+    # ariza.
+    #
+    # Bu joyning o'z aloqa raqamidan boshqa narsa
+    # (`Business.phone_number` — uni mijozlar ko'radi). Bu yerdagisi
+    # EGASINING raqami va faqat administratorga ko'rinadi.
+    permission_classes = [IsAuthenticated, HasContactPhone]
+    phone_message = (
+        "Ariza yuborish uchun aloqa raqamingizni kiriting — "
+        "administrator siz bilan bog'lanadi."
+    )
     throttle_classes = [BusinessApplicationThrottle]
 
     @extend_schema(

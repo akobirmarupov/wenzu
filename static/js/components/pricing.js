@@ -316,7 +316,13 @@ export function bindPricing(root, { plans, telegram = "@uvente", onSent, mode = 
   });
 }
 
-function openRequestModal(plan, telegram, onSent) {
+async function openRequestModal(plan, telegram, onSent) {
+  // Obunani uzaytirish ham ARIZA: administrator to'lovni tasdiqlash
+  // uchun egasi bilan bog'lanadi. Raqamsiz bu oqim boshi berk
+  // ko'chaga olib boradi (server ham rad etadi).
+  const { ensurePhone } = await import("./phone-gate.js");
+  if (!(await ensurePhone("subscription"))) return;
+
   const handle = telegram.replace("@", "");
   const telegramUrl = `https://t.me/${handle}`;
 

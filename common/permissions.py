@@ -73,18 +73,36 @@ class IsReviewOwnerOrReadOnly(BasePermission):
         return obj.user_id == request.user.id
 
 
-class IsPhoneVerified(BasePermission):
+class HasContactPhone(BasePermission):
     """
-    Vazifasi: SMS orqali telefon tasdiqlanmagan foydalanuvchiga
-    bron qilish/ariza yuborish kabi og'ir amallarni taqiqlaydi.
+    Vazifasi: bron qilish uchun ALOQA RAQAMI bo'lishini talab qiladi.
+
+    Ilgari bu `IsPhoneVerified` edi va SMS-kod bilan tasdiqlangan
+    raqamni talab qilardi. Ro'yxatdan o'tish Google'ga o'tgach, SMS
+    oqimi butunlay olib tashlandi — Google pochtani o'zi tekshirgan,
+    ustiga yana kod yuborishning ma'nosi yo'q edi.
+
+    Lekin raqamning O'ZI baribir kerak: joy egasi mehmonga qo'ng'iroq
+    qilib, bronni tasdiqlaydi yoki kechikish haqida ogohlantiradi.
+    Raqamsiz bron — egasi uchun boshi berk ko'cha.
+
+    Shuning uchun raqam KIRISH paytida emas, BIRINCHI BRON paytida
+    so'raladi: frontend shu xatoni ko'rib, kichik oyna ochadi va
+    raqamni profilga saqlaydi. Ikkinchi marta so'ralmaydi.
     """
-    message = "Avval telefon raqamingizni SMS-kod orqali tasdiqlang."
+    # Xabar UMUMIY: bu to'siq bir necha joyda ishlatiladi (bron,
+    # biznes arizasi, obuna so'rovi). View o'ziga xos matn bermoqchi
+    # bo'lsa `phone_message` orqali beradi — shunda odam nima uchun
+    # kerakligini aynan o'sha kontekstda o'qiydi.
+    message = "Davom etish uchun aloqa raqamingizni kiriting."
+    code = "phone_required"
 
     def has_permission(self, request, view):
+        self.message = getattr(view, "phone_message", self.message)
         return bool(
             request.user
             and request.user.is_authenticated
-            and request.user.is_phone_verified
+            and request.user.phone_number
         )
 
 class IsBusinessRole(BasePermission):
@@ -176,19 +194,26 @@ class HasActiveSubscription(BasePermission):
         if request.user.is_staff:
             return True
 
-        business = request.user.businesses.select_related("subscription").first()
+        business = request.user.businesses.select_related("application", "subscription").first()
         if business is None:
             return False
 
         subscription = getattr(business, "subscription", None)
         if subscription is None:
-            # Obuna YO'Q = ariza hali tasdiqlanmagan.
-            #
-            # Ilgari bu holatda ruxsat berilardi ("obuna hali yaratilmagan —
-            # bloklamaymiz"). Endi obuna faqat admin tasdig'idan keyin
-            # ochilgani uchun, obunasizlik "hali tekshirilmagan" degani —
-            # bunday biznes ma'lumot kirita olmasligi kerak.
+            # Obuna yo'q — yozish yopiq. Lekin SABABI ikki xil bo'lishi
+            # mumkin va odamga to'g'risini aytish kerak:
+            #   · ariza hali ko'rib chiqilmagan — kutish kifoya
+            #   · ariza tasdiqlangan, ammo obuna ochilmagan (masalan bepul
+            #     sinov avval ishlatilgan) — bu yerda kutish yordam
+            #     bermaydi, tarif tanlash kerak
+            # Ilgari ikkalasiga bir xil "arizangiz tasdiqlanmagan" deyilardi
+            # va tasdiqlangan egasi nima qilishini bilmay qolardi.
+            application = getattr(business, "application", None)
+            approved = application is not None and application.status == "approved"
             self.message = (
+                "Obunangiz hali ochilmagan. Davom ettirish uchun tarif tanlab, "
+                "administrator bilan Telegram orqali bog'laning."
+                if approved else
                 "Arizangiz hali tasdiqlanmagan. Administrator tekshirgach, "
                 "7 kunlik bepul sinov boshlanadi va barcha bo'limlar ochiladi."
             )

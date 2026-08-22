@@ -1,11 +1,11 @@
-"""User modeli uchun API'lar — ro'yxatdan o'tish, SMS tasdiq, login, profil."""
+"""User modeli uchun API'lar — Google orqali kirish, profil, admin ro'yxati."""
 
 import logging
 import secrets
+from urllib.parse import urlencode
 
-from django.conf import settings
-from django.core.cache import cache
 from django.db import transaction
+from django.http import HttpResponseRedirect
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
@@ -23,154 +23,203 @@ from account.models import User
 from account.routes.serializers import (
     AvatarSerializer,
     CustomTokenObtainPairSerializer,
+    GoogleAuthSerializer,
     LogoutSerializer,
-    RegisterSerializer,
-    SendCodeSerializer,
     UserAdminSerializer,
     UserSerializer,
-    VerifyPhoneSerializer,
+    build_user_payload,
+)
+from account.services import (
+    GoogleAuthError,
+    build_auth_url,
+    exchange_code,
+    get_or_create_google_user,
+    verify_google_token,
 )
 from common.pagination import StandardResultsPagination
 from common.permissions import IsSuperAdmin
-from common.sms import send_verification_code
-from common.throttles import (
-    LoginThrottle,
-    RegisterThrottle,
-    SMSSendThrottle,
-    SMSVerificationThrottle,
-)
+from common.throttles import LoginThrottle
 
 logger = logging.getLogger("account")
 security_logger = logging.getLogger("django.security")
 
-SMS_CACHE_KEY = "sms_code:%s"
-SMS_ATTEMPTS_KEY = "sms_attempts:%s"
 
-
-class RegisterAPIView(APIView):
-    """POST /api/auth/register/ — yangi foydalanuvchi (telefon hali tasdiqlanmagan)."""
-
-    permission_classes = [AllowAny]
-    throttle_classes = [RegisterThrottle]
-
-    @extend_schema(request=RegisterSerializer, responses={201: RegisterSerializer})
-    def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        with transaction.atomic():
-            user = serializer.save()
-
-        logger.info(f"User registered: id={user.id}, username={user.username}")
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-
-class SendCodeAPIView(APIView):
+def google_redirect_uri(request):
     """
-    POST /api/auth/send-code/ — telefon raqamiga tasdiqlash kodi yuboradi.
+    Google qaytadigan manzil.
 
-    XAVFSIZLIK: raqam bazada bor-yo'qligidan qat'i nazar BIR XIL javob
-    qaytadi. Aks holda bu endpoint "bu raqam ro'yxatdan o'tganmi?" degan
-    savolga javob beradigan vositaga aylanib qolardi (user enumeration).
+    So'rovning O'ZIDAN quriladi, sozlamaga yozilmaydi: lokal ishlab
+    chiqishda `http://127.0.0.1:8000/...`, productionda
+    `https://wenzu.uz/...` bo'ladi va ikkalasini qo'lda boshqarish
+    bitta joyni unutish demakdir. Google Console'ga esa ikkalasi ham
+    "Authorized redirect URIs" ga qo'shiladi.
+    """
+    return request.build_absolute_uri("/api/auth/google/callback/")
+
+
+class GoogleStartAPIView(APIView):
+    """
+    GET /api/auth/google/start/ — foydalanuvchini Google'ga yuboradi.
+
+    Popup emas, ODDIY O'TISH. Sabab `account/services.py` da batafsil:
+    GSI popup oqimi "origin is not allowed" bilan ishlamadi va uni
+    tuzatish bizning qo'limizda emas edi. Redirect oqimi esa butunlay
+    boshqa ro'yxatga ("Authorized redirect URIs") tayanadi va
+    telefonda ham ishonchliroq.
+
+    `state` — CSRF himoyasi: tasodifiy satr sessiyaga yoziladi va
+    qaytganda solishtiriladi. Usiz begona odam qurbonni o'z Google
+    hisobiga kirgizib qo'yishi mumkin edi.
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = [SMSSendThrottle]
 
-    GENERIC_RESPONSE = {
-        "detail": "Agar bu raqam ro'yxatdan o'tgan bo'lsa, tasdiqlash kodi yuborildi."
-    }
+    def get(self, request):
+        state = secrets.token_urlsafe(24)
+        request.session["google_state"] = state
+        # Kirishdan keyin qayerga qaytish — foydalanuvchi ketayotgan
+        # sahifa. Faqat ICHKI manzil: tashqi manzil ochiq
+        # yo'naltirish (open redirect) zaifligi bo'lardi.
+        next_url = request.GET.get("next") or "/"
+        request.session["google_next"] = next_url if next_url.startswith("/") else "/"
 
-    @extend_schema(request=SendCodeSerializer, responses={200: None})
-    def post(self, request):
-        serializer = SendCodeSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        phone_number = serializer.validated_data["phone_number"]
-
-        user = User.objects.filter(phone_number=phone_number).only("id").first()
-        if user is None:
-            security_logger.info(f"send-code: mavjud bo'lmagan raqam so'raldi ({phone_number})")
-            return Response(self.GENERIC_RESPONSE, status=status.HTTP_200_OK)
-
-        # `secrets` — `random` emas: tasdiqlash kodi taxmin qilinmaydigan
-        # bo'lishi kerak, `random` esa kriptografik jihatdan ishonchsiz.
-        code = f"{secrets.randbelow(1_000_000):06d}"
-        cache.set(SMS_CACHE_KEY % phone_number, code, timeout=settings.SMS_CODE_TTL_SECONDS)
-        cache.delete(SMS_ATTEMPTS_KEY % phone_number)
-
-        send_verification_code(phone_number, code)
-        logger.info(f"SMS code issued for user_id={user.id}")
-
-        payload = dict(self.GENERIC_RESPONSE)
-        if settings.DEBUG:
-            # Faqat ishlab chiqish rejimida — haqiqiy SMS pulini sarflamaslik uchun.
-            payload["debug_code"] = code
-        return Response(payload, status=status.HTTP_200_OK)
+        try:
+            url = build_auth_url(
+                redirect_uri=google_redirect_uri(request), state=state
+            )
+        except GoogleAuthError as error:
+            return Response({"detail": str(error)}, status=status.HTTP_400_BAD_REQUEST)
+        return HttpResponseRedirect(url)
 
 
-class VerifyPhoneAPIView(APIView):
+class GoogleCallbackAPIView(APIView):
     """
-    POST /api/auth/verify-phone/ — SMS-kodni tekshirib, is_phone_verified=True qiladi.
+    GET /api/auth/google/callback/ — Google shu yerga qaytaradi.
 
-    Kod cheklangan marta (`SMS_MAX_VERIFY_ATTEMPTS`) tekshiriladi — shundan
-    keyin kod bekor qilinadi. 6 xonali kodni 1 000 000 marta sinab
-    topib bo'lmasligi uchun.
+    Tokenlar sahifaga URL FRAGMENTI (`#`) bilan uzatiladi. Nega
+    aynan fragment: u serverga YUBORILMAYDI va shuning uchun
+    kirish jurnallarida, proksi loglarida yoki `Referer` sarlavhasida
+    qolib ketmaydi. Frontend uni o'qib, darhol manzildan tozalaydi.
     """
 
     permission_classes = [AllowAny]
-    throttle_classes = [SMSVerificationThrottle]
 
-    @extend_schema(request=VerifyPhoneSerializer, responses={200: None})
+    def get(self, request):
+        error = request.GET.get("error")
+        if error:
+            # Odam "Bekor qilish" bosdi — bu xato emas, tanlov.
+            return self._back(request, error="cancelled" if error == "access_denied" else error)
+
+        state = request.GET.get("state")
+        expected = request.session.pop("google_state", None)
+        if not state or state != expected:
+            security_logger.warning("Google callback: state mos kelmadi")
+            return self._back(request, error="state")
+
+        code = request.GET.get("code")
+        if not code:
+            return self._back(request, error="nocode")
+
+        try:
+            id_token_value = exchange_code(
+                code=code, redirect_uri=google_redirect_uri(request)
+            )
+            payload = verify_google_token(id_token_value)
+            user, created = get_or_create_google_user(payload)
+        except GoogleAuthError as exc:
+            logger.warning(f"Google callback xatosi: {exc}")
+            return self._back(request, error="google")
+
+        if not user.is_active:
+            security_logger.warning(f"Bloklangan hisob Google orqali urindi: user_id={user.id}")
+            return self._back(request, error="blocked")
+
+        refresh = CustomTokenObtainPairSerializer.get_token(user)
+        logger.info(f"Google login OK: user_id={user.id}, yangi={created}")
+
+        # HAR DOIM kirish sahifasiga qaytamiz, `next` esa fragment
+        # ichida ketadi.
+        #
+        # Ilgari to'g'ridan-to'g'ri `next` ga qaytarilardi — masalan
+        # joy sahifasiga. U yerda esa tokenni o'qiydigan kod yo'q
+        # edi: manzilda `#access=...` osilib qolardi, odam esa
+        # kirmagan holda qolaverardi (aynan shunday bo'lgan).
+        #
+        # Endi tokenni BITTA joy qabul qiladi — kirish sahifasi —
+        # va u odamni kerakli joyga o'zi uzatadi. Har bir sahifaga
+        # alohida ilgak qo'yish esa bir kun bittasini unutish
+        # demakdir.
+        fragment = urlencode({
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "created": "1" if created else "0",
+            "next": self._next(request),
+        })
+        return HttpResponseRedirect(f"/kirish/#{fragment}")
+
+    def _next(self, request):
+        return request.session.pop("google_next", None) or "/"
+
+    def _back(self, request, *, error):
+        """Xato bo'lsa kirish sahifasiga sabab bilan qaytaramiz."""
+        return HttpResponseRedirect(f"/kirish/?google_error={error}")
+
+
+class GoogleAuthAPIView(APIView):
+    """
+    POST /api/auth/google/ — RO'YXATDAN O'TISH VA KIRISH, bitta manzil.
+
+    Brauzer Google'dan `credential` (id_token) oladi va shu yerga
+    yuboradi. Biz uni tekshiramiz va o'z tokenlarimizni beramiz.
+
+    Ikkiga bo'lingan "ro'yxat" va "kirish" YO'Q. Foydalanuvchi uchun
+    ular bir xil amal: Google tugmasini bosish. Hisob bo'lmasa
+    yaratiladi, bo'lsa kiritiladi — buni server o'zi hal qiladi.
+    Ilgari odam "men ro'yxatdan o'tganmidim?" deb ikki sahifa orasida
+    yurardi.
+
+    SMS-kod oqimi olib tashlandi: pochtani Google tekshirgan.
+    """
+
+    permission_classes = [AllowAny]
+    throttle_classes = [LoginThrottle]
+
+    @extend_schema(
+        request=GoogleAuthSerializer,
+        responses={200: None},
+        description="Google `id_token` ni tekshirib, access/refresh token qaytaradi.",
+    )
     def post(self, request):
-        serializer = VerifyPhoneSerializer(data=request.data)
+        serializer = GoogleAuthSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        phone_number = serializer.validated_data["phone_number"]
-        code = serializer.validated_data["code"]
 
-        cache_key = SMS_CACHE_KEY % phone_number
-        attempts_key = SMS_ATTEMPTS_KEY % phone_number
+        try:
+            payload = verify_google_token(serializer.validated_data["credential"])
+            user, created = get_or_create_google_user(payload)
+        except GoogleAuthError as error:
+            return Response({"detail": str(error)}, status=status.HTTP_400_BAD_REQUEST)
 
-        expected = cache.get(cache_key)
-        if expected is None:
+        if not user.is_active:
+            security_logger.warning(f"Bloklangan hisob Google orqali urindi: user_id={user.id}")
             return Response(
-                {"detail": "Kod muddati tugagan yoki yuborilmagan. Qaytadan so'rang."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": "Hisobingiz bloklangan. Administrator bilan bog'laning."},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
-        attempts = (cache.get(attempts_key) or 0) + 1
-        if attempts > settings.SMS_MAX_VERIFY_ATTEMPTS:
-            cache.delete(cache_key)
-            cache.delete(attempts_key)
-            security_logger.warning(f"SMS brute-force to'xtatildi: phone={phone_number}")
-            return Response(
-                {"detail": "Juda ko'p noto'g'ri urinish. Yangi kod so'rang."},
-                status=status.HTTP_429_TOO_MANY_REQUESTS,
-            )
+        refresh = CustomTokenObtainPairSerializer.get_token(user)
+        logger.info(f"Google login OK: user_id={user.id}, yangi={created}")
 
-        # `compare_digest` — vaqt bo'yicha hujumdan (timing attack) himoya.
-        if not secrets.compare_digest(str(expected), str(code)):
-            cache.set(attempts_key, attempts, timeout=settings.SMS_CODE_TTL_SECONDS)
-            security_logger.warning(
-                f"Invalid SMS code attempt {attempts}/{settings.SMS_MAX_VERIFY_ATTEMPTS} "
-                f"for phone={phone_number}"
-            )
-            return Response({"detail": "Kod noto'g'ri."}, status=status.HTTP_400_BAD_REQUEST)
-
-        user = User.objects.filter(phone_number=phone_number).first()
-        if user is None:
-            return Response(
-                {"detail": "Bu raqamda foydalanuvchi topilmadi."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-        with transaction.atomic():
-            user.is_phone_verified = True
-            user.save(update_fields=["is_phone_verified"])
-
-        cache.delete(cache_key)
-        cache.delete(attempts_key)
-        logger.info(f"Phone verified: user_id={user.id}")
-        return Response({"detail": "Telefon raqami muvaffaqiyatli tasdiqlandi."})
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": build_user_payload(user, request),
+                # Frontend shu bayroqqa qarab yangi kelgan odamni
+                # profilga, qaytganini esa o'z paneliga yuboradi.
+                "created": created,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class LoginAPIView(TokenObtainPairView):
@@ -357,7 +406,16 @@ class AdminUserListAPIView(APIView):
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request, view=self)
         serializer = UserAdminSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        response = paginator.get_paginated_response(serializer.data)
+
+        # `count` — FILTRGA tushganlar soni, `total` — platformadagi
+        # BARCHA foydalanuvchi. Ikkalasi ham kerak: admin "biznes
+        # egalari 20 ta" degan raqamni ko'rib turib, "jami nechta
+        # odam bor?" degan savolga javobni ham bir qarashda olishi
+        # kerak. Alohida so'rov yubormaslik uchun shu javobga
+        # qo'shiladi.
+        response.data["total"] = User.objects.count()
+        return response
 
 
 class AdminUserDetailAPIView(APIView):

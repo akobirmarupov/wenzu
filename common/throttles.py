@@ -29,36 +29,6 @@ class SustainedAnonThrottle(AnonRateThrottle):
     scope = "sustained_anon"
 
 
-class PhoneNumberThrottle(SimpleRateThrottle):
-    """
-    Telefon raqami bo'yicha cheklov — IP bo'yicha emas.
-
-    IP bo'yicha cheklash yetarli emas: hujumchi proksi almashtirib bitta
-    raqamga yuzlab SMS yuborishi (va egasini bezovta qilib, bizga pul
-    to'latishi) mumkin edi.
-    """
-
-    scope = None
-
-    def get_cache_key(self, request, view):
-        phone = request.data.get("phone_number") or request.query_params.get("phone_number")
-        if not phone:
-            return None
-        return self.cache_format % {"scope": self.scope, "ident": phone}
-
-
-class SMSSendThrottle(PhoneNumberThrottle):
-    scope = "sms_send"
-
-
-class SMSVerificationThrottle(PhoneNumberThrottle):
-    scope = "sms_verify"
-
-
-class RegisterThrottle(AnonRateThrottle):
-    scope = "register"
-
-
 class LoginThrottle(SimpleRateThrottle):
     """
     IP + username juftligi bo'yicha — bitta hisobga parol terishni ham,

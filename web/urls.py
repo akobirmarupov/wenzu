@@ -6,6 +6,14 @@ from web import views
 app_name = "web"
 
 urlpatterns = [
+    # --- PWA ---
+    #
+    # ILDIZDA turishi shart: service worker o'zi turgan papkadan
+    # pastini boshqaradi, `/static/sw.js` esa sahifalarga yeta olmasdi.
+    path("manifest.webmanifest", views.ManifestView.as_view(), name="manifest"),
+    path("sw.js", views.ServiceWorkerView.as_view(), name="service-worker"),
+    path("oflayn/", views.OfflineView.as_view(), name="offline"),
+
     # --- ommaviy ---
     path("", views.HomeView.as_view(), name="home"),
     path("restoranlar/", views.RestaurantListView.as_view(), name="restaurants"),
@@ -25,9 +33,23 @@ urlpatterns = [
     path("bronlarim/", views.MyBookingsView.as_view(), name="my-bookings"),
 
     # --- autentifikatsiya ---
+    #
+    # BITTA sahifa. Google tugmasi hisob bo'lsa kiritadi, bo'lmasa
+    # yaratadi — "ro'yxatdan o'tish" va "kirish" farqi yo'qoldi.
     path("kirish/", views.LoginView.as_view(), name="login"),
-    path("royxat/", views.RegisterView.as_view(), name="register"),
-    path("tasdiqlash/", views.VerifyPhoneView.as_view(), name="verify"),
+
+    # Eski manzillar. Havolalar xatcho'plarda, qidiruv natijalarida va
+    # sayt ichida qolgan bo'lishi mumkin — 404 o'rniga to'g'ri joyga.
+    path(
+        "royxat/",
+        RedirectView.as_view(url="/kirish/", permanent=True),
+        name="register",
+    ),
+    path(
+        "tasdiqlash/",
+        RedirectView.as_view(url="/kirish/", permanent=True),
+        name="verify",
+    ),
 
     # --- biznes egasi paneli ---
     path("panel/", views.OwnerOverviewView.as_view(), name="owner-overview"),

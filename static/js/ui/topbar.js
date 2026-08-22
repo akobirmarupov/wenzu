@@ -48,7 +48,7 @@ function userHtml() {
   if (!user) {
     return `
       <a class="btn btn-ghost btn-sm" href="${ROUTES.login}">${esc(t("nav.login"))}</a>
-      <a class="btn btn-primary btn-sm" href="${ROUTES.register}">${esc(t("nav.register"))}</a>`;
+      <a class="btn btn-primary btn-sm" href="${ROUTES.login}">${esc(t("nav.register"))}</a>`;
   }
   return `
     <a class="topbar-user" href="${ROUTES.profile}" title="${esc(t("nav.profile"))}">

@@ -15,33 +15,9 @@ import { ROUTES } from "../core/config.js";
 import { openModal, modal } from "../ui/modal.js";
 import { esc, busy } from "../ui/dom.js";
 import { money } from "../ui/format.js";
+import { ensurePhone } from "./phone-gate.js";
 import { toast } from "../ui/toast.js";
 
-/**
- * Telefon tasdiqlanmaganini ALOHIDA ekranda aytamiz.
- *
- * Ilgari foydalanuvchi butun formani to'ldirib, "Yuborish" bosgandan
- * keyingina qizil yozuv ko'rardi — va o'sha yozuvdan chiqib ketadigan
- * yo'l yo'q edi. Ya'ni ariza umuman ketmasdi, sabab esa tushunarsiz
- * qolardi. Endi to'siq BOSHIDA aytiladi va darhol yechim tugmasi bor.
- */
-function openVerifyGate(label) {
-  openModal(
-    `<h2>Telefonni tasdiqlash kerak</h2>
-     <div class="notice">
-       <p>Assalomu alaykum! 👋</p>
-       <p>${esc(label)} ochish uchun avval telefon raqamingizni SMS-kod
-          orqali tasdiqlashingiz kerak — bu bir daqiqalik ish.</p>
-       <p class="xs muted">Bu talab tekshirilmagan raqamlar bilan soxta
-          joy ochilishining oldini oladi.</p>
-     </div>
-     <a class="btn btn-primary btn-block btn-lg" style="margin-top:var(--sp-5)"
-        href="${ROUTES.verify}">Raqamni tasdiqlash</a>
-     <button class="btn btn-ghost btn-block" style="margin-top:var(--sp-2)"
-             type="button" data-modal-close>Keyinroq</button>`,
-    { wide: true }
-  );
-}
 
 /**
  * Ariza yuborilgandan keyingi ekran.
@@ -108,13 +84,16 @@ export async function openApplyModal(type, { plan = null, onSent } = {}) {
   // `plan` bo'sh — BEPUL SINOV arizasi. Reja berilgan bo'lsa — pullik.
   const isTrial = !plan;
 
-  // Telefon tasdiqlanmagan bo'lsa formani ochishning ma'nosi yo'q —
-  // server baribir rad etadi.
-  const user = auth.user();
-  if (user && !user.is_phone_verified) {
-    openVerifyGate(label);
-    return;
-  }
+  // ALOQA RAQAMI — ariza yuborishdan oldin.
+  //
+  // Ilgari bu yerda SMS tasdig'i talab qilinardi va odam sahifadan
+  // quvib chiqarilardi. Endi SMS yo'q, lekin RAQAMNING O'ZI kerak:
+  // administrator arizani ko'rib chiqib, egasi bilan bog'lanadi va
+  // to'lovni kelishadi. Raqamsiz ariza — javobsiz ariza.
+  //
+  // Raqam bo'lsa oyna umuman ochilmaydi. Bo'lmasa — shu yerda,
+  // kichik oynada bir marta so'raladi va odam o'z joyida qoladi.
+  if (!(await ensurePhone("application"))) return;
 
   let settings = null;
   try {
@@ -201,13 +180,6 @@ export async function openApplyModal(type, { plan = null, onSent } = {}) {
         onDone: onSent,
       });
     } catch (error) {
-      // Telefon tasdig'i oradan chiqib qolgan bo'lsa (masalan boshqa
-      // qurilmada bekor qilingan) — qizil yozuv o'rniga yechim ekrani.
-      if (error.status === 403 && /telefon/i.test(error.message)) {
-        modal.close();
-        openVerifyGate(label);
-        return;
-      }
       errorBox.textContent = error.fieldError?.("business_name") || error.message;
       errorBox.hidden = false;
     } finally {
@@ -223,7 +195,11 @@ export async function openApplyModal(type, { plan = null, onSent } = {}) {
  * reja yo'q — shuning uchun restoranmi yoki to'yxonami degan savol
  * alohida beriladi.
  */
-export function openTypePicker({ plan = null, onSent } = {}) {
+export async function openTypePicker({ plan = null, onSent } = {}) {
+  // Bepul sinov ham ARIZA — administrator uni ko'rib chiqadi va
+  // egasi bilan bog'lanadi. Shuning uchun raqam bu yerda ham shart.
+  if (!(await ensurePhone("application"))) return;
+
   const node = openModal(
     `<h2>Bepul sinov</h2>
      <div class="notice">

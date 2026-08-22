@@ -10,7 +10,6 @@ export const STORAGE_KEYS = {
   access: "wenzu.access",
   refresh: "wenzu.refresh",
   user: "wenzu.user",
-  pendingPhone: "wenzu.pendingPhone",
 };
 
 /** Sahifa manzillari — shablonlardagi URL'lar bilan mos bo'lishi shart. */
@@ -28,9 +27,10 @@ export const ROUTES = {
   // odam "tarifni qayerdan tanlayman, biznesni qayerdan ochaman?" deb
   // ikkalasini ham izlab yurardi.
   premium: "/profil/?tab=premium",
+  // Kirish VA ro'yxatdan o'tish — bitta sahifa: Google tugmasi hisob
+  // bo'lmasa yaratadi. `register` va `verify` manzillari olib
+  // tashlandi (server ularni `/kirish/` ga qaytaradi).
   login: "/kirish/",
-  register: "/royxat/",
-  verify: "/tasdiqlash/",
   ownerHome: "/panel/",
   adminHome: "/boshqaruv/",
 };

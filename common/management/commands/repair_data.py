@@ -34,6 +34,7 @@ class Command(BaseCommand):
         self.found = 0
 
         self._approved_without_business()
+        self._approved_without_subscription()
         self._business_role_without_business()
         self._staff_with_business()
 
@@ -115,6 +116,47 @@ class Command(BaseCommand):
             )
 
     # ---------------- 2 ----------------
+    def _approved_without_subscription(self):
+        """
+        Ariza tasdiqlangan, biznes bor, lekin obuna ochilmagan.
+
+        Odatiy sababi: admin arizani Django panelidagi shakl orqali
+        "Tasdiqlangan"ga o'zgartirgan — maydon o'zgargan, servis esa
+        chaqirilmagan. Egasi profilida "tasdiqlangan" deb ko'rsatiladi,
+        biroq panelda yozish taqiqlangan holda qoladi.
+
+        Tuzatish: aynan tasdiq paytida ochilishi kerak bo'lgan obunani
+        ochamiz (tarif ko'rsatilgan bo'lsa pullik, aks holda sinov) va
+        joyni qidiruvga chiqaramiz.
+        """
+        self.stdout.write("\n2. Tasdiqlangan ariza, obuna yo'q")
+
+        broken = [
+            business
+            for business in Business.objects.select_related("application", "owner")
+            .filter(application__status=BusinessApplication.STATUS_APPROVED)
+            if not hasattr(business, "subscription")
+        ]
+
+        if not broken:
+            self.stdout.write("   ✓ toza")
+            return
+
+        for business in broken:
+            self.found += 1
+            self.stdout.write(f"   · {business.name!r} — egasi: {business.owner.username}")
+            if not self.fix:
+                continue
+
+            with transaction.atomic():
+                if not business.is_visible:
+                    business.is_visible = True
+                    business.save(update_fields=["is_visible"])
+                self._restore_subscription(business, business.application)
+
+            self.stdout.write(self.style.SUCCESS("     → obuna ochildi"))
+
+    # ---------------- 3 ----------------
     def _business_role_without_business(self):
         """
         `role='business'`, lekin biznesi yo'q va tasdiqlangan arizasi ham yo'q.
@@ -123,7 +165,7 @@ class Command(BaseCommand):
         nima ko'rsatishni bilmaydi. Rolini oddiy foydalanuvchiga
         qaytaramiz — u istalgan paytda qaytadan ariza bera oladi.
         """
-        self.stdout.write("\n2. Biznes roli, lekin biznesi yo'q")
+        self.stdout.write("\n3. Biznes roli, lekin biznesi yo'q")
 
         stranded = [
             user
@@ -143,7 +185,7 @@ class Command(BaseCommand):
                 user.save(update_fields=["role"])
                 self.stdout.write(self.style.SUCCESS("     → rol 'user'ga qaytarildi"))
 
-    # ---------------- 3 ----------------
+    # ---------------- 4 ----------------
     def _staff_with_business(self):
         """
         Bitta hisob ham platforma egasi, ham biznes egasi.
@@ -153,7 +195,7 @@ class Command(BaseCommand):
         olmaydi (`IsBusinessRole` uni kiritmaydi), ya'ni bunday hisobdagi
         biznes boshqarilmay qoladi.
         """
-        self.stdout.write("\n3. Ham platforma egasi, ham biznes egasi")
+        self.stdout.write("\n4. Ham platforma egasi, ham biznes egasi")
 
         both = [user for user in User.objects.filter(is_staff=True) if user.businesses.exists()]
 

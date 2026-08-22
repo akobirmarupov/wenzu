@@ -76,21 +76,8 @@ class LoginView(PageView):
     body_class = "page-auth"
 
 
-class RegisterView(PageView):
-    template_name = "pages/auth/register.html"
-    page_title = "Ro'yxatdan o'tish"
-    body_class = "page-auth"
 
 
-class VerifyPhoneView(PageView):
-    template_name = "pages/auth/verify.html"
-    page_title = "Telefonni tasdiqlash"
-    body_class = "page-auth"
-
-
-# ===================================================================
-# Biznes egasi paneli
-# ===================================================================
 class OwnerOverviewView(PageView):
     template_name = "pages/owner/overview.html"
     page_title = "Umumiy ko'rinish"
@@ -204,3 +191,51 @@ class AdminSettingsView(PageView):
     template_name = "pages/admin/settings.html"
     page_title = "Platforma sozlamalari"
     body_class = "page-dashboard"
+
+
+# ===================================================================
+# PWA — ilovani telefonga o'rnatish
+#
+# Uch fayl ham SHABLON orqali beriladi, oddiy statik fayl sifatida
+# emas. Ikki sabab:
+#
+#   1. `{% static %}` — productionda fayl nomlariga xesh qo'shiladi
+#      (`icon-192.a1b2c3.png`). Qo'lda yozilgan manzil o'sha yerda
+#      404 bo'lardi va ikonkasiz ilova o'rnatilmaydi.
+#   2. Service worker keshining nomiga `asset_version` kiradi — kod
+#      yangilanganda eski kesh o'zi o'chadi.
+#
+# Manzillar ILDIZDA turishi SHART: service worker faqat o'zi turgan
+# papka va undan pastini boshqara oladi. `/static/sw.js` bo'lsa,
+# u faqat `/static/...` ni ko'rardi — ya'ni sahifalarga ta'sir
+# qilolmasdi va oflayn rejim ishlamasdi.
+# ===================================================================
+class ManifestView(TemplateView):
+    """/manifest.webmanifest — ilova nomi, ikonkalari va rangi."""
+
+    template_name = "pwa/manifest.webmanifest"
+    content_type = "application/manifest+json"
+
+
+class ServiceWorkerView(TemplateView):
+    """/sw.js — oflayn rejim va o'rnatish uchun."""
+
+    template_name = "pwa/sw.js"
+    content_type = "application/javascript"
+
+    def render_to_response(self, context, **response_kwargs):
+        response = super().render_to_response(context, **response_kwargs)
+        # Worker faylining O'ZI keshlanmasin: aks holda yangi versiya
+        # chiqqanda brauzer eskisini ishlatishda davom etardi va
+        # foydalanuvchi yangilanishni ko'rmasdi.
+        response["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response["Service-Worker-Allowed"] = "/"
+        return response
+
+
+class OfflineView(PageView):
+    """Tarmoq uzilganda service worker shu sahifani ko'rsatadi."""
+
+    template_name = "pages/public/offline.html"
+    page_title = "Internet yo'q"
+    body_class = "page-offline"

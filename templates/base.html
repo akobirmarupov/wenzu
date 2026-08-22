@@ -13,5 +13,11 @@
 
   {# Har bir sahifa o'z modulini shu blokda ulaydi #}
   {% block scripts %}{% endblock %}
+
+  {# Telefonga o'rnatish va oflayn rejim — HAMMA sahifada bir xil #}
+  <script type="module">
+    import { initPwa } from "{% static 'js/core/pwa.js' %}?v={{ asset_version }}";
+    initPwa();
+  </script>
 </body>
 </html>

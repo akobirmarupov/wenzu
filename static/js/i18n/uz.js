@@ -168,6 +168,13 @@ export default {
   },
 
   auth: {
+    googleTitle: "Bir bosishda kiring",
+    googleLead: "Google hisobingiz bilan davom eting — parol o'ylab topish, SMS kutish shart emas.",
+    perkFast: "Bir bosish — hisob tayyor",
+    perkSafe: "Parolingiz bizda saqlanmaydi",
+    perkPhoto: "Ism va rasm avtomatik olinadi",
+    passwordLogin: "Parol bilan kirish",
+    passwordHint: "Faqat eski hisoblar va administrator uchun.",
     loginTitle: "Kirish",
     loginLead: "Hisobingizga kiring va bronlaringizni boshqaring.",
     registerTitle: "Ro'yxatdan o'tish",
@@ -194,6 +201,8 @@ export default {
     bookings: "Mening bronlarim",
     business: "Biznes ochish",
     personalInfo: "Shaxsiy ma'lumotlar",
+    edit: "Tahrirlash",
+    editTitle: "Ma'lumotlarni tahrirlash",
     account: "Hisob ma'lumotlari",
     groupAccount: "Hisobim",
     groupManage: "Boshqaruv",
@@ -266,6 +275,10 @@ export default {
   admin: {
     title: "Platforma boshqaruvi",
     shortcuts: "Tez o'tish",
+  },
+
+  news: {
+    open: "Havolani ochish",
   },
 
   common: {

@@ -22,6 +22,19 @@
 .field-error { font-size: var(--fs-xs); color: var(--danger); font-weight: 600; }
 .field-hint  { font-size: var(--fs-xs); color: var(--ink-faint); }
 
+/* Yuklangan rasmning hozirgi holati — fayl maydoni ostida.
+   Tanlash oynasidan boshqa hech qanday dalil bo'lmasa, egasi rasm
+   saqlandimi-yo'qmi bilmaydi. */
+.field-preview {
+  margin-top: var(--sp-2);
+  width: 100%;
+  max-height: 120px;
+  object-fit: cover;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: var(--surface-2);
+}
+
 .checkbox { display: flex; align-items: center; gap: var(--sp-2); font-size: var(--fs-sm); cursor: pointer; }
 
 /* Qidiruv qatori */

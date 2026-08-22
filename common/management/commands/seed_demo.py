@@ -13,6 +13,16 @@ litsenziya `media/_demo_cache/manifest.json` da yozib boriladi.
 
 Internet bo'lmasa buyruq baribir ishlaydi — shunchaki suratsiz.
 
+NIMA YARATILADI:
+  · 10 restoran va 10 to'yxona — har birining ismi-sharifi bor egasi,
+    1 oylik FAOL obunasi, xonalari/zallari, menyusi va jadvali bilan
+  · 10 ta TASDIQ KUTAYOTGAN ariza (5 restoran, 5 to'yxona; 1 va 3
+    oylik tariflar aralash) — administrator ularni o'z panelidan
+    tasdiqlab, oqimni boshidan oxirigacha ko'radi
+  · 8 mijoz, ularning bronlari va sharhlari
+
+Parol hamma demo hisobda bir xil (pastdagi `PASSWORD`).
+
 Ishlatish:
     python manage.py seed_demo --clear
     python manage.py seed_demo --clear --no-photos    # tezroq, suratsiz
@@ -35,7 +45,7 @@ from reservations.models import Availability, Reservation
 from reviews.models import Review
 
 User = get_user_model()
-PASSWORD = "DemoPass123!"
+PASSWORD = "akobir2004"
 
 # ===================================================================
 # Xona shabloni.
@@ -58,7 +68,7 @@ ROOM_SET = [
 ]
 
 # ===================================================================
-# Restoranlar (8 ta)
+# Restoranlar (10 ta)
 #
 # `menu` dagi uchinchi qiymat — SURAT MAVZUSI. Commons'da aynan shu
 # so'z bo'yicha qidiriladi, shuning uchun taom nomi bilan surat mos
@@ -185,10 +195,40 @@ RESTAURANTS = [
             ("Kofe latte", "drink", 19000, "latte"),
         ],
     },
+    {
+        "name": "Marvarid Steak House", "district": "Mirobod", "cuisine": "yevropa",
+        "open": "12:00", "close": "23:30", "lat": 41.2994, "lng": 69.2801,
+        "description": "Quruq usulda yetiltirilgan go'sht va ochiq ko'mir gril. "
+                       "Somelye tanlagan ichimliklar va tinch VIP xonalar.",
+        "photos": "steakhouse",
+        "menu": [
+            ("Ribay steyk (300 g)", "main", 165000, "steak"),
+            ("Tandirda qo'zi qovurg'asi", "main", 132000, "tandoor-meat"),
+            ("Qo'ziqorinli krem-sho'rva", "soup", 46000, "mushroom-soup"),
+            ("Sezar salat (tovuq bilan)", "salad", 58000, "caesar-salad"),
+            ("Shokoladli tort", "dessert", 40000, "chocolate-cake"),
+            ("Anor sharbati", "drink", 24000, "pomegranate-juice"),
+        ],
+    },
+    {
+        "name": "Sakura Sushi Bar", "district": "Yunusobod", "cuisine": "fusion",
+        "open": "11:00", "close": "23:00", "lat": 41.3588, "lng": 69.2903,
+        "description": "Yaponcha oshxona va sushi-bar. Har kuni yangi baliq, "
+                       "ochiq oshxona va yakka mehmonlar uchun bar stollari.",
+        "photos": "sushi-restaurant",
+        "menu": [
+            ("Filadelfiya to'plami", "main", 118000, "sushi"),
+            ("Losos steyk", "main", 128000, "salmon"),
+            ("Tom Yum sho'rvasi", "soup", 72000, "tom-yum"),
+            ("Kaprese salat", "salad", 48000, "caprese-salad"),
+            ("Chizkeyk", "dessert", 44000, "cheesecake"),
+            ("Yashil choy", "drink", 14000, "green-tea"),
+        ],
+    },
 ]
 
 # ===================================================================
-# To'yxonalar (6 ta)
+# To'yxonalar (10 ta)
 # ===================================================================
 VENUES = [
     {
@@ -283,6 +323,69 @@ VENUES = [
             ("Tort", "dessert", "chocolate-cake"),
         ],
     },
+    {
+        "name": "Shodlik Saroyi", "district": "Yashnobod", "lat": 41.2887, "lng": 69.3121,
+        "photos": "wedding-reception",
+        "description": "Ikki qavatli zamonaviy to'yxona: pastda nikoh marosimi, "
+                       "yuqorida katta to'y zali. Liftli kirish va issiq yo'lak.",
+        "halls": [("Shodlik zali", 550), ("Nikoh zali", 140)],
+        "pricing": {1: 105000, 2: 125000, 3: 155000},
+        "menu": [
+            ("To'y oshi", "main", "plov"),
+            ("Tovuq kabob", "main", "chicken-kebab"),
+            ("Manti", "main", "manti"),
+            ("Salatlar to'plami", "salad", "salad-platter"),
+            ("Shirinliklar stoli", "dessert", "dessert-table"),
+            ("Ichimliklar", "drink", "soft-drinks"),
+        ],
+    },
+    {
+        "name": "Malika To'yxonasi", "district": "Uchtepa", "lat": 41.2809, "lng": 69.1774,
+        "photos": "wedding-decor",
+        "description": "O'z dekoratsiya jamoasi bor to'yxona: sahna bezagi, gullar va "
+                       "yorug'lik narxga kiritilgan. Kelin-kuyov uchun alohida xona.",
+        "halls": [("Malika zali", 400), ("Kichik zal", 130)],
+        "pricing": {1: 98000, 2: 120000, 3: 148000},
+        "menu": [
+            ("Palov", "main", "plov"),
+            ("Norin", "main", "norin"),
+            ("Chuchvara", "soup", "chuchvara"),
+            ("Achchiq-chuchuk", "salad", "tomato-salad"),
+            ("Mevali stol", "dessert", "fruit-platter"),
+            ("Choy", "drink", "green-tea"),
+        ],
+    },
+    {
+        "name": "Anhor Bog'i", "district": "Shayxontohur", "lat": 41.3243, "lng": 69.2384,
+        "photos": "garden-wedding",
+        "description": "Anhor bo'yidagi bog' maskani. Yozda ochiq maydonda, qishda "
+                       "issiq zalda tadbir o'tkaziladi. Fotosessiya uchun ko'prik va soyabon.",
+        "halls": [("Bog' maydoni", 450), ("Qishki zal", 250)],
+        "pricing": {1: 92000, 2: 112000, 3: 138000},
+        "menu": [
+            ("To'y palovi", "main", "plov"),
+            ("Shashlik", "main", "shashlik"),
+            ("Somsa", "starter", "samsa"),
+            ("Yashil salat", "salad", "green-salad"),
+            ("Mevalar", "dessert", "fruit-platter"),
+        ],
+    },
+    {
+        "name": "Sitora Palace", "district": "Mirobod", "lat": 41.3012, "lng": 69.2846,
+        "photos": "ballroom",
+        "description": "Shahar markazidagi nufuzli marosimlar zali. Qandil, sahna va "
+                       "professional tovush tizimi. Mehmonlar uchun yopiq parking.",
+        "halls": [("Sitora zali", 700), ("Yulduz zali", 180)],
+        "pricing": {1: 125000, 2: 148000, 3: 178000},
+        "menu": [
+            ("To'y oshi", "main", "plov"),
+            ("Lyulya-kabob", "main", "lyulya-kebab"),
+            ("Lag'mon", "main", "lagman"),
+            ("Salatlar to'plami", "salad", "salad-platter"),
+            ("Shirinliklar stoli", "dessert", "dessert-table"),
+            ("Ichimliklar", "drink", "soft-drinks"),
+        ],
+    },
 ]
 
 # ===================================================================
@@ -314,6 +417,11 @@ PHOTO_TERMS = {
     "wedding-hall": "wedding hall",
     "garden-wedding": "outdoor wedding venue",
     "banquet-hall": "banquet hall",
+    "steakhouse": "steakhouse interior",
+    "sushi-restaurant": "sushi restaurant interior",
+    "wedding-reception": "wedding reception hall",
+    "wedding-decor": "wedding hall decoration",
+    "ballroom": "ballroom interior",
     # --- taomlar ---
     "plov": "uzbek pilaf",
     "shashlik": "shashlik",
@@ -359,11 +467,96 @@ PHOTO_TERMS = {
     "soft-drinks": "soft drinks bottles",
 }
 
+# ===================================================================
+# JOY EGALARI — har bir joyning o'z hisobi.
+#
+# Nega alohida jadval: ilgari egalar `demo_owner_<joy nomi>` ko'rinishida
+# avtomatik yaratilardi. Bunday hisob namoyish paytida darhol sun'iy
+# ko'rinardi — kirish oynasiga "demo_owner_grand" deb yozish haqiqiy
+# ishlatishga o'xshamaydi. Endi har bir joyning ismi-sharifi bor odami
+# bor, telefon raqami bilan: ro'yxatni ochib, kimning qaysi joy egasi
+# ekanini ko'rish mumkin.
+#
+# `demo_` prefiksi ATAYLAB saqlanadi: `--clear` aynan shu prefiksga
+# qarab tozalaydi va haqiqiy foydalanuvchilarga tegmaydi.
+#
+# joy nomi: (username, ism-familiya, telefon)
+# ===================================================================
+OWNERS = {
+    # --- restoranlar ---
+    "Choyxona Chinor":      ("demo_akmal_tursunov", "Akmal Tursunov", "+998901010101"),
+    "Shoxona Restorani":    ("demo_bekzod_aliyev", "Bekzod Aliyev", "+998901010102"),
+    "Osh Markazi":          ("demo_sardor_yoqubov", "Sardor Yoqubov", "+998901010103"),
+    "Sky Lounge":           ("demo_temur_saidov", "Temur Saidov", "+998901010104"),
+    "Registon Taomxonasi":  ("demo_ulugbek_nazarov", "Ulug'bek Nazarov", "+998901010105"),
+    "Bella Napoli":         ("demo_farrux_qodirov", "Farrux Qodirov", "+998901010106"),
+    "Anor Grill":           ("demo_jasur_ergashev", "Jasur Ergashev", "+998901010107"),
+    "Bahor Kafe":           ("demo_dilnoza_ismoilova", "Dilnoza Ismoilova", "+998901010108"),
+    "Marvarid Steak House": ("demo_shohruh_umarov", "Shohruh Umarov", "+998901010109"),
+    "Sakura Sushi Bar":     ("demo_aziza_rahimova", "Aziza Rahimova", "+998901010110"),
+    # --- to'yxonalar ---
+    "Grand Palace To'yxonasi": ("demo_rustam_xolmatov", "Rustam Xolmatov", "+998901010201"),
+    "Bog'i Rayhon":            ("demo_gulnora_sattorova", "Gulnora Sattorova", "+998901010202"),
+    "Diyor Saroyi":            ("demo_ilhom_yusupov", "Ilhom Yusupov", "+998901010203"),
+    "Navro'z Saroyi":          ("demo_qahramon_toshev", "Qahramon Toshev", "+998901010204"),
+    "Zilol Zamon":             ("demo_mavluda_ochilova", "Mavluda Ochilova", "+998901010205"),
+    "Oq Saroy":                ("demo_botir_hasanov", "Botir Hasanov", "+998901010206"),
+    "Shodlik Saroyi":          ("demo_anvar_mirzayev", "Anvar Mirzayev", "+998901010207"),
+    "Malika To'yxonasi":       ("demo_nigora_abdullayeva", "Nigora Abdullayeva", "+998901010208"),
+    "Anhor Bog'i":             ("demo_shavkat_normatov", "Shavkat Normatov", "+998901010209"),
+    "Sitora Palace":           ("demo_zafar_karimov", "Zafar Karimov", "+998901010210"),
+}
+
+# ===================================================================
+# KUTILAYOTGAN ARIZALAR — administrator uchun ish stoli.
+#
+# Bular hali TASDIQLANMAGAN: odam ro'yxatdan o'tgan, tarif tanlab ariza
+# yuborgan va javob kutmoqda. Joyi bazada bor, lekin `is_visible=False`
+# — qidiruvda chiqmaydi, obunasi ochilmagan, egasi panelga ma'lumot
+# kirita olmaydi.
+#
+# Nega kerak: tasdiqlash oqimini HAQIQIY ma'lumotda sinash uchun. Faqat
+# tasdiqlangan joylar bo'lsa, admin panelidagi "Arizalar" bo'limi bo'sh
+# turadi va uni bosib ko'rib bo'lmaydi.
+#
+# Tariflar ATAYLAB aralash — 1 oylik va 3 oylik. Tasdiqlangandan keyin
+# obuna aynan tanlangan muddatga ochiladi, ya'ni farqi darhol ko'rinadi.
+#
+# (username, ism-familiya, telefon, biznes turi, joy nomi, oy)
+# ===================================================================
+PENDING_APPLICANTS = [
+    ("demo_muzaffar_sobirov", "Muzaffar Sobirov", "+998901010301",
+     "restaurant", "Lazzat Milliy Taomlar", 1),
+    ("demo_shahnoza_yuldash", "Shahnoza Yo'ldosheva", "+998901010302",
+     "restaurant", "Shirin Kafe", 3),
+    ("demo_otabek_rasulov", "Otabek Rasulov", "+998901010303",
+     "restaurant", "Baraka Osh Uyi", 1),
+    ("demo_kamron_alimov", "Kamronbek Alimov", "+998901010304",
+     "restaurant", "Gril Master", 3),
+    ("demo_madina_xudoyberdi", "Madina Xudoyberdiyeva", "+998901010305",
+     "restaurant", "Sitora Pitsa", 1),
+    ("demo_sanjar_ochilov", "Sanjar Ochilov", "+998901010306",
+     "venue", "Yangi Asr To'yxonasi", 3),
+    ("demo_zulfiya_nematova", "Zulfiya Ne'matova", "+998901010307",
+     "venue", "Guliston Saroyi", 1),
+    ("demo_doniyor_xasanov", "Doniyor Xasanov", "+998901010308",
+     "venue", "Marvarid To'yxonasi", 3),
+    ("demo_feruza_bekmurod", "Feruza Bekmurodova", "+998901010309",
+     "venue", "Zarafshon Bog'i", 1),
+    ("demo_ergash_qurbonov", "Ergash Qurbonov", "+998901010310",
+     "venue", "Chinor Saroyi", 3),
+]
+
+# Bron qiladigan va sharh qoldiradigan oddiy mijozlar.
 CUSTOMERS = [
     ("demo_dilshod", "Dilshod Aliyev", "+998901112233"),
     ("demo_nodira", "Nodira Karimova", "+998907778899"),
     ("demo_javohir", "Javohir Rasulov", "+998903334455"),
     ("demo_kamola", "Kamola Yusupova", "+998905556677"),
+    ("demo_bobur", "Bobur Ergashev", "+998901112244"),
+    ("demo_zarina", "Zarina Umarova", "+998907778811"),
+    ("demo_islom", "Islom Toshpo'latov", "+998903334466"),
+    ("demo_malika", "Malika Sobirova", "+998905556688"),
 ]
 
 COMMENTS = [
@@ -378,7 +571,7 @@ COMMENTS = [
 
 
 class Command(BaseCommand):
-    help = "Namoyish uchun 8 restoran, 6 to'yxona, bron va sharhlar yaratadi (haqiqiy suratlar bilan)."
+    help = "Namoyish uchun 10 restoran, 10 to'yxona, kutilayotgan arizalar, bron va sharhlar yaratadi."
 
     def add_arguments(self, parser):
         parser.add_argument("--clear", action="store_true",
@@ -400,6 +593,20 @@ class Command(BaseCommand):
         random.seed(42)  # har safar bir xil natija — namoyish barqaror bo'lsin
         self.use_photos = not options["no_photos"]
         self.photo_cache = {}
+        self.plans = self._plans()
+
+        # Bir surat mavzusini bir nechta joy baham ko'radi (masalan uchta
+        # bog' to'yxonasi). Har biriga keshdagi kadrlar ro'yxatining
+        # BOSHQA qismidan beriladi — aks holda uchalasi bosh sahifada
+        # bir xil rasm bilan chiqib, ma'lumot soxta ekani darrov
+        # bilinardi. Bu yerda har bir joyga o'z "boshlanish nuqtasi"
+        # hisoblanadi.
+        self.photo_slot = {}
+        used = {}
+        for data in RESTAURANTS + VENUES:
+            key = data["photos"]
+            self.photo_slot[data["name"]] = used.get(key, 0) * 4
+            used[key] = used.get(key, 0) + 1
 
         # Suratlar TRANZAKSIYADAN TASHQARIDA yuklanadi: tarmoq sekin
         # bo'lsa, ochiq tranzaksiya bazani daqiqalab qulflab turardi.
@@ -422,8 +629,30 @@ class Command(BaseCommand):
             for index, data in enumerate(VENUES):
                 businesses.append(self._venue(data, index))
             self._reservations_and_reviews(businesses, customers)
+            self._pending_applications()
 
         self._report(customers)
+
+    # ---------------- tariflar ----------------
+    def _plans(self):
+        """
+        Tarif rejalarini tayyorlaydi: {(biznes turi, oy): reja}.
+
+        `seed_platform` ularni yaratadi, lekin demo undan oldin ham
+        ishga tushishi mumkin. Yo'q bo'lsa shu yerda ochiladi —
+        seeder boshqa buyruqning tartibiga bog'liq bo'lmasin.
+        """
+        from common.management.commands.seed_platform import PLAN_PRICES
+        from subscriptions.models import SubscriptionPlan
+
+        plans = {}
+        for business_type, durations in PLAN_PRICES.items():
+            for months, price in durations.items():
+                plans[(business_type, months)], _ = SubscriptionPlan.objects.get_or_create(
+                    business_type=business_type, duration_months=months,
+                    defaults={"price": price, "trial_days": 7},
+                )
+        return plans
 
     # ---------------- suratlar ----------------
     def _download_photos(self):
@@ -437,7 +666,9 @@ class Command(BaseCommand):
         self.stdout.write("Suratlar yuklanmoqda (Wikimedia Commons)...")
         for key in sorted(place_keys):
             # Joy uchun ko'proq kadr kerak: muqova + galereya + xona/zal.
-            self.photo_cache[key] = collect(PHOTO_TERMS[key], 6, cache_key=key)
+            # O'nta — chunki bitta mavzuni uchtagacha joy baham ko'radi
+            # va har biriga o'z kadrlari tegishi kerak (`photo_slot`).
+            self.photo_cache[key] = collect(PHOTO_TERMS[key], 10, cache_key=key)
             self.stdout.write(f"  {key}: {len(self.photo_cache[key])} ta")
         for key in sorted(food_keys):
             self.photo_cache[key] = collect(PHOTO_TERMS[key], 2, cache_key=key)
@@ -493,19 +724,23 @@ class Command(BaseCommand):
 
     # ---------------- restoran ----------------
     def _restaurant(self, data, index):
-        owner = self._user(
-            f"demo_owner_{self._slug(data['name'])}",
-            f"{data['name']} egasi",
-            f"+9989011{index:05d}",
-        )
+        username, full_name, phone = OWNERS[data["name"]]
+        owner = self._user(username, full_name, phone)
+
         # Demo joylar DARHOL tasdiqlanadi.
         #
         # Haqiqiy oqimda ariza yuborilgach admin uni tekshiradi va ana
         # shunda biznes ko'rinadigan bo'ladi. Demoda tasdiqlovchi yo'q,
         # shuning uchun buni seeder o'zi bajaradi — aks holda barcha
         # namoyish joylari yashirin qolib, sayt bo'sh ko'rinardi.
+        #
+        # Tarif ariza bosqichidayoq tanlanadi (1 oylik), ya'ni bu PULLIK
+        # ariza: tasdiqlangach obuna bepul sinovsiz, darhol 'active'
+        # holatda 30 kunga ochiladi. Sinov yo'li alohida — uni
+        # kutilayotgan arizalarda ko'rish mumkin.
         application, business, _ = submit_application(
-            applicant=owner, business_type="restaurant", business_name=data["name"]
+            applicant=owner, business_type="restaurant", business_name=data["name"],
+            plan=self.plans[("restaurant", 1)],
         )
         approve_application(application=application, approved_by=self.approver)
 
@@ -517,16 +752,21 @@ class Command(BaseCommand):
         business.open_time = data["open"]
         business.close_time = data["close"]
         business.telegram_username = f"{self._slug(data['name'])}_admin"
-        business.phone_number = f"+9987112{index:05d}"
+        # Aloqa raqami joyning O'ZINIKI (egasinikidan boshqa) — mijoz
+        # shu raqamga qo'ng'iroq qiladi. Restoran va to'yxona raqamlari
+        # turli oraliqdan olinadi, aks holda ikki xil joy bir xil raqam
+        # bilan chiqib qolardi.
+        business.phone_number = f"+99871200{index:03d}"
         business.save()
 
         photos = data["photos"]
-        self._attach(business.cover_photo, photos, 0,
+        slot = self.photo_slot[data["name"]]
+        self._attach(business.cover_photo, photos, slot,
                      name=f"{business.id}-cover.jpg")
 
         # Galereya — uchta qo'shimcha kadr (muqovadan boshqa).
         for order in range(3):
-            picture = self._picture(photos, order + 1, width=1200)
+            picture = self._picture(photos, slot + order + 1, width=1200)
             if picture is None:
                 break
             photo = BusinessPhoto(business=business, order=order)
@@ -538,7 +778,7 @@ class Command(BaseCommand):
                 business=business, name=name, room_type=room_type,
                 capacity=capacity, deposit_tier=tier,
             )
-            self._attach(room.photo, photos, position % 6,
+            self._attach(room.photo, photos, slot + position,
                          name=f"{room.id}.jpg", width=900)
             rooms.append(room)
 
@@ -555,13 +795,12 @@ class Command(BaseCommand):
 
     # ---------------- to'yxona ----------------
     def _venue(self, data, index):
-        owner = self._user(
-            f"demo_owner_{self._slug(data['name'])}",
-            f"{data['name']} egasi",
-            f"+9989022{index:05d}",
-        )
+        username, full_name, phone = OWNERS[data["name"]]
+        owner = self._user(username, full_name, phone)
+
         application, business, _ = submit_application(
-            applicant=owner, business_type="venue", business_name=data["name"]
+            applicant=owner, business_type="venue", business_name=data["name"],
+            plan=self.plans[("venue", 1)],
         )
         approve_application(application=application, approved_by=self.approver)
 
@@ -570,14 +809,15 @@ class Command(BaseCommand):
         business.latitude, business.longitude = data["lat"], data["lng"]
         business.description = data["description"]
         business.telegram_username = f"{self._slug(data['name'])}_admin"
-        business.phone_number = f"+9987112{index:05d}"
+        business.phone_number = f"+99871210{index:03d}"
         business.save()
 
         photos = data["photos"]
-        self._attach(business.cover_photo, photos, 0, name=f"{business.id}-cover.jpg")
+        slot = self.photo_slot[data["name"]]
+        self._attach(business.cover_photo, photos, slot, name=f"{business.id}-cover.jpg")
 
         for order in range(3):
-            picture = self._picture(photos, order + 1, width=1200)
+            picture = self._picture(photos, slot + order + 1, width=1200)
             if picture is None:
                 break
             photo = BusinessPhoto(business=business, order=order)
@@ -585,7 +825,7 @@ class Command(BaseCommand):
 
         for position, (name, people) in enumerate(data["halls"]):
             hall = Hall.objects.create(business=business, name=name, people=people)
-            self._attach(hall.photo, photos, position + 1,
+            self._attach(hall.photo, photos, slot + position + 1,
                          name=f"{hall.id}.jpg", width=1200)
 
         for dish_count, price in data["pricing"].items():
@@ -627,10 +867,18 @@ class Command(BaseCommand):
 
     # ---------------- bron va sharhlar ----------------
     def _reservations_and_reviews(self, businesses, customers):
-        statuses = ["pending", "confirmed", "confirmed", "completed", "cancelled"]
+        # Holatlar TAQSIMOTI ataylab nomutanosib: yakunlangan bron ko'p
+        # bo'lsin. Sababi — sharh faqat yakunlangan bronga yoziladi,
+        # reyting esa sharhdan hisoblanadi. Ilgari yakunlangani beshdan
+        # bir edi va ko'pchilik joy reytingsiz, "0.0" bilan turardi;
+        # bosh sahifa yarim tayyor ko'rinardi.
+        statuses = [
+            "pending", "confirmed", "confirmed", "confirmed",
+            "completed", "completed", "completed", "cancelled",
+        ]
 
         for business in businesses:
-            for _ in range(random.randint(3, 6)):
+            for _ in range(random.randint(8, 14)):
                 customer = random.choice(customers)
                 status = random.choice(statuses)
                 availability = (
@@ -679,27 +927,77 @@ class Command(BaseCommand):
                         comment=random.choice(COMMENTS),
                     )
 
+    # ---------------- kutilayotgan arizalar ----------------
+    def _pending_applications(self):
+        """
+        Tasdiqlanmagan arizalar — admin panelida ko'rib chiqish uchun.
+
+        Bu yerda `approve_application` ATAYLAB chaqirilmaydi: arizani
+        administrator o'z panelidan tasdiqlaydi. Ana shunda obuna
+        tanlangan muddatga ochiladi va joy qidiruvda paydo bo'ladi —
+        oqimning butun ma'nosi shu qadamda ko'rinadi.
+        """
+        for username, full_name, phone, business_type, business_name, months in PENDING_APPLICANTS:
+            applicant = self._user(username, full_name, phone)
+            submit_application(
+                applicant=applicant,
+                business_type=business_type,
+                business_name=business_name,
+                plan=self.plans[(business_type, months)],
+            )
+
     # ---------------- xulosa ----------------
     def _report(self, customers):
-        from businesses.models import Business
+        from businesses.models import BusinessApplication
 
-        photos = BusinessPhoto.objects.count()
+        photos = BusinessPhoto.objects.filter(
+            business__owner__username__startswith="demo_"
+        ).count()
+        pending = BusinessApplication.objects.filter(
+            applicant__username__startswith="demo_", status="pending_payment",
+        ).count()
+
+        restaurant_owners = "\n".join(
+            f"    {OWNERS[data['name']][0]:<24} — {data['name']}"
+            for data in RESTAURANTS
+        )
+        venue_owners = "\n".join(
+            f"    {OWNERS[data['name']][0]:<24} — {data['name']}"
+            for data in VENUES
+        )
+        applicants = "\n".join(
+            f"    {username:<24} — {name} ({months} oylik)"
+            for username, _, _, _, name, months in PENDING_APPLICANTS
+        )
+
         self.stdout.write(self.style.SUCCESS(f"""
-Demo ma'lumot tayyor.
+Demo ma'lumot tayyor. PAROL HAMMASIDA BIR XIL: {PASSWORD}
 
   Restoranlar : {len(RESTAURANTS)} ta (har birida {len(ROOM_SET)} xona)
   To'yxonalar : {len(VENUES)} ta
-  Bizneslar   : {Business.objects.filter(owner__username__startswith='demo_').count()}
+  Obuna       : hammasi 1 oylik, 'active' holatda
   Galereya    : {photos} ta surat
-  Bronlar     : {Reservation.objects.count()}
-  Sharhlar    : {Review.objects.count()}
+  Bronlar     : {Reservation.objects.filter(user__username__startswith='demo_').count()}
+  Sharhlar    : {Review.objects.filter(user__username__startswith='demo_').count()}
   Mijozlar    : {len(customers)}
+  Kutayotgan arizalar : {pending} ta
 
-Kirish uchun (parol hammasida: {PASSWORD}):
+RESTORAN EGALARI (obunasi faol, panelga kiradi)
+{restaurant_owners}
 
-  Restoran egasi : demo_owner_shoxona
-  To'yxona egasi : demo_owner_grand
-  Mijoz          : demo_dilshod
+TO'YXONA EGALARI (obunasi faol, panelga kiradi)
+{venue_owners}
+
+TASDIQ KUTAYOTGAN ARIZALAR (siz admin sifatida ko'rib chiqasiz)
+{applicants}
+
+  Ular hozir panelga KIRA OLMAYDI va joylari qidiruvda YO'Q.
+  Admin panelidagi "Arizalar" bo'limidan tasdiqlang — obuna
+  tanlangan muddatga ochiladi va joy darhol saytda paydo bo'ladi.
+
+MIJOZLAR (bron qiladi, sharh yozadi)
+    demo_dilshod, demo_nodira, demo_javohir, demo_kamola,
+    demo_bobur, demo_zarina, demo_islom, demo_malika
 
 Suratlar Wikimedia Commons'dan (erkin litsenziya).
 Manba va mualliflar: media/_demo_cache/manifest.json

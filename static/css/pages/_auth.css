@@ -181,3 +181,60 @@
   .lang-switch button { color: rgba(255, 255, 255, .82); }
   .lang-switch button:hover { background: rgba(255, 255, 255, .18); color: #FFFFFF; }
 }
+
+/* ===================================================================
+   GOOGLE ORQALI KIRISH.
+
+   Tugmani o'zimiz chizamiz (Google kutubxonasi emas). Ko'rinishi
+   Google brend qoidasiga mos: oq fon, kulrang ramka, rasmiy "G"
+   belgisi va aniq matn — odam uni tanib turishi kerak, aks holda
+   "bu nima?" degan ikkilanish paydo bo'ladi.
+   =================================================================== */
+.google-signin { margin-block: var(--sp-6); }
+
+.btn-google {
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-3);
+  width: 100%; min-height: 48px; padding: 12px var(--sp-5);
+  border-radius: var(--radius-pill);
+  /* Google talabi: tugma OQ (yoki to'q ko'k) bo'lishi kerak. Sayt
+     temasidan qat'i nazar shu ranglar qoladi — brend belgisi. */
+  background: #FFFFFF; color: #1F1F1F;
+  border: 1px solid #DADCE0;
+  font-weight: 600; font-size: 15px;
+  transition: box-shadow var(--transition), background var(--transition);
+}
+.btn-google:hover { background: #F8F9FA; box-shadow: var(--shadow); }
+.btn-google:active { transform: scale(.99); }
+.btn-google .google-mark { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* Nima yutayotgani — tugma ostidagi uchta qator. Ular reklama emas,
+   savolga javob: "nega Google, parol bilan bo'lmaydimi?" */
+.auth-perks {
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  margin-block: var(--sp-5);
+}
+.auth-perks li {
+  display: flex; align-items: center; gap: var(--sp-3);
+  font-size: var(--fs-sm); color: var(--ink-soft);
+}
+
+/* Parol bilan kirish — YOPIQ holda.
+
+   O'chirilmadi: administrator va eski hisoblar shu yerdan kiradi.
+   Lekin yangi odam uni ochmasligi kerak, shuning uchun ko'zga
+   tashlanmaydigan qilib qo'yilgan. */
+.auth-legacy {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--line-soft);
+}
+.auth-legacy > summary {
+  cursor: pointer; list-style: none;
+  font-size: var(--fs-sm); font-weight: 700; color: var(--ink-faint);
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.auth-legacy > summary::-webkit-details-marker { display: none; }
+.auth-legacy > summary::before { content: "\25B8"; transition: transform var(--transition); }
+.auth-legacy[open] > summary::before { transform: rotate(90deg); }
+.auth-legacy > summary:hover { color: var(--ink); }
+.auth-legacy > * + * { margin-top: var(--sp-3); }

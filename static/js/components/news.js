@@ -1,8 +1,14 @@
 /** Yangiliklar: to'liq kartochkalar va yon ustundagi qisqa lenta. */
 import { api } from "../core/api.js";
-import { getLanguage } from "../core/i18n.js";
+import { getLanguage, t } from "../core/i18n.js";
 import { esc } from "../ui/dom.js";
+import { modal } from "../ui/modal.js";
 import { dateLabel } from "../ui/format.js";
+
+// Ochilgan oynaga ma'lumotni id bo'yicha topamiz: HTML atributiga
+// butun matnni yozib qo'yish sahifani og'irlashtirardi va uzun
+// yangilikda qochirish (escaping) muammosi tug'ilardi.
+let loaded = [];
 
 function categoryClass(category) {
   return `news-cat news-cat-${category || "news"}`;
@@ -20,10 +26,16 @@ function cardHtml(item) {
       </div>
     </div>`;
 
-  const classes = `news-card ${item.is_pinned ? "news-pinned" : ""}`;
-  return item.link_url
-    ? `<a class="${classes}" href="${esc(item.link_url)}">${inner}</a>`
-    : `<article class="${classes}">${inner}</article>`;
+  // Kartochka HAVOLA emas, TUGMA.
+  //
+  // Ilgari u to'g'ridan-to'g'ri `link_url` ga olib ketardi: odam
+  // yangilikni o'qimasdan turib boshqa saytga tushib qolardi, matn
+  // esa (`body`) hech qayerda ko'rinmasdi — bekorga yozilardi.
+  // Endi avval oyna ochiladi, havolaga o'tish esa pastdagi tugma
+  // orqali — ya'ni ongli tanlov.
+  return `
+    <button class="news-card ${item.is_pinned ? "news-pinned" : ""}" type="button"
+            data-news="${esc(item.id)}">${inner}</button>`;
 }
 
 function stripHtml(item) {
@@ -34,9 +46,54 @@ function stripHtml(item) {
       ${item.excerpt ? `<span class="xs muted">${esc(item.excerpt)}</span>` : ""}
       <span class="xs faint">${dateLabel(item.created_at)}</span>
     </div>`;
-  return item.link_url
-    ? `<a class="news-strip-item" href="${esc(item.link_url)}">${inner}</a>`
-    : `<div class="news-strip-item">${inner}</div>`;
+  return `<button class="news-strip-item" type="button" data-news="${esc(item.id)}">${inner}</button>`;
+}
+
+/** To'liq yangilik oynasi. */
+function openNews(item) {
+  // Matn `body` da abzatslar bilan yoziladi. `esc` dan keyin qatorlarni
+  // <p> ga aylantiramiz — HTML kiritishga yo'l qo'ymay, lekin abzats
+  // ko'rinishini saqlab. Bo'sh bo'lsa qisqacha matn ishlatiladi.
+  // Ichki havola SHU OYNADA ochiladi, tashqisi — yangi ilovada.
+  // Aks holda o'z saytimizning sahifasi ham yangi ilovada ochilib,
+  // odamda o'nlab ilova to'planib qolardi.
+  const external = /^https?:\/\//i.test(item.link_url || "");
+
+  const text = (item.body || item.excerpt || "").trim();
+  const paragraphs = text
+    ? text.split(/\n{2,}|\r\n{2,}/).map((part) => `<p>${esc(part.trim()).replace(/\n/g, "<br>")}</p>`).join("")
+    : "";
+
+  modal.open(`
+    ${item.cover ? `<img class="news-modal-cover" src="${esc(item.cover)}" alt="">` : ""}
+    <span class="${categoryClass(item.category)}">${esc(item.category_display || "")}</span>
+    <h2 class="display h2" style="margin-top:var(--sp-3)">${esc(item.title)}</h2>
+    <span class="xs faint">${dateLabel(item.created_at)}</span>
+
+    <div class="news-modal-body">${paragraphs || `<p class="muted">—</p>`}</div>
+
+    <div class="row row-2" style="margin-top:var(--sp-6)">
+      <button class="btn btn-outline" style="flex:1" type="button" data-modal-close>
+        ${esc(t("common.close"))}
+      </button>
+      ${item.link_url ? `
+        <a class="btn btn-primary" style="flex:1" href="${esc(item.link_url)}"
+           ${external ? 'target="_blank" rel="noopener noreferrer"' : ""}>
+          ${esc(t("news.open"))}${external ? " ↗" : ""}
+        </a>` : ""}
+    </div>`, { wide: true });
+}
+
+/** Kartochka va lenta bosilganda oynani ochadi (bir marta ulanadi). */
+function bindOnce() {
+  if (bindOnce.done) return;
+  bindOnce.done = true;
+  document.addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-news]");
+    if (!trigger) return;
+    const item = loaded.find((news) => String(news.id) === trigger.dataset.news);
+    if (item) openNews(item);
+  });
 }
 
 /**
@@ -51,6 +108,9 @@ export async function renderNews({ stripSelector, gridSelector, sectionSelector,
   } catch {
     return;
   }
+
+  loaded = items;
+  bindOnce();
 
   const strip = stripSelector ? document.querySelector(stripSelector) : null;
   if (strip) {

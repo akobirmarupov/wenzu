@@ -1,0 +1,166 @@
+/* ===================================================================
+   TELEFON KO'RINISHI.
+
+   Bu fayl ro'yxatda ENG OXIRIDA turadi — shuning uchun u boshqa
+   qatlamlarni xotirjam ustidan yozadi va `!important` kerak emas.
+
+   Bu yerda faqat KICHIK EKRANGA va O'RNATILGAN ILOVAGA tegishli
+   qoidalar bo'ladi. Umumiy tartib (yon menyuning surilishi, jadval
+   aylanishi, katakchalarning tik joylashishi) o'z komponentlarida
+   qolaveradi — u yerda kontekst bilan birga o'qiladi.
+   =================================================================== */
+
+/* -------------------------------------------------------------------
+   1. "TIRQISHLI" EKRANLAR (notch, yumaloq burchak).
+
+   Telefonda ekranning yuqori va past cheti tizim elementlari bilan
+   band. `viewport-fit=cover` bilan sahifa butun ekranni egallaydi,
+   ya'ni mazmun o'sha chetlarga kirib ketishi mumkin — pastdagi
+   tugmalar barmoq bilan bosilmay qoladi.
+
+   `env(safe-area-inset-*)` — tizim aytadigan xavfsiz masofa. Qo'llab
+   -quvvatlamaydigan brauzerda u 0 ga teng, ya'ni hech narsa buzilmaydi.
+   ------------------------------------------------------------------- */
+.side-nav {
+  padding-top: max(var(--sp-5), env(safe-area-inset-top));
+  padding-bottom: max(var(--sp-5), env(safe-area-inset-bottom));
+}
+.topbar { padding-top: env(safe-area-inset-top); }
+.footer { padding-bottom: max(var(--sp-8), env(safe-area-inset-bottom)); }
+
+/* -------------------------------------------------------------------
+   2. BRAUZER PANELI VA BALANDLIK.
+
+   Telefonda `100vh` — manzil qatori YASHIRINGANDAGI balandlik. Panel
+   ko'rinib turganda esa sahifa ekranga sig'may, pastki qismi kesilib
+   qoladi. `100dvh` ("dynamic") panel bilan birga o'zgaradi.
+
+   `100vh` fallback sifatida oldin yoziladi: eski brauzer ikkinchi
+   qatorni tushunmaydi va birinchisida qolib ketadi.
+   ------------------------------------------------------------------- */
+.shell { min-height: 100vh; min-height: 100dvh; }
+.side-nav { height: 100vh; height: 100dvh; }
+
+@media (max-width: 940px) {
+  /* -----------------------------------------------------------------
+     3. YUQORI PANEL — YOPISHIB TURADI.
+
+     Telefonda sahifa uzun bo'ladi va pastga tushgan odam menyuga
+     qaytish uchun tepaga scroll qilishi kerak edi. Endi gamburger
+     doim ko'z oldida.
+     ----------------------------------------------------------------- */
+  .topbar {
+    position: sticky; top: 0; z-index: calc(var(--z-sidebar) - 2);
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 560px) {
+  /* -----------------------------------------------------------------
+     4. KLAVIATURA OCHILGANDA EKRAN "SAKRAMASIN".
+
+     iOS Safari 16 px dan KICHIK matnli maydonga bosilganda sahifani
+     avtomatik kattalashtiradi va foydalanuvchi qo'lda qaytarishi
+     kerak bo'ladi. 16 px — o'sha chegara.
+     ----------------------------------------------------------------- */
+  .input, .select, .textarea { font-size: 16px; }
+
+  /* -----------------------------------------------------------------
+     5. BARMOQ O'LCHAMI.
+
+     Sichqoncha uchun 34 px yetarli, barmoq uchun emas: yonma-yon
+     turgan mayda tugmalar noto'g'ri bosiladi. 42 px — qulay eng
+     kichik o'lcham.
+     ----------------------------------------------------------------- */
+  .btn { padding: 12px 20px; min-height: 44px; }
+  .btn-sm { min-height: 38px; }
+  .icon-btn { width: 42px; height: 42px; }
+
+  /* Kartochkadagi tugmalar tor ekranda yonma-yon siqilib qolardi. */
+  .row-2 > .btn, .row-3 > .btn { flex: 1; }
+
+  /* Sarlavhalar telefonda biroz kichrayadi — aks holda uzun nom
+     ekranga sig'may, uch qatorga bo'linib ketardi. */
+  .display.h2 { font-size: var(--fs-xl); }
+  h1.display  { font-size: var(--fs-2xl); }
+
+  /* Modal — pastdan chiqadigan varaq ko'rinishida (`_modal.css` da
+     560 px uchun allaqachon shunday). Ichidagi tugmalar tik tursin. */
+  .modal .row-2 { flex-direction: column-reverse; align-items: stretch; }
+  .modal .row-2 > .btn { width: 100%; }
+
+  /* Jadval kartochkalari va panel ichi torroq chetga o'tadi. */
+  .panel { padding: var(--sp-4); }
+  .dash-content { padding: var(--sp-4) var(--sp-3) var(--sp-12); }
+
+  /* Uzun matnli ustunlar telefonda jadvalni cho'zib yubormasin —
+     `.table-wrap` aylantiradi, lekin kamroq aylantirish qulayroq. */
+  .table th, .table td { padding: var(--sp-3); }
+}
+
+/* -------------------------------------------------------------------
+   6. O'RNATILGAN ILOVA REJIMI.
+
+   Ilova bosh ekrandan ochilganda brauzerning "orqaga" tugmasi yo'q.
+   Shuning uchun matnni tasodifan belgilab qo'yish va ikki marta
+   bosganda kattalashish bezovta qiladi — ular o'chiriladi.
+   Matnli maydonlarga bu tegmaydi.
+   ------------------------------------------------------------------- */
+@media (display-mode: standalone) {
+  body { -webkit-user-select: none; user-select: none; }
+  .input, .textarea, .select, p, h1, h2, h3, .table {
+    -webkit-user-select: text; user-select: text;
+  }
+}
+
+/* -------------------------------------------------------------------
+   7. "ILOVANI O'RNATING" TASMASI.
+
+   Pastda turadi: yuqorida bo'lsa sarlavhani bosib qolardi. Faqat
+   Android brauzeri o'rnatish mumkinligini aytganda paydo bo'ladi
+   (`js/core/pwa.js`), bir marta yopilsa boshqa chiqmaydi.
+   ------------------------------------------------------------------- */
+.install-bar {
+  position: fixed; z-index: var(--z-toast, 90);
+  left: var(--sp-4); right: var(--sp-4);
+  bottom: max(var(--sp-4), env(safe-area-inset-bottom));
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-m); box-shadow: var(--shadow-lg);
+  animation: install-rise .28s ease-out;
+}
+@keyframes install-rise {
+  from { transform: translateY(120%); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+.install-bar .install-icon {
+  width: 44px; height: 44px; border-radius: var(--radius-s); flex-shrink: 0;
+  background: var(--surface-2);
+}
+.install-bar .install-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.install-bar .install-text b { font-size: var(--fs-sm); }
+.install-bar .install-text span { font-size: var(--fs-xs); color: var(--ink-soft); }
+
+@media (max-width: 560px) {
+  /* Tor ekranda tavsif matni tugmalarni siqib qo'yardi. */
+  .install-bar .install-text span { display: none; }
+}
+
+/* -------------------------------------------------------------------
+   8. OFLAYN SAHIFA.
+   ------------------------------------------------------------------- */
+.offline-wrap {
+  min-height: 100vh; min-height: 100dvh;
+  display: grid; place-items: center; padding: var(--sp-6);
+  background: var(--ground);
+}
+.offline-card {
+  max-width: 420px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-4);
+  padding: var(--sp-8) var(--sp-6);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-l); box-shadow: var(--shadow);
+}
+.offline-icon { font-size: 46px; }

@@ -77,8 +77,22 @@ function buildUrl(path, params) {
 }
 
 async function send(path, { method = "GET", params, body, auth = true, isForm = false, retry = true } = {}) {
+  // FAYL YUBORISHNI O'ZI TANIYDI.
+  //
+  // Ilgari buni faqat `http.upload()` bilardi va u faqat POST edi. Rasm
+  // esa ko'pincha PATCH bilan yuboriladi (biznesning asosiy rasmi, xona
+  // va zal surati, taom fotosi, banner). Bunday chaqiruvda `isForm`
+  // qolib ketardi va FormData `JSON.stringify` dan o'tib, serverga
+  // "{}" bo'lib borardi: server 200 qaytarardi, ekranda "saqlandi"
+  // chiqardi, rasm esa hech qayerga yozilmasdi — xatoning eng yomon
+  // turi, chunki hech kim sezmaydi.
+  //
+  // Endi tekshiruv shu yerda, bitta joyda: FormData ko'rinsa —
+  // `Content-Type` ni brauzer o'zi qo'yadi (multipart chegarasi bilan).
+  const sendsForm = isForm || body instanceof FormData;
+
   const headers = {};
-  if (!isForm) headers["Content-Type"] = "application/json";
+  if (!sendsForm) headers["Content-Type"] = "application/json";
 
   const token = storage.getAccess();
   if (auth && token) headers.Authorization = `Bearer ${token}`;
@@ -88,7 +102,7 @@ async function send(path, { method = "GET", params, body, auth = true, isForm = 
     response = await fetch(buildUrl(path, params), {
       method,
       headers,
-      body: isForm ? body : body !== undefined ? JSON.stringify(body) : undefined,
+      body: sendsForm ? body : body !== undefined ? JSON.stringify(body) : undefined,
     });
   } catch {
     // Tarmoq uzilgan yoki server javob bermayapti.
@@ -98,7 +112,7 @@ async function send(path, { method = "GET", params, body, auth = true, isForm = 
   // Token eskirgan — yangilab, so'rovni bir marta qaytaramiz.
   if (response.status === 401 && auth && retry && storage.getRefresh()) {
     const fresh = await refreshAccessToken();
-    if (fresh) return send(path, { method, params, body, auth, isForm, retry: false });
+    if (fresh) return send(path, { method, params, body, auth, isForm: sendsForm, retry: false });
     storage.clear();
     if (!window.location.pathname.startsWith(ROUTES.login)) {
       window.location.href = `${ROUTES.login}?next=${encodeURIComponent(window.location.pathname)}`;

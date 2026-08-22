@@ -14,6 +14,7 @@ import { ROUTES } from "../core/config.js";
 import { openModal, modal } from "../ui/modal.js";
 import { toast } from "../ui/toast.js";
 import { esc, busy } from "../ui/dom.js";
+import { ensurePhone } from "./phone-gate.js";
 import { money, timeLabel, todayISO, dateLabel, imageUrl } from "../ui/format.js";
 
 /** Vaqt tanlash qadami (daqiqa). 30 daqiqa — 1 soatlik ham, 5 soatlik ham bo'ladi. */
@@ -57,8 +58,17 @@ function rangeIsBusy(startMin, endMin) {
   });
 }
 
-/** Bron qilishdan oldin kirish va telefon tasdig'i talab qilinadi. */
-function ensureCanBook() {
+/**
+ * Bron qilishdan oldingi tekshiruvlar.
+ *
+ * Ilgari bu yerda SMS tasdig'i talab qilinardi va odam `/tasdiqlash/`
+ * sahifasiga QUVIB CHIQARILARDI — tanlagan sanasi, xonasi, hammasi
+ * yo'qolardi va qaytib kelgach boshidan boshlashi kerak edi.
+ *
+ * Endi SMS yo'q: raqam shu yerda, kichik oynada bir marta so'raladi
+ * va foydalanuvchi o'z joyida qoladi.
+ */
+async function ensureCanBook() {
   if (!auth.isAuthenticated()) {
     window.location.href = `${ROUTES.login}?next=${encodeURIComponent(window.location.pathname)}`;
     return false;
@@ -74,19 +84,16 @@ function ensureCanBook() {
     );
     return false;
   }
-  if (user && !user.is_phone_verified) {
-    toast.error("Avval telefon raqamingizni tasdiqlang.");
-    window.location.href = ROUTES.verify;
-    return false;
-  }
-  return true;
+  // Aloqa raqami — joy egasi mehmonga qo'ng'iroq qilishi uchun.
+  // Bor bo'lsa oyna umuman ochilmaydi.
+  return ensurePhone();
 }
 
 // ===================================================================
 // Restoran
 // ===================================================================
 export async function openRoomBooking(business, room) {
-  if (!ensureCanBook()) return;
+  if (!(await ensureCanBook())) return;
 
   Object.assign(state, {
     type: "restaurant", business, room, hall: null,
@@ -207,7 +214,7 @@ function timePickerHtml() {
 // To'yxona
 // ===================================================================
 export async function openHallBooking(business, hall, pricing) {
-  if (!ensureCanBook()) return;
+  if (!(await ensureCanBook())) return;
 
   Object.assign(state, {
     type: "venue", business, hall, room: null,

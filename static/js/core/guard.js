@@ -15,11 +15,31 @@ function redirect(to) {
 
 /** Tizimga kirgan bo'lishi shart. */
 export function requireAuth() {
-  if (!auth.isAuthenticated()) {
+  const toLogin = () =>
     redirect(`${ROUTES.login}?next=${encodeURIComponent(window.location.pathname)}`);
+
+  if (!auth.isAuthenticated()) {
+    toLogin();
     return null;
   }
-  return storage.getUser();
+
+  // Token bor, lekin saqlangan PROFIL yo'q — sessiya yarim buzilgan.
+  //
+  // Bunday holat brauzer saqlashni qisman tozalaganda yoki kirish
+  // oxirigacha yetmaganda paydo bo'ladi. Ilgari funksiya shunchaki
+  // `null` qaytarardi va sahifalar `if (user) start()` deb tekshirib,
+  // hech narsa chizmasdan to'xtardi: odam BO'M-BO'SH ekranni ko'rardi
+  // va nima bo'lganini bilmasdi.
+  //
+  // Endi uni kirish sahifasiga qaytaramiz — u yerdan hammasi
+  // qaytadan tiklanadi.
+  const user = storage.getUser();
+  if (!user) {
+    storage.clear();
+    toLogin();
+    return null;
+  }
+  return user;
 }
 
 /**
@@ -53,8 +73,10 @@ export function requireOwner() {
     redirect(ROUTES.profile);
     return null;
   }
-  // `is_approved` — obuna ochilganmi. Obuna faqat admin tasdig'idan
-  // keyin paydo bo'ladi, ya'ni uning mavjudligi tasdiqning o'zi.
+  // `is_approved` — ARIZA tasdiqlanganmi. Obuna bilan aralashtirmaslik
+  // kerak: tasdiqlangan, lekin obunasi ochilmagan egasi ham panelga
+  // kiradi — u yerda o'z holatini ko'rib, tarif tanlaydi. Yozish
+  // amallarini server obunaga qarab cheklaydi.
   //
   // `=== false` ataylab: eski, `is_approved` maydonisiz saqlangan
   // sessiyada qiymat `undefined` bo'ladi va odamni bekorga quvib

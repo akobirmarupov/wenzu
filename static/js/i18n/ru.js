@@ -135,6 +135,13 @@ export default {
   },
 
   auth: {
+    googleTitle: "Вход в одно нажатие",
+    googleLead: "Продолжите с аккаунтом Google — не нужно придумывать пароль и ждать SMS.",
+    perkFast: "Одно нажатие — аккаунт готов",
+    perkSafe: "Пароль у нас не хранится",
+    perkPhoto: "Имя и фото подставятся сами",
+    passwordLogin: "Вход по паролю",
+    passwordHint: "Только для старых аккаунтов и администратора.",
     loginTitle: "Вход", loginLead: "Войдите и управляйте своими бронями.",
     registerTitle: "Регистрация", verifyTitle: "Подтверждение телефона",
     fullName: "Полное имя", phone: "Номер телефона", username: "Имя пользователя",
@@ -153,6 +160,8 @@ export default {
     bookings: "Мои брони",
     business: "Открыть бизнес",
     personalInfo: "Личные данные",
+    edit: "Редактировать",
+    editTitle: "Редактирование данных",
     account: "Данные аккаунта",
     groupAccount: "Мой аккаунт",
     groupManage: "Управление",
@@ -225,6 +234,10 @@ export default {
   admin: {
     title: "Управление платформой",
     shortcuts: "Быстрый доступ",
+  },
+
+  news: {
+    open: "Открыть ссылку",
   },
 
   common: {

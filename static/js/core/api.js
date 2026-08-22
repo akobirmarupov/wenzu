@@ -10,10 +10,11 @@ import { http } from "./http.js";
 export const api = {
   // ---------------- auth ----------------
   auth: {
-    register: (data) => http.post("/auth/register/", data, { auth: false }),
-    sendCode: (phone_number) => http.post("/auth/send-code/", { phone_number }, { auth: false }),
-    verifyPhone: (phone_number, code) =>
-      http.post("/auth/verify-phone/", { phone_number, code }, { auth: false }),
+    // Ro'yxatdan o'tish VA kirish — bitta chaqiruv. Hisob bo'lmasa
+    // server o'zi yaratadi, shuning uchun alohida `register` yo'q.
+    google: (credential) => http.post("/auth/google/", { credential }, { auth: false }),
+
+    // Parol bilan kirish — eski hisoblar va administrator uchun.
     login: (username, password) => http.post("/auth/login/", { username, password }, { auth: false }),
     logout: (refresh) => http.post("/auth/logout/", { refresh }),
     me: () => http.get("/auth/me/"),

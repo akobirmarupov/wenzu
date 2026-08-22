@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% comment %}
+  Internet uzilganda ko'rinadigan sahifa.
+
+  U service worker tomonidan OLDINDAN yuklab qo'yiladi, shuning uchun
+  qobiq (`layouts/public.html`) ishlatilmaydi: yon menyu va yuqori
+  panel mazmuni JS orqali serverdan keladi, tarmoqsiz esa ular bo'sh
+  qora joy bo'lib qolardi. Bu yerda hamma narsa sahifaning o'zida.
+{% endcomment %}
+
+{% block body %}
+<div class="offline-wrap">
+  <div class="offline-card">
+    <div class="offline-icon" aria-hidden="true">📡</div>
+
+    <h1 class="display h2">Internet yo'q</h1>
+    <p class="muted">
+      Qurilmangiz tarmoqqa ulanmagan. Wi-Fi yoki mobil internetni
+      yoqing va sahifani qayta yuklang.
+    </p>
+
+    <button class="btn btn-primary" type="button" onclick="location.reload()">
+      Qayta urinish
+    </button>
+
+    <p class="xs faint" style="margin-top:var(--sp-5)">
+      WENZU — restoran va to'yxonalarni onlayn bron qilish
+    </p>
+  </div>
+</div>
+{% endblock %}

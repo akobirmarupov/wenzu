@@ -1,4 +1,10 @@
-/** Kirish sahifasi. */
+/**
+ * Kirish sahifasi.
+ *
+ * Asosiy yo'l — Google tugmasi (`ui/google-signin.js`). Pastdagi
+ * parol formasi eski hisoblar va administrator uchun qoldirilgan;
+ * yangi ro'yxat u yerdan o'tmaydi.
+ */
 import { auth } from "../../core/auth.js";
 import { redirectIfAuthenticated } from "../../core/guard.js";
 import { $, formValues, busy } from "../../ui/dom.js";
@@ -7,12 +13,29 @@ import { initI18n } from "../../core/i18n.js";
 import { theme } from "../../core/theme.js";
 import { renderControls } from "../../ui/controls.js";
 import { initAuthVisual } from "../../ui/auth-visual.js";
+import { consumeGoogleRedirect, renderGoogleButton } from "../../ui/google-signin.js";
 
-redirectIfAuthenticated();
+// GOOGLE'DAN QAYTISH — ENG BIRINCHI TEKSHIRILADI.
+//
+// `redirectIfAuthenticated()` dan ham oldin. Sabab: u
+// `location.replace` bilan ishlaydi va manzilni almashtirganda
+// fragmentdagi (`#access=...`) tokenlar yo'qolardi. Ya'ni eski
+// sessiyasi bor odam Google bilan qaytganda kirishi bekorga
+// ketardi.
+const arrivedFromGoogle = consumeGoogleRedirect();
+
+if (!arrivedFromGoogle) {
+  redirectIfAuthenticated();
+}
+
 theme.init();
 await initI18n();
 renderControls("#auth-controls");
 initAuthVisual();
+
+if (!arrivedFromGoogle) {
+  renderGoogleButton("#google-button");
+}
 
 const form = $("#login-form");
 const errorBox = $("#form-error");

@@ -241,9 +241,13 @@ async function paint() {
   render("#profile-content", section.module.render(user) + extra);
 
   section.module.bind?.({
+    user,
     onUpdated: (fresh) => {
       user = fresh;
-      render("#profile-cover", coverHtml(user));
+      // Butun bo'limni qayta chizamiz, faqat muqovani emas: ma'lumot
+      // endi o'qish uchun ramkada turadi va o'zgargan ism/bio o'sha
+      // yerda ham yangilanishi kerak.
+      paint();
     },
     onGoToBusiness: () => {
       window.location.href = ROUTES.premium;
