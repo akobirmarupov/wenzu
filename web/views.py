@@ -67,14 +67,6 @@ class MyBookingsView(PageView):
     body_class = "page-bookings"
 
 
-class OpenBusinessView(PageView):
-    """"Biznes ochish" — profil ichida emas, ALOHIDA sahifa."""
-
-    template_name = "pages/public/business.html"
-    page_title = "Biznes ochish"
-    body_class = "page-business"
-
-
 # ===================================================================
 # Autentifikatsiya
 # ===================================================================
@@ -183,6 +175,22 @@ class AdminBusinessesView(PageView):
 class AdminSubscriptionsView(PageView):
     template_name = "pages/admin/subscriptions.html"
     page_title = "Obunalar"
+    body_class = "page-dashboard"
+
+
+class AdminReservationsView(PageView):
+    """Platformadagi barcha bronlar — admin faqat kuzatadi, tahrirlamaydi."""
+
+    template_name = "pages/admin/reservations.html"
+    page_title = "Barcha bronlar"
+    body_class = "page-dashboard"
+
+
+class AdminPaymentsView(PageView):
+    """To'lovlar jurnali — Telegram orqali qabul qilingan to'lovlar."""
+
+    template_name = "pages/admin/payments.html"
+    page_title = "To'lovlar"
     body_class = "page-dashboard"
 
 

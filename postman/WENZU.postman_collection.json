@@ -168,6 +168,31 @@
       "key": "user_id",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "notification_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "news_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "news_admin_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "banner_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "subscription_request_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
@@ -694,6 +719,48 @@
             "description": "⚠️ Hisobni faolsizlantiradi va shaxsiy ma'lumotlarni anonimlashtiradi.\n\nYozuv jismonan o'chirilmaydi — bronlar va to'lov tarixi saqlanib qoladi."
           },
           "response": []
+        },
+        {
+          "name": "Profil rasmini yuklash",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me/avatar/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me",
+                "avatar"
+              ]
+            },
+            "description": "Profil rasmi. **Body → form-data** bo'lishi kerak: `avatar` = fayl.\n\nEski rasm avtomatik o'chiriladi. Ruxsat: jpg/jpeg/png/webp, 5 MB gacha."
+          },
+          "response": []
+        },
+        {
+          "name": "Profil rasmini o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/me/avatar/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "me",
+                "avatar"
+              ]
+            },
+            "description": "Rasmni olib tashlaydi — o'rniga ism bosh harflari ko'rsatiladi."
+          },
+          "response": []
         }
       ]
     },
@@ -829,7 +896,7 @@
                 "{{business_id}}"
               ]
             },
-            "description": "Detal sahifasi bitta so'rovda: galereya, xona/zallar, menyu, taom paketi narxlari.\n\nAlohida so'rov yuborish shart emas — hammasi shu javobda.",
+            "description": "Detal sahifasi bitta so'rovda: galereya, xona/zallar, menyu, taom paketi narxlari.\n\nAlohida so'rov yuborish shart emas — hammasi shu javobda.\n\n**ALOQA MA'LUMOTI YOPIQ**\n`telegram_username` va `phone_number` faqat KIRGAN foydalanuvchiga qaytadi. Mehmonga `null` keladi va `contacts_locked: true` bo'ladi.\n\nNega: ochiq turgan raqam bir kunda spam-botlar ro'yxatiga tushadi. Bron qilish uchun baribir kirish kerak, ya'ni haqiqiy mijoz hech narsa yo'qotmaydi.\n\nJavob keshlanadi, lekin kesh kaliti kirgan/kirmaganni ajratadi — raqam mehmonga kesh orqali ham o'tmaydi.",
             "auth": {
               "type": "noauth"
             }
@@ -1215,6 +1282,237 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Bosh sahifa: rasm lentasi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/showcase/photos/?limit=60",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "showcase",
+                "photos"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "60",
+                  "description": "Eng ko'pi 120"
+                }
+              ]
+            },
+            "description": "Bosh sahifadagi uzluksiz rasm lentasi uchun. Barcha ko'rinadigan joylarning muqova rasmi va galereyasi bitta ro'yxatda.\n\nBloklangan (is_visible=False) bizneslar CHIQMAYDI.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Ro'yxat qaytdi\", () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bosh sahifa: restoran taomlari",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/menu/restaurant/?page_size=40",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "menu",
+                "restaurant"
+              ],
+              "query": [
+                {
+                  "key": "page_size",
+                  "value": "40"
+                }
+              ]
+            },
+            "description": "PLATFORMADAGI barcha restoran taomlari — bosh sahifadagi \"Bugun nima yeymiz?\" to'ri uchun.\n\nFaqat rasmi bor va mavjud taomlar chiqadi. Har bir taom bilan birga qaysi restoranniki ekani ham keladi.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bosh sahifa: to'yxona taomlari",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/menu/venue/?page_size=30",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "menu",
+                "venue"
+              ],
+              "query": [
+                {
+                  "key": "page_size",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "PLATFORMADAGI barcha to'yxona taomlari.\n\n`price_from` — o'sha to'yxonaning eng arzon \"kishi boshiga\" narxi. To'yxonada taomning o'z narxi yo'q, narx taom soniga bog'lanadi.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Kirish sahifasi banneri",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/banners/?placement=auth",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "banners"
+              ],
+              "query": [
+                {
+                  "key": "placement",
+                  "value": "auth",
+                  "description": "hero | inline | sidebar | auth"
+                }
+              ]
+            },
+            "description": "Kirish/ro'yxatdan o'tish sahifasining chap tomoni. Admin bu bannerga rasm yuklasa, o'sha surat fon bo'ladi; bo'lmasa standart gradient qoladi.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Yangiliklar ro'yxati",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/news/?lang=uz&page_size=6",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "news"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "uz",
+                  "description": "uz | ru | en"
+                },
+                {
+                  "key": "page_size",
+                  "value": "6"
+                },
+                {
+                  "key": "category",
+                  "value": "tip",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Bosh sahifadagi yangiliklar lentasi. Matn `?lang=` bo'yicha kerakli tilda qaytadi; tarjima to'ldirilmagan bo'lsa o'zbekchaga qaytadi.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json().results;",
+                  "if (rows && rows.length) pm.collectionVariables.set('news_id', rows[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bitta yangilik",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/news/{{news_id}}/?lang=uz",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "news",
+                "{{news_id}}"
+              ],
+              "query": [
+                {
+                  "key": "lang",
+                  "value": "uz"
+                }
+              ]
+            },
+            "description": "Yangilikning to'liq matni.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -1390,9 +1688,21 @@
                 "cancel"
               ]
             },
-            "description": "Mijoz o'z bronini bekor qiladi. Allaqachon bekor qilingan yoki yakunlangan bronni qayta bekor qilib bo'lmaydi."
+            "description": "Mijoz o'z bronini bekor qiladi.\n\n**MUDDAT QOIDASI**\n· `pending` (hali tasdiqlanmagan) — istalgan paytda bekor qilinadi. Bunday so'rov hali hech kimni bog'lamagan.\n· `confirmed` (tasdiqlangan) — TASDIQLANGAN paytdan boshlab **1 soat** ichida. Keyin 400 qaytadi.\n\nNega chegara bor: joy egasi bronni tasdiqlab, o'sha vaqtni band qilib qo'yadi va boshqa mijozlarni rad etadi. Oxirgi daqiqadagi bekor qilish uning uchun to'g'ridan-to'g'ri zarar.\n\nAdministrator (`is_staff`) uchun chegara ISHLAMAYDI — nizoli holatni kimdir hal qila olishi kerak.\n\nMuddat `GET /api/reservations/my/` javobidagi `can_cancel`, `cancel_deadline` va `cancel_blocked_reason` maydonlarida keladi — frontend qoidani qaytadan yozmaydi."
           },
-          "response": []
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 yoki 400 (muddat tugagan bo'lsa)\", () =>",
+                  "  pm.expect([200, 400]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Sharh qoldirish",
@@ -2783,6 +3093,76 @@
             "description": "Admin tasdiqlagan to'lovlar jurnali."
           },
           "response": []
+        },
+        {
+          "name": "Obuna arizalarim",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/owner/subscription/requests/?page_size=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "subscription",
+                "requests"
+              ],
+              "query": [
+                {
+                  "key": "page_size",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Yuborilgan uzaytirish arizalari tarixi — qachon, qaysi muddatga, qanday holatda."
+          },
+          "response": []
+        },
+        {
+          "name": "Obunani uzaytirish arizasi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/owner/subscription/requests/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "owner",
+                "subscription",
+                "requests"
+              ]
+            },
+            "description": "Egasi tarifni tanlab ariza yuboradi.\n\n**OQIM** (biznes ochish bilan bir xil):\nariza → Telegram orqali to'lov → admin tasdiqlaydi → muddat uzayadi.\n\nNarx ariza paytida MUZLATILADI: admin ertaga tarifni oshirsa, kecha ariza bergan odam eski narxda to'laydi.\n\nOchiq ariza allaqachon bo'lsa yangisi yaratilmaydi — mavjudi qaytariladi (200, 201 emas). Shuning uchun tugmani ikki marta bosgan odam adminga ikkita bir xil ariza yubormaydi.\n\nObunasi TUGAGAN egasi ham yubora oladi — aks holda uzaytirishning iloji bo'lmasdi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan\": \"{{plan_id}}\",\n  \"note\": \"To'lov chekini yubordim\"\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 yoki 200 (ochiq ariza bor)\", () =>",
+                  "  pm.expect([200, 201]).to.include(pm.response.code));",
+                  "if (pm.response.code < 300) pm.collectionVariables.set('subscription_request_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -3251,10 +3631,10 @@
                 "subscription-plans"
               ]
             },
-            "description": "",
+            "description": "**Muddat.** Har bir biznes turi uchun bir nechta reja bo'ladi: `duration_months=1` (oylik) va `duration_months=3` (choraklik). `price` — SHU MUDDAT uchun to'liq summa, oylik emas.\n\nStandart narxlar: restoran 250 000 / 600 000, to'yxona 300 000 / 800 000 so'm.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"business_type\": \"restaurant\",\n  \"monthly_price\": \"255000\",\n  \"trial_days\": 7\n}",
+              "raw": "{\n  \"business_type\": \"restaurant\",\n  \"trial_days\": 7,\n  \"price\": \"255000\",\n  \"duration_months\": 1\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3307,10 +3687,10 @@
                 "{{plan_id}}"
               ]
             },
-            "description": "",
+            "description": "**Muddat.** Har bir biznes turi uchun bir nechta reja bo'ladi: `duration_months=1` (oylik) va `duration_months=3` (choraklik). `price` — SHU MUDDAT uchun to'liq summa, oylik emas.\n\nStandart narxlar: restoran 250 000 / 600 000, to'yxona 300 000 / 800 000 so'm.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"monthly_price\": \"300000\"\n}",
+              "raw": "{\n  \"price\": \"300000\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -3490,6 +3870,660 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Barcha bronlar (platforma bo'ylab)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/reservations/?page_size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "reservations"
+              ],
+              "query": [
+                {
+                  "key": "page_size",
+                  "value": "20"
+                },
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                },
+                {
+                  "key": "business_type",
+                  "value": "venue",
+                  "disabled": true
+                },
+                {
+                  "key": "date_from",
+                  "value": "2026-01-01",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Admin panelidagi \"Barcha bronlar\" jadvali.\n\nFiltrlar: `?status=`, `?business_type=restaurant|venue`, `?date_from=`, `?date_to=`, `?business=`."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bannerlar ro'yxati",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/banners/?page_size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "banners"
+              ],
+              "query": [
+                {
+                  "key": "page_size",
+                  "value": "20"
+                },
+                {
+                  "key": "placement",
+                  "value": "hero",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Barcha bannerlar — nofaollari va muddati o'tganlari ham. Ommaviy `/api/banners/` dan farqi shu."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json().results || pm.response.json();",
+                  "if (rows && rows.length) pm.collectionVariables.set('banner_id', rows[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Banner yaratish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/banners/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "banners"
+              ]
+            },
+            "description": "Yangi banner. Rasm yoki video yuklash uchun **form-data** ishlating (`image` yoki `video` maydoni) va `media_type` ni mos qo'ying.\n\n`placement=auth` bo'lsa — kirish sahifasining chap tomonida chiqadi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title_uz\": \"Yangi e'lon\",\n  \"title_ru\": \"Новое объявление\",\n  \"title_en\": \"New announcement\",\n  \"subtitle_uz\": \"Platforma haqida\",\n  \"body_uz\": \"Matn shu yerda.\",\n  \"cta_label_uz\": \"Batafsil\",\n  \"cta_url\": \"/restoranlar/\",\n  \"placement\": \"hero\",\n  \"media_type\": \"none\",\n  \"is_active\": true,\n  \"order\": 0\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bannerni tahrirlash",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/banners/{{banner_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "banners",
+                "{{banner_id}}"
+              ]
+            },
+            "description": "Faqat o'zgargan maydonlarni yuboring.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_active\": false\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Bannerni o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/banners/{{banner_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "banners",
+                "{{banner_id}}"
+              ]
+            },
+            "description": "Bannerni butunlay o'chiradi."
+          },
+          "response": []
+        },
+        {
+          "name": "Yangiliklar ro'yxati (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/news/?page_size=20",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "news"
+              ],
+              "query": [
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Nofaol yangiliklar ham ko'rinadi."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json().results || pm.response.json();",
+                  "if (rows && rows.length) pm.collectionVariables.set('news_admin_id', rows[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Yangilik yaratish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/news/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "news"
+              ]
+            },
+            "description": "Uch tilda matn. Rasm uchun **form-data** da `cover` maydonini yuboring.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title_uz\": \"Yangilik sarlavhasi\",\n  \"title_ru\": \"Заголовок новости\",\n  \"title_en\": \"News title\",\n  \"excerpt_uz\": \"Qisqacha mazmuni.\",\n  \"body_uz\": \"To'liq matn.\",\n  \"category\": \"news\",\n  \"is_active\": true,\n  \"is_pinned\": false,\n  \"order\": 0\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Yangilikni tahrirlash",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/news/{{news_admin_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "news",
+                "{{news_admin_id}}"
+              ]
+            },
+            "description": "Masalan lentaning boshiga qadab qo'yish.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_pinned\": true\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Yangilikni o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/news/{{news_admin_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "news",
+                "{{news_admin_id}}"
+              ]
+            },
+            "description": "Yangilikni butunlay o'chiradi."
+          },
+          "response": []
+        },
+        {
+          "name": "Biznes ochish (admin qo'lda)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/businesses/create/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "businesses",
+                "create"
+              ]
+            },
+            "description": "Admin foydalanuvchi nomiga biznes ochadi.\n\nIchkarida oddiy ariza oqimi ishlaydi: ariza yozuvi yaratiladi, egasining roli `business`ga o'tadi va 7 kunlik sinov boshlanadi. `approve: true` bo'lsa ariza darhol tasdiqlanib obuna 30 kunga faollashadi.\n\nBitta egada bitta biznes — ikkinchisiga urinilsa 400 qaytadi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"owner\": 1,\n  \"business_type\": \"restaurant\",\n  \"name\": \"Bahor Taomxonasi\",\n  \"district\": \"Yunusobod\",\n  \"address\": \"Amir Temur 12\",\n  \"telegram_username\": \"bahor_admin\",\n  \"approve\": true\n}"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set('business_id', pm.response.json().id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bitta biznes (admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/businesses/{{business_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "businesses",
+                "{{business_id}}"
+              ]
+            },
+            "description": "Bloklanganini ham ko'rsatadi — ommaviy `/api/businesses/{id}/` dan farqi shu.\n\n**ALOQA MA'LUMOTI YOPIQ**\n`telegram_username` va `phone_number` faqat KIRGAN foydalanuvchiga qaytadi. Mehmonga `null` keladi va `contacts_locked: true` bo'ladi.\n\nNega: ochiq turgan raqam bir kunda spam-botlar ro'yxatiga tushadi. Bron qilish uchun baribir kirish kerak, ya'ni haqiqiy mijoz hech narsa yo'qotmaydi.\n\nJavob keshlanadi, lekin kesh kaliti kirgan/kirmaganni ajratadi — raqam mehmonga kesh orqali ham o'tmaydi."
+          },
+          "response": []
+        },
+        {
+          "name": "Biznesni tahrirlash",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/businesses/{{business_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "businesses",
+                "{{business_id}}"
+              ]
+            },
+            "description": "Tahrirlanadigan maydonlar: `name`, `business_type`, `address`, `district`, `telegram_username`, `is_visible`.\n\nEgasi va reyting ATAYLAB o'zgarmaydi: reyting sharhlardan hisoblanadi, egasi esa butun bron tarixini bog'lab turadi.\n\n**ALOQA MA'LUMOTI YOPIQ**\n`telegram_username` va `phone_number` faqat KIRGAN foydalanuvchiga qaytadi. Mehmonga `null` keladi va `contacts_locked: true` bo'ladi.\n\nNega: ochiq turgan raqam bir kunda spam-botlar ro'yxatiga tushadi. Bron qilish uchun baribir kirish kerak, ya'ni haqiqiy mijoz hech narsa yo'qotmaydi.\n\nJavob keshlanadi, lekin kesh kaliti kirgan/kirmaganni ajratadi — raqam mehmonga kesh orqali ham o'tmaydi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bahor Taomxonasi (yangilangan)\",\n  \"district\": \"Mirobod\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Biznesni o'chirish",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/businesses/{{business_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "businesses",
+                "{{business_id}}"
+              ]
+            },
+            "description": "QAYTARIB BO'LMAYDI: xona/zal, menyu, sharh va bron tarixi ham o'chadi.\n\nFaol (kutilayotgan yoki tasdiqlangan) bron bo'lsa 400 qaytadi — mijozlar xabarsiz bronsiz qolmasligi uchun. Vaqtincha yopish kerak bo'lsa `toggle-block` ishlating.\n\nEgasida boshqa biznes qolmasa, uning roli `user`ga qaytariladi.\n\n**ALOQA MA'LUMOTI YOPIQ**\n`telegram_username` va `phone_number` faqat KIRGAN foydalanuvchiga qaytadi. Mehmonga `null` keladi va `contacts_locked: true` bo'ladi.\n\nNega: ochiq turgan raqam bir kunda spam-botlar ro'yxatiga tushadi. Bron qilish uchun baribir kirish kerak, ya'ni haqiqiy mijoz hech narsa yo'qotmaydi.\n\nJavob keshlanadi, lekin kesh kaliti kirgan/kirmaganni ajratadi — raqam mehmonga kesh orqali ham o'tmaydi."
+          },
+          "response": []
+        },
+        {
+          "name": "Obuna arizalari",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/subscription-requests/?status=pending_payment",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscription-requests"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending_payment"
+                },
+                {
+                  "key": "business",
+                  "value": "",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Biznes egalari yuborgan uzaytirish arizalari.\n\nFiltrlar: `?status=pending_payment|approved|rejected`, `?business=<id>`."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json().results;",
+                  "if (rows.length) pm.collectionVariables.set('subscription_request_id', rows[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obuna arizasini tasdiqlash",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/subscription-requests/{{subscription_request_id}}/approve/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscription-requests",
+                "{{subscription_request_id}}",
+                "approve"
+              ]
+            },
+            "description": "To'lovni ko'rgach tasdiqlaydi — obuna REJA MUDDATIGA uzayadi (1 oylik → 30 kun, 3 oylik → 90 kun).\n\nMuddat mavjud tugash sanasidan boshlab qo'shiladi, ya'ni erta to'lagan odam kunini yo'qotmaydi.\n\nTo'lov `PaymentLog`ga yoziladi va egasiga bildirishnoma ketadi. Ikkinchi marta tasdiqlab bo'lmaydi — 400 qaytadi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": \"600000\",\n  \"note\": \"Payme orqali to'landi\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Obuna arizasini rad etish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/admin/subscription-requests/{{subscription_request_id}}/reject/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "subscription-requests",
+                "{{subscription_request_id}}",
+                "reject"
+              ]
+            },
+            "description": "Obuna holati o'zgarmaydi, egasiga sabab bilan bildirishnoma yuboriladi.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"To'lov topilmadi\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06 · Bildirishnomalar",
+      "description": "Qo'ng'iroqcha ostidagi xabarlar. Bron holati o'zgarganda, ariza ko'rib chiqilganda va yangi sharh kelganda AVTOMATIK yaratiladi (signal orqali).",
+      "item": [
+        {
+          "name": "Bildirishnomalarim",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/?page_size=12",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications"
+              ],
+              "query": [
+                {
+                  "key": "page_size",
+                  "value": "12"
+                },
+                {
+                  "key": "is_read",
+                  "value": "false",
+                  "disabled": true
+                },
+                {
+                  "key": "kind",
+                  "value": "reservation",
+                  "disabled": true
+                }
+              ]
+            },
+            "description": "Yuqoridagi qo'ng'iroqcha ostidagi ro'yxat.\n\nFaqat O'Z yozuvlaringiz ko'rinadi. Filtrlar: `?is_read=false`, `?kind=reservation|application|subscription|review|system`."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "const rows = pm.response.json().results;",
+                  "if (rows.length) pm.collectionVariables.set('notification_id', rows[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "O'qilmaganlar soni",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/unread-count/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "unread-count"
+              ]
+            },
+            "description": "Qo'ng'iroqcha ustidagi raqam. Har sahifa yuklanganda chaqiriladi, shuning uchun ataylab yengil — bitta COUNT so'rovi, indeksdan."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"unread bor\", () => pm.expect(pm.response.json()).to.have.property('unread'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Bittasini o'qildi qilish",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/{{notification_id}}/read/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "{{notification_id}}",
+                "read"
+              ]
+            },
+            "description": "Bosilgan bildirishnomani o'qilgan deb belgilaydi.\n\nBoshqa foydalanuvchining yozuvini belgilashga urinilsa 404 qaytadi — queryset boshidanoq joriy foydalanuvchi bilan cheklangan."
+          },
+          "response": []
+        },
+        {
+          "name": "Hammasini o'qildi qilish",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/notifications/read-all/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "notifications",
+                "read-all"
+              ]
+            },
+            "description": "Bitta UPDATE bilan barcha o'qilmaganlarni belgilaydi."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"nol bo'ldi\", () => pm.expect(pm.response.json().unread).to.eql(0));"
+                ]
+              }
+            }
+          ]
         }
       ]
     }

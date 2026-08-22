@@ -37,7 +37,7 @@ class BannerListAPIView(APIView):
     @extend_schema(
         responses=BannerSerializer(many=True),
         parameters=[
-            OpenApiParameter("placement", str, description="hero | inline | sidebar"),
+            OpenApiParameter("placement", str, description="hero | inline | sidebar | auth"),
             OpenApiParameter("lang", str, description="uz | ru | en"),
         ],
     )

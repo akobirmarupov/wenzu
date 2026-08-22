@@ -34,6 +34,15 @@
 .lang-trigger .globe { font-size: 13px; }
 .lang-trigger .caret { font-size: 9px; opacity: .65; }
 
+/* Joriy til kodi ("UZ") — monoshiriftda, tanlagichdagi segmentlar
+   bilan bir xil ko'rinishda. Klass ishlatilardi-yu, uslubsiz qolgan
+   edi va faqat ota-elementdan meros olardi. */
+.lang-trigger .code {
+  font-family: var(--font-mono);
+  font-size: 11.5px; font-weight: 800; letter-spacing: .05em;
+  color: var(--ink);
+}
+
 .lang-dropdown {
   position: absolute; top: calc(100% + 8px); right: 0; z-index: var(--z-overlay);
   min-width: 186px; padding: 6px;
@@ -78,4 +87,83 @@
   .topbar-title { display: none; }
   .topbar { padding-inline: var(--sp-4); }
   .topbar-user .name { display: none; }
+}
+
+/* ===================================================================
+   Bildirishnoma qo'ng'irog'i — til tanlagichining chap yonida.
+   =================================================================== */
+.notif { position: relative; }
+.notif-trigger {
+  position: relative;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--surface-2); border: 1px solid var(--line);
+  color: var(--ink-soft); font-size: 15px;
+  transition: all var(--transition);
+}
+.notif-trigger:hover { border-color: var(--gold-500); color: var(--ink); }
+.notif-trigger.has-unread { border-color: var(--gold-500); }
+
+/* O'qilmaganlar soni — oltin nishon */
+.notif-dot {
+  position: absolute; top: -4px; right: -4px;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: var(--radius-pill);
+  display: grid; place-items: center;
+  background: var(--gold-shine); color: #1A1405;
+  font-size: 10px; font-weight: 800; font-variant-numeric: tabular-nums;
+  box-shadow: var(--gold-glow);
+  border: 2px solid var(--surface);
+}
+.notif-dot[hidden] { display: none; }
+
+.notif-panel {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: var(--z-overlay);
+  width: min(360px, calc(100vw - var(--sp-8)));
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-m); box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: drop .14s ease;
+}
+.notif-panel[hidden] { display: none; }
+
+.notif-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-3); padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface-2);
+}
+.notif-head b { font-size: var(--fs-sm); }
+
+.notif-body { max-height: min(60vh, 420px); overflow-y: auto; }
+.notif-empty { padding: var(--sp-8) var(--sp-4); text-align: center; color: var(--ink-faint); font-size: var(--fs-sm); }
+
+.notif-row {
+  display: flex; gap: var(--sp-3); align-items: flex-start;
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--line-soft);
+  transition: background var(--transition);
+}
+.notif-row:last-child { border-bottom: 0; }
+.notif-row:hover { background: var(--surface-2); }
+
+/* O'qilmagani — chap chetida oltin chiziqcha */
+.notif-row.unread { background: var(--theme-accent-dim); }
+.notif-row.unread { box-shadow: inset 3px 0 0 var(--gold-500); }
+
+.notif-row .ic {
+  width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%;
+  display: grid; place-items: center; font-size: 14px;
+  background: var(--surface-2); border: 1px solid var(--line);
+}
+.notif-row .ic.success { background: var(--ok-dim); color: var(--ok); border-color: transparent; }
+.notif-row .ic.warning { background: var(--warn-dim); color: var(--warn); border-color: transparent; }
+
+.notif-row .text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.notif-row .text b { font-size: var(--fs-sm); color: var(--ink); }
+.notif-row .text .body { font-size: var(--fs-xs); color: var(--ink-soft); }
+.notif-row .text .when { font-size: 10.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 940px) {
+  .notif-panel { right: -60px; }
 }

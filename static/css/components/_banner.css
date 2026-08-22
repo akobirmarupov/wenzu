@@ -2,15 +2,20 @@
    Reklama / e'lon banneri.
 
    Hozircha reklama yo'q — loyiha haqidagi ma'lumot turadi. Admin
-   panelda rasm yoki video qo'ysa, shu yerda o'sha chiqadi. Uch holat
-   qo'llab-quvvatlanadi: faqat matn, rasm, video.
+   panelda rasm yoki video qo'ysa, shu yerda o'sha chiqadi.
+
+   Uch holat, uchtasi ham boshqacha tuzilishda:
+     matn  — butun bannerni matn egallaydi
+     rasm  — rasm fon, matn ustida (qorong'i parda bilan)
+     video — matn CHAPDA, video O'NGDA to'liq ko'rinib turadi
+             (video fon qilinsa, ustidagi parda uni ko'rsatmay qo'yardi)
    =================================================================== */
 .banner {
   position: relative; overflow: hidden;
   border-radius: var(--radius-l);
   background: linear-gradient(135deg, var(--emerald-900) 0%, #0C4438 55%, #061F1A 100%);
   color: #FFFFFF;
-  min-height: 260px;
+  min-height: 268px;
   display: flex;
 }
 :root[data-theme="dark"] .banner {
@@ -26,18 +31,19 @@
 
 /* Oltin nur — bannerga "qimmat" ko'rinish beradi */
 .banner::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
   background: radial-gradient(circle at 82% 18%, rgba(224, 192, 90, .26), transparent 48%);
 }
 
-.banner-media { position: absolute; inset: 0; }
+/* ---------- rasmli banner: rasm fon ---------- */
+.banner-media { position: absolute; inset: 0; z-index: 0; }
 .banner-media img, .banner-media video { width: 100%; height: 100%; object-fit: cover; }
 .banner-media::after {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(100deg, rgba(6, 31, 26, .92) 0%, rgba(6, 31, 26, .66) 45%, transparent 82%);
+  background: linear-gradient(100deg, rgba(6, 31, 26, .93) 0%, rgba(6, 31, 26, .70) 42%, rgba(6, 31, 26, .12) 84%);
 }
 :root[data-theme="dark"] .banner-media::after {
-  background: linear-gradient(100deg, rgba(4, 10, 18, .94) 0%, rgba(4, 10, 18, .72) 45%, transparent 82%);
+  background: linear-gradient(100deg, rgba(4, 10, 18, .95) 0%, rgba(4, 10, 18, .76) 42%, rgba(4, 10, 18, .14) 84%);
 }
 
 .banner-body {
@@ -46,31 +52,73 @@
   display: flex; flex-direction: column; justify-content: center; gap: var(--sp-3);
   max-width: 660px;
 }
+
+/* ---------- SUBTITLE (tepadagi kichik yozuv) ----------
+
+   Avval bu yozuv `background-clip: text` + `color: transparent` bilan
+   chizilardi. Agar gradient qandaydir sababga ko'ra qo'llanmasa (inline
+   `--gold-shine`, eski brauzer, tezkor qayta chizish) matn TO'LIQ
+   ko'rinmay qolardi — foydalanuvchi shuni "subtitle yo'q" deb ko'rdi.
+   Endi rang QATTIQ oltin: hech qanday shartga bog'liq emas. */
 .banner-eyebrow {
   display: inline-flex; align-items: center; gap: var(--sp-2); align-self: flex-start;
-  padding: 4px 12px; border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, .10);
-  border: 1px solid rgba(224, 192, 90, .38);
-  font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  padding: 6px 14px; border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(224, 192, 90, .55);
+  font-size: 12px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase;
+  color: #FBE9A8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .45);
+  max-width: 100%;
 }
-.banner-eyebrow span { background: var(--gold-shine); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.banner h2 { font-size: clamp(24px, 3.2vw, 38px); line-height: 1.1; }
+.banner-eyebrow span { color: inherit; }
+.banner-eyebrow::before {
+  content: "✦"; font-size: 11px; color: #FFD873; letter-spacing: 0;
+}
+
+.banner h2 { font-size: clamp(24px, 3.2vw, 38px); line-height: 1.1; color: #FFFFFF; }
 .banner h2 em { font-style: italic; background: var(--gold-shine);
   -webkit-background-clip: text; background-clip: text; color: transparent; }
-.banner p { color: #D5E4DD; max-width: 52ch; font-size: var(--fs-md); }
-:root[data-theme="dark"] .banner p { color: #B9CBDD; }
+.banner p { color: #D9E7E0; max-width: 52ch; font-size: var(--fs-md); }
+:root[data-theme="dark"] .banner p { color: #BFD0E1; }
 
 .banner-actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-2); }
 
+/* ---------- videoli banner ----------
+
+   Video FON emas: chapda matn, o'ngda videoning o'zi to'liq ko'rinadi.
+   Shunday qilinmasa qorong'i parda ostida video deyarli bilinmasdi. */
+.banner-video { min-height: 340px; }
+.banner-video .banner-body { max-width: none; flex: 1 1 42%; padding-right: var(--sp-8); }
+.banner-video .banner-media {
+  position: relative; inset: auto; flex: 1 1 58%;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--sp-5) var(--sp-6) var(--sp-5) 0;
+}
+.banner-video .banner-media::after { content: none; }
+.banner-video .banner-media video {
+  width: 100%; height: 100%; max-height: 320px;
+  object-fit: contain;                     /* kadr kesilmasin — to'liq ko'rinsin */
+  border-radius: var(--radius-m);
+  background: #04090F;
+  box-shadow: 0 18px 44px -18px rgba(0, 0, 0, .8);
+}
+
 /* Bir nechta banner bo'lsa — nuqtali navigatsiya */
-.banner-dots { position: absolute; bottom: var(--sp-5); right: var(--sp-6); display: flex; gap: 6px; z-index: 2; }
+.banner-dots { position: absolute; bottom: var(--sp-5); right: var(--sp-6); display: flex; gap: 6px; z-index: 3; }
 .banner-dots button {
   width: 8px; height: 8px; border-radius: 50%;
-  background: rgba(255, 255, 255, .35); transition: all var(--transition);
+  background: rgba(255, 255, 255, .38); transition: all var(--transition);
 }
 .banner-dots button.active { width: 22px; border-radius: var(--radius-pill); background: var(--gold-shine); }
 
+@media (max-width: 860px) {
+  .banner-video { flex-direction: column; min-height: 0; }
+  .banner-video .banner-body { padding: var(--sp-8) var(--sp-5) var(--sp-4); }
+  .banner-video .banner-media { padding: 0 var(--sp-5) var(--sp-8); width: 100%; }
+  .banner-video .banner-media video { max-height: 240px; }
+}
 @media (max-width: 720px) {
   .banner-body { padding: var(--sp-8) var(--sp-5); }
   .banner { min-height: 230px; }
+  .banner-dots { bottom: var(--sp-3); right: var(--sp-4); }
 }

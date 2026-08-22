@@ -13,7 +13,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient
 
 from businesses.models import Room
-from businesses.services import submit_application
+from common.test_utils import make_business
 from reservations.models import Availability
 
 User = get_user_model()
@@ -34,10 +34,10 @@ class AuthorizationTest(TestCase):
         cache.clear()
         self.owner_a = make_user("owner_a", "+998900000001")
         self.owner_b = make_user("owner_b", "+998900000002")
-        _, self.biz_a, _ = submit_application(
+        _, self.biz_a, _ = make_business(
             applicant=self.owner_a, business_type="restaurant", business_name="Restoran A"
         )
-        _, self.biz_b, _ = submit_application(
+        _, self.biz_b, _ = make_business(
             applicant=self.owner_b, business_type="restaurant", business_name="Restoran B"
         )
         self.room_a = Room.objects.create(
@@ -224,7 +224,7 @@ class SubscriptionGateTest(TestCase):
     def setUp(self):
         cache.clear()
         self.owner = make_user("expired_owner", "+998903333333")
-        _, self.business, self.subscription = submit_application(
+        _, self.business, self.subscription = make_business(
             applicant=self.owner, business_type="restaurant", business_name="Muddati tugagan"
         )
         self.owner.refresh_from_db()
@@ -279,7 +279,7 @@ class BookingIntegrityTest(TestCase):
     def setUp(self):
         cache.clear()
         self.owner = make_user("book_owner", "+998904444444")
-        _, self.business, _ = submit_application(
+        _, self.business, _ = make_business(
             applicant=self.owner, business_type="restaurant", business_name="Bron Restorani"
         )
         self.room = Room.objects.create(
@@ -328,7 +328,7 @@ class BookingIntegrityTest(TestCase):
         from catalog.models import RestaurantMenuItem
 
         other_owner = make_user("other_rest", "+998906666666")
-        _, other_business, _ = submit_application(
+        _, other_business, _ = make_business(
             applicant=other_owner, business_type="restaurant", business_name="Boshqa"
         )
         alien = RestaurantMenuItem.objects.create(

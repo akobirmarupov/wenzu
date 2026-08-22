@@ -2,6 +2,7 @@
 
 import logging
 
+from django.conf import settings
 from django.db import transaction
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -19,7 +20,11 @@ from common.services import get_owner_business
 
 logger = logging.getLogger("businesses")
 
-MAX_PHOTOS_PER_BUSINESS = 10
+# Galereya chegarasi. "Xohlagancha" desa ham mutlaqo cheksiz qoldirib
+# bo'lmaydi: bitta akkaunt disk va trafikni cheksiz yeb qo'yishi mumkin.
+# 40 ta surat — restoranning tashqarisi, yo'lagi, zallari, stollari va
+# taomlari uchun mo'l-ko'l.
+MAX_PHOTOS_PER_BUSINESS = 40
 
 
 class BusinessPhotoListAPIView(APIView):
@@ -37,6 +42,54 @@ class BusinessPhotoListAPIView(APIView):
             BusinessPhotoSerializer(photos, many=True, context={"request": request}).data,
             status=status.HTTP_200_OK,
         )
+
+
+class ShowcasePhotoListAPIView(APIView):
+    """
+    GET /api/showcase/photos/ — bosh sahifadagi rasm lentasi uchun.
+
+    Butun platformadagi ko'rinadigan joylarning suratlari: muqova rasmi
+    va galereyasi birga. Ro'yxat endpointiga galereyani qo'shish o'rniga
+    alohida yengil endpoint: katalog sahifalari har safar ortiqcha
+    surat ro'yxatini tortib yurmasin.
+    """
+
+    permission_classes = [AllowAny]
+
+    @extend_schema(responses={200: None})
+    def get(self, request):
+        limit = min(int(request.GET.get("limit", 60) or 60), 120)
+
+        photos = []
+        covers = (
+            Business.objects.filter(is_visible=True)
+            .exclude(cover_photo="")
+            .values("id", "name", "cover_photo")[:limit]
+        )
+        for row in covers:
+            photos.append({
+                "business": str(row["id"]),
+                "business_name": row["name"],
+                "image": request.build_absolute_uri(
+                    f"{settings.MEDIA_URL}{row['cover_photo']}"
+                ),
+            })
+
+        gallery = (
+            BusinessPhoto.objects.filter(business__is_visible=True)
+            .select_related("business")
+            .values("business_id", "business__name", "image")[:limit]
+        )
+        for row in gallery:
+            photos.append({
+                "business": str(row["business_id"]),
+                "business_name": row["business__name"],
+                "image": request.build_absolute_uri(
+                    f"{settings.MEDIA_URL}{row['image']}"
+                ),
+            })
+
+        return Response(photos[:limit], status=status.HTTP_200_OK)
 
 
 class OwnerBusinessPhotoListCreateAPIView(APIView):

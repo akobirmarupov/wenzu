@@ -2,11 +2,11 @@
 import { api } from "../../core/api.js";
 import { initAdminPage } from "./shell.js";
 import { $, render, delegate, esc, busy } from "../../ui/dom.js";
-import { skeletonRows, errorState } from "../../ui/state.js";
+import { skeletonRows, emptyState, errorState } from "../../ui/state.js";
 import { paginationHtml } from "../../ui/pagination.js";
 import { openModal, modal, confirmDialog } from "../../ui/modal.js";
 import { toast } from "../../ui/toast.js";
-import { money, statusSeal, businessTypeLabel } from "../../ui/format.js";
+import { money, statusSeal, businessTypeLabel, dateTimeLabel } from "../../ui/format.js";
 
 const STATUSES = [
   { value: "", label: "Barchasi" },
@@ -16,8 +16,74 @@ const STATUSES = [
 ];
 
 const filters = { status: "", page: 1 };
+
+const REQUEST_STATUSES = [
+  { value: "pending_payment", label: "Kutilmoqda" },
+  { value: "approved", label: "Tasdiqlangan" },
+  { value: "rejected", label: "Rad etilgan" },
+  { value: "", label: "Barchasi" },
+];
+// Standart ko'rinish — kutilayotganlar: admin bu ekranga shular uchun kiradi.
+const requestFilters = { status: "pending_payment" };
+
 const user = await initAdminPage();
 if (user) init();
+
+/* ===================================================================
+   Obuna arizalari — biznes egasi yuborgan uzaytirish so'rovlari
+   =================================================================== */
+function requestRowHtml(row) {
+  const pending = row.status === "pending_payment";
+  return `
+    <div class="list-row">
+      <div class="stack stack-1" style="min-width:240px">
+        <b>${esc(row.business_name)}</b>
+        <span class="small muted">
+          ${esc(businessTypeLabel(row.business_type))} · ${esc(row.owner_name || "—")}
+          · <span class="mono">${esc(row.owner_phone || "")}</span>
+        </span>
+        <span class="xs faint">
+          ${esc(row.plan_label)} — <b>${money(row.price)}</b> · ${dateTimeLabel(row.created_at)}
+          ${row.note ? ` · "${esc(row.note)}"` : ""}
+        </span>
+      </div>
+      ${pending
+        ? `<div class="row row-2">
+             <button class="btn btn-sm btn-outline" data-reject-request="${esc(row.id)}">Rad etish</button>
+             <button class="btn btn-sm btn-primary" data-approve-request="${esc(row.id)}"
+                     data-label="${esc(row.plan_label)}">Tasdiqlash</button>
+           </div>`
+        : statusSeal(row.status)}
+    </div>`;
+}
+
+async function loadRequests() {
+  const container = $("#requests");
+  if (!container) return;
+  container.innerHTML = skeletonRows(3);
+
+  try {
+    const params = { page_size: 20 };
+    if (requestFilters.status) params.status = requestFilters.status;
+
+    const data = await api.admin.subscriptionRequests(params);
+    container.innerHTML = data.results.length
+      ? data.results.map(requestRowHtml).join("")
+      : emptyState(
+          requestFilters.status === "pending_payment"
+            ? "Kutilayotgan ariza yo'q"
+            : "Ariza topilmadi",
+          "Biznes egasi obunani uzaytirish arizasini yuborganda shu yerda ko'rinadi.",
+          "📨"
+        );
+
+    // Nishonni yangilaymiz — menyuda ish borligi ko'rinsin.
+    const badge = document.querySelector("#requests-panel .count-pill");
+    if (badge) badge.textContent = data.count;
+  } catch (error) {
+    container.innerHTML = errorState(error.message);
+  }
+}
 
 function openActivateModal(subscription) {
   const node = openModal(`
@@ -29,7 +95,7 @@ function openActivateModal(subscription) {
       <div class="field">
         <label for="amount">Summa (so'm)</label>
         <input class="input" id="amount" name="amount" type="number" min="0"
-               value="${Math.round(subscription.monthly_price || 0)}">
+               value="${Math.round(subscription.price || 0)}">
         <span class="field-hint">Bo'sh qoldirsangiz tarif narxi olinadi</span>
       </div>
       <div class="field">
@@ -37,7 +103,7 @@ function openActivateModal(subscription) {
         <input class="input" id="note" name="note" placeholder="Masalan: Payme orqali to'landi">
       </div>
       <button class="btn btn-primary btn-block btn-lg" type="submit" id="activate-submit">
-        Tasdiqlash — obuna 30 kunga uzayadi
+        Tasdiqlash — obuna reja muddatiga uzayadi
       </button>
     </form>`);
 
@@ -67,6 +133,61 @@ function openActivateModal(subscription) {
 let subscriptions = [];
 
 function init() {
+  render("#request-filters", REQUEST_STATUSES.map((item) =>
+    `<button class="chip ${requestFilters.status === item.value ? "active" : ""}"
+      data-request-status="${esc(item.value)}" type="button">${esc(item.label)}</button>`).join(""));
+
+  delegate("#request-filters", "[data-request-status]", (button) => {
+    requestFilters.status = button.dataset.requestStatus;
+    document.querySelectorAll("#request-filters .chip").forEach((c) => c.classList.remove("active"));
+    button.classList.add("active");
+    loadRequests();
+  });
+
+  delegate("#requests", "[data-approve-request]", async (button) => {
+    const ok = await confirmDialog({
+      title: "To'lovni tasdiqlaysizmi?",
+      message: `Obuna ${button.dataset.label} muddatga uzayadi va egasiga bildirishnoma ketadi.`,
+      confirmText: "Tasdiqlash",
+    });
+    if (!ok) return;
+
+    const done = busy(button);
+    try {
+      await api.admin.approveRequest(button.dataset.approveRequest);
+      toast.ok("Obuna uzaytirildi.");
+      loadRequests();
+      load();
+    } catch (error) {
+      toast.fromError(error);
+    } finally {
+      done();
+    }
+  });
+
+  delegate("#requests", "[data-reject-request]", async (button) => {
+    const ok = await confirmDialog({
+      title: "Arizani rad etasizmi?",
+      message: "Obuna holati o'zgarmaydi, egasiga bildirishnoma yuboriladi.",
+      confirmText: "Rad etish",
+      danger: true,
+    });
+    if (!ok) return;
+
+    const done = busy(button);
+    try {
+      await api.admin.rejectRequest(button.dataset.rejectRequest);
+      toast.ok("Ariza rad etildi.");
+      loadRequests();
+    } catch (error) {
+      toast.fromError(error);
+    } finally {
+      done();
+    }
+  });
+
+  loadRequests();
+
   render("#status-filters", STATUSES.map((item) =>
     `<button class="chip ${filters.status === item.value ? "active" : ""}"
       data-status="${esc(item.value)}" type="button">${esc(item.label)}</button>`).join(""));
@@ -119,7 +240,7 @@ function row(subscription) {
         <div class="xs faint">${esc(businessTypeLabel(subscription.business_type))}</div></td>
       <td>${esc(subscription.owner_name || "—")}
         <div class="xs faint mono">${esc(subscription.owner_phone || "")}</div></td>
-      <td class="nums">${money(subscription.monthly_price)}</td>
+      <td class="nums">${money(subscription.price)}</td>
       <td>${statusSeal(subscription.status)}</td>
       <td class="nums">${subscription.days_left !== null ? `${subscription.days_left} kun` : "—"}</td>
       <td class="right">

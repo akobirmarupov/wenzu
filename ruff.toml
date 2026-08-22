@@ -1,0 +1,83 @@
+# Ruff sozlamalari.
+#
+# Loyihada `ruff check .` toza chiqishi kerak — shunda haqiqiy muammo
+# paydo bo'lganda u shovqin ichida ko'milib qolmaydi.
+
+line-length = 100
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "I", "B", "UP", "DTZ", "RUF", "BLE", "FURB", "PL"]
+
+ignore = [
+    # Django/DRF'da klass darajasidagi ro'yxatlar — bu FRAMEWORK USLUBI,
+    # xato emas: `permission_classes = [...]`, `filter_backends = [...]`,
+    # `fields = [...]`. Ruff ularni "o'zgaruvchan standart qiymat" deb
+    # belgilaydi, lekin Django ularni hech qachon o'zgartirmaydi.
+    # 300 dan ortiq shunday belgi haqiqiy muammolarni ko'mib tashlardi.
+    "RUF012",
+
+    # Uzun tushuntirish matnlari va HTML bloklari — o'zbekcha izohlar
+    # ba'zan chegaradan oshadi, lekin bo'lib tashlash o'qilishini
+    # yomonlashtiradi.
+    "E501",
+
+    # Funksiya ichidagi importlar — bu yerda ATAYLAB: modellar bir-birini
+    # aylanma import qilmasligi uchun (`businesses` ↔ `subscriptions`
+    # ↔ `notifications`). Yuqoriga ko'chirilsa loyiha umuman ishga
+    # tushmasdi.
+    "PLC0415",
+
+    # `raise ... from err` — xato matni foydalanuvchiga boradi, ichki
+    # zanjir esa loglarda allaqachon bor.
+    "B904",
+
+    # "Sehrli sonlar" — `status_code == 200` kabi taqqoslashlar o'zi
+    # tushunarli, ular uchun alohida konstanta yaratish shovqin bo'lardi.
+    "PLR2004",
+
+    # O'zbek matnidagi apostrof (') va tirelar — bu til belgisi, xato emas.
+    "RUF001", "RUF002", "RUF003",
+]
+
+[lint.per-file-ignores]
+# Testlarda `datetime.date.today()` — ataylab: sinov ma'lumoti server
+# vaqtiga bog'liq va vaqt mintaqasi bu yerda ahamiyatsiz.
+# Ishlab chiqarish kodida esa `timezone.localdate()` ishlatiladi.
+"*/tests.py" = ["DTZ011"]
+"common/test_*.py" = ["DTZ011"]
+"*/management/commands/seed_*.py" = ["DTZ011"]
+
+# Migratsiyalarni Django o'zi yozadi — ularni tekshirishning ma'nosi yo'q.
+"*/migrations/*" = ["ALL"]
+
+# Sog'liq tekshiruvi va navbat — HAR QANDAY xatoni ushlashi SHART.
+# Ularning vazifasi "tizim ishlayaptimi?" degan savolga javob berish;
+# o'zi yiqilsa, javob umuman kelmaydi.
+"common/routes/health.py" = ["BLE001"]
+"common/queue.py" = ["BLE001"]
+
+# Uchidan-uchiga oqim testi ataylab uzun: u foydalanuvchining butun
+# yo'lini bir joyda ko'rsatadi. Bo'laklarga bo'lish "keyingi qadam
+# qayerda?" degan savolni tug'dirardi.
+"common/tests.py" = ["PLR0915"]
+
+# `notify()` — barcha argumentlari nomli, ya'ni chaqiruv joyi o'zi
+# tushunarli. Ularni obyektga yig'ish faqat ortiqcha qatlam bo'lardi.
+"notifications/services.py" = ["PLR0913"]
+
+# To'yxona broni tekshiruvi — 13 ta shart. Har biri alohida QOIDA
+# (sana, zal, sig'im, menyu, narx...) va ularni funksiyalarga bo'lish
+# tartibni ko'rinmas qilardi.
+"reservations/routes/serializers.py" = ["PLR0912"]
+
+# Statik fayllar versiyasi — modul darajasidagi ATAYLAB memo:
+# productionda bir marta hisoblanadi va xotirada qoladi.
+"web/context_processors.py" = ["PLW0603"]
+
+[lint.isort]
+known-first-party = [
+    "account", "businesses", "catalog", "common", "config",
+    "content", "notifications", "reservations", "reviews",
+    "subscriptions", "web",
+]

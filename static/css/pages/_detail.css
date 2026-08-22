@@ -1,10 +1,67 @@
-/* Biznes detal sahifasi */
+/* ===================================================================
+   Biznes detal sahifasi — galereya.
+
+   Joyning BARCHA suratlari bitta katta kadrda navbat bilan aylanadi,
+   pastda esa kichik nishonlar. Ilgari bitta katta + ikkita kichik rasm
+   qotirilgan edi va uchinchisidan keyingilari umuman ko'rinmasdi.
+
+   Rasm sifati: `object-fit: cover` kadrni to'ldiradi, lekin sifat
+   MANBAGA bog'liq — kichik surat kattalashtirilsa xira chiqadi.
+   Shuning uchun sahna balandligi cheklangan (aspect-ratio 16/9) va
+   suratlar zarur bo'lganidan ortiq cho'zilmaydi.
+   =================================================================== */
 .detail-hero { position: relative; }
-.detail-gallery { display: grid; grid-template-columns: 2fr 1fr; gap: var(--sp-2); border-radius: var(--radius-l); overflow: hidden; }
-.detail-gallery img { width: 100%; height: 100%; object-fit: cover; }
-.detail-gallery .main { aspect-ratio: 16 / 9; }
-.detail-gallery .side { display: grid; gap: var(--sp-2); }
-@media (max-width: 780px) { .detail-gallery { grid-template-columns: 1fr; } .detail-gallery .side { grid-template-columns: repeat(3, 1fr); } }
+
+.detail-gallery { display: flex; flex-direction: column; gap: var(--sp-2); }
+.detail-gallery .stage {
+  position: relative; overflow: hidden;
+  aspect-ratio: 16 / 9; max-height: 480px;
+  border-radius: var(--radius-l);
+  background: var(--surface-2);
+}
+.detail-gallery .stage img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+  opacity: 0; transition: opacity .55s ease;
+}
+.detail-gallery .stage img.active { opacity: 1; }
+
+.detail-gallery .g-nav {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
+  width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(10, 17, 28, .55); color: #FFFFFF; font-size: 24px; line-height: 1;
+  backdrop-filter: blur(4px);
+  transition: background var(--transition);
+}
+.detail-gallery .g-nav:hover { background: rgba(10, 17, 28, .82); }
+.detail-gallery .g-nav.prev { left: var(--sp-3); }
+.detail-gallery .g-nav.next { right: var(--sp-3); }
+.detail-gallery .g-count {
+  position: absolute; right: var(--sp-4); bottom: var(--sp-4); z-index: 2;
+  padding: 4px 12px; border-radius: var(--radius-pill);
+  background: rgba(10, 17, 28, .60); color: #FFFFFF;
+  font-size: var(--fs-xs); font-variant-numeric: tabular-nums;
+}
+
+.detail-gallery .thumbs {
+  display: flex; gap: var(--sp-2); overflow-x: auto; padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.detail-gallery .thumb {
+  flex: 0 0 auto; width: 92px; aspect-ratio: 4 / 3;
+  border-radius: var(--radius-s); overflow: hidden;
+  border: 2px solid transparent; opacity: .6;
+  transition: opacity var(--transition), border-color var(--transition);
+}
+.detail-gallery .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.detail-gallery .thumb:hover { opacity: 1; }
+.detail-gallery .thumb.active { opacity: 1; border-color: var(--gold-500); }
+
+@media (max-width: 780px) {
+  .detail-gallery .stage { aspect-ratio: 4 / 3; }
+  .detail-gallery .thumb { width: 72px; }
+}
 
 .detail-title { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-6); flex-wrap: wrap; margin-block: var(--sp-6) var(--sp-4); }
 .detail-meta { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; color: var(--ink-soft); font-size: var(--fs-sm); }
@@ -17,8 +74,8 @@
 .tab.active { color: var(--emerald-800); border-bottom-color: var(--emerald-600); }
 
 .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--sp-4); }
-.menu-item { border: 1px solid var(--line); border-radius: var(--radius-m); overflow: hidden; background: var(--white); position: relative; }
-.menu-item img { aspect-ratio: 4 / 3; object-fit: cover; width: 100%; background: var(--paper-dim); }
+.menu-item { border: 1px solid var(--line); border-radius: var(--radius-m); overflow: hidden; background: var(--surface); position: relative; }
+.menu-item img { aspect-ratio: 4 / 3; object-fit: cover; width: 100%; background: var(--surface-2); }
 .menu-item .body { padding: var(--sp-3); display: flex; flex-direction: column; gap: 2px; }
 .menu-item.selectable { cursor: pointer; transition: all var(--transition); }
 .menu-item.selectable:hover { border-color: var(--theme-accent); }
@@ -26,7 +83,7 @@
 .menu-item .check {
   position: absolute; top: var(--sp-2); right: var(--sp-2);
   width: 24px; height: 24px; border-radius: 50%;
-  background: var(--theme-accent); color: var(--white);
+  background: var(--theme-accent); color: var(--on-accent);
   display: none; place-items: center; font-size: 13px; font-weight: 800;
 }
 .menu-item.checked .check { display: grid; }
@@ -36,20 +93,29 @@
 .hour-cell {
   padding: 10px 4px; border-radius: var(--radius-s); text-align: center;
   font-size: var(--fs-sm); font-weight: 700; font-variant-numeric: tabular-nums;
-  border: 1.5px solid var(--line); background: var(--white); cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--surface); cursor: pointer;
   transition: all var(--transition);
 }
 .hour-cell.free:hover { border-color: var(--theme-accent); color: var(--theme-accent); }
-.hour-cell.sel { background: var(--theme-accent); border-color: var(--theme-accent); color: var(--white); }
+.hour-cell.sel { background: var(--theme-accent); border-color: var(--theme-accent); color: var(--on-accent); }
 .hour-cell.busy { background: var(--danger-dim); border-color: var(--danger-dim); color: var(--danger); cursor: not-allowed; }
-.hour-legend { display: flex; gap: var(--sp-4); flex-wrap: wrap; font-size: var(--fs-xs); color: var(--ink-soft); margin-bottom: var(--sp-4); }
+.hour-legend { display: flex; gap: var(--sp-4); flex-wrap: wrap; font-size: var(--fs-xs); color: var(--ink-soft); margin-bottom: var(--sp-2); }
 .hour-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.hour-legend .l-free { background: var(--surface); border: 1.5px solid var(--line); }
+.hour-legend .l-sel  { background: var(--theme-accent); }
+.hour-legend .l-busy { background: var(--danger-dim); border: 1.5px solid var(--danger); }
+
+/* Matn ichidagi tugma — havolaga o'xshaydi, lekin <button> */
+.link-btn {
+  color: var(--theme-accent); font-weight: 700; text-decoration: underline;
+  font-size: inherit; background: none; padding: 0;
+}
 
 /* Taom soni tanlash (to'yxona) */
 .dish-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--sp-2); }
 .dish-chip {
   padding: var(--sp-3); border-radius: var(--radius-m); text-align: center;
-  border: 1.5px solid var(--line); background: var(--white); cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--surface); cursor: pointer;
   transition: all var(--transition);
 }
 .dish-chip:hover { border-color: var(--theme-accent); }
@@ -60,3 +126,88 @@
 .review:last-child { border-bottom: 0; }
 .review-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); }
 .review-user { display: flex; align-items: center; gap: var(--sp-2); font-weight: 700; font-size: var(--fs-sm); }
+
+/* ===================================================================
+   Joyning kichik profil kartochkasi.
+
+   Katta ekranda tablar yonida (o'ngda) yopishib turadi, mobilda esa
+   pastga tushadi. Foydalanuvchi menyuni ko'rib turib ham "bu qayerda
+   va qanday bog'lanaman?" degan savolga javob topadi.
+   =================================================================== */
+.detail-split {
+  display: grid; grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--sp-8); align-items: start;
+  margin-top: var(--sp-8);
+}
+@media (max-width: 1000px) {
+  .detail-split { grid-template-columns: 1fr; gap: var(--sp-6); }
+}
+
+.biz-profile {
+  position: sticky; top: calc(62px + var(--sp-4));
+  display: flex; flex-direction: column; gap: var(--sp-4);
+  padding: var(--sp-5);
+  border: 1px solid var(--line); border-radius: var(--radius-l);
+  background: var(--surface); box-shadow: var(--shadow-sm);
+}
+@media (max-width: 1000px) { .biz-profile { position: static; } }
+
+.biz-profile-head { display: flex; align-items: center; gap: var(--sp-3); }
+.biz-profile-head img {
+  width: 56px; height: 56px; flex-shrink: 0;
+  border-radius: var(--radius-m); object-fit: cover;
+  border: 1px solid var(--line); background: var(--surface-2);
+}
+.biz-profile-head b {
+  font-size: var(--fs-md); color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.biz-profile-head .rating { display: flex; align-items: center; gap: 5px; font-size: var(--fs-xs); }
+
+.biz-profile-label {
+  font-size: 10.5px; font-weight: 800; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+
+/* Faktlar ro'yxati: chapda nima, o'ngda qiymati */
+.biz-facts {
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  padding-top: var(--sp-4); border-top: 1px solid var(--line-soft);
+}
+.biz-facts > div { display: flex; flex-direction: column; gap: 2px; }
+.biz-facts dt { font-size: var(--fs-xs); color: var(--ink-faint); }
+.biz-facts dd { margin: 0; font-size: var(--fs-sm); color: var(--ink); }
+
+/* --- ochiq aloqa --- */
+.biz-contacts { display: flex; flex-direction: column; gap: var(--sp-2); }
+.biz-contact {
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3); border-radius: var(--radius-m);
+  border: 1px solid var(--line); background: var(--surface-2);
+  transition: border-color var(--transition), transform var(--transition);
+}
+.biz-contact:hover { border-color: var(--theme-accent); transform: translateX(2px); }
+.biz-contact .ic { font-size: 18px; flex-shrink: 0; }
+.biz-contact b { display: block; font-size: var(--fs-sm); color: var(--ink); }
+.biz-contact .small { display: block; color: var(--ink-faint); font-size: var(--fs-xs); }
+.biz-contact.tg { background: linear-gradient(120deg, #1B7FA8 0%, #2AA0CC 100%); border-color: transparent; }
+.biz-contact.tg b, .biz-contact.tg .small { color: #FFFFFF; }
+.biz-contact.tg .small { color: rgba(255, 255, 255, .82); }
+
+/* --- yopiq aloqa (kirmagan foydalanuvchi) --- */
+.biz-locked {
+  position: relative;
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-4); border-radius: var(--radius-m);
+  border: 1px dashed var(--gold-500);
+  background: var(--gold-100);
+  color: var(--ink);
+  transition: background var(--transition);
+}
+:root[data-theme="dark"] .biz-locked,
+:root:not([data-theme="light"]) .biz-locked { background: var(--surface-2); }
+.biz-locked:hover { background: var(--surface); }
+.biz-locked .ic { font-size: 20px; flex-shrink: 0; }
+.biz-locked b { display: block; font-size: var(--fs-sm); }
+.biz-locked .small { display: block; color: var(--ink-soft); font-size: var(--fs-xs); margin-top: 2px; }
+.biz-locked .go { margin-left: auto; color: var(--gold-600); font-weight: 800; }

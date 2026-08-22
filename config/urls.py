@@ -17,6 +17,7 @@ api_patterns = [
     path("", include("reviews.urls")),
     path("", include("subscriptions.urls")),
     path("", include("content.urls")),
+    path("", include("notifications.urls")),
 ]
 
 urlpatterns = [

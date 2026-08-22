@@ -1,5 +1,33 @@
 {% extends "base.html" %}
 
+{% comment %}
+  Panel qobig'i: yon menyu + yuqori panel + mazmun.
+
+  MUHIM: bu yerdagi belgilash ataylab TO'G'RIDAN-TO'G'RI yozilgan,
+  `{% include %}` bilan emas.
+
+  Django'da `{% block %}` `{% include %}` chegarasidan O'TMAYDI: qo'shilgan
+  shablon alohida kontekstda chiziladi va uning ichidagi blok bola
+  shablondagi bir xil nomli blokni KO'RMAYDI. Ilgari `dashboard_content`
+  bloki `partials/dashboard_shell.html` ichida turardi — natijada admin
+  va biznes panelining BARCHA sahifalari bo'm-bo'sh `<main>` bilan
+  chiqardi: na jadval, na tugma, na forma.
+
+  Yon menyu va yuqori panel esa blok tutmaydi, shuning uchun ular
+  bemalol `{% include %}` bo'lib qolaveradi.
+{% endcomment %}
+
 {% block body %}
-  {% include "partials/dashboard_shell.html" %}
+<div class="shell">
+  <aside class="side-nav" id="sidebar" aria-label="Panel menyusi"></aside>
+  <div class="nav-scrim" id="nav-scrim" hidden></div>
+
+  <div class="shell-main">
+    {% include "partials/topbar.html" %}
+
+    <main class="dash-content" id="dash-content">
+      {% block dashboard_content %}{% endblock %}
+    </main>
+  </div>
+</div>
 {% endblock %}

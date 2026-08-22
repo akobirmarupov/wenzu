@@ -16,8 +16,8 @@ from django.test import TestCase, TransactionTestCase, override_settings
 from rest_framework.test import APIClient
 
 from businesses.models import Business, Hall, Room
-from businesses.services import submit_application
 from catalog.models import RestaurantMenuItem
+from common.test_utils import make_business
 from reservations.models import Availability, Reservation
 
 User = get_user_model()
@@ -45,7 +45,7 @@ class QueryCountTest(TestCase):
     def setUpTestData(cls):
         for i in range(12):
             owner = make_owner(i)
-            _, business, _ = submit_application(
+            _, business, _ = make_business(
                 applicant=owner,
                 business_type="restaurant" if i % 2 == 0 else "venue",
                 business_name=f"Biznes {i}",
@@ -129,7 +129,7 @@ class QueryCountTest(TestCase):
         small = Business.objects.filter(business_type="restaurant").first()
 
         big_owner = make_owner(80)
-        _, big, _ = submit_application(
+        _, big, _ = make_business(
             applicant=big_owner, business_type="restaurant", business_name="Katta"
         )
         for r in range(20):
@@ -196,7 +196,7 @@ class CachingTest(TestCase):
     def setUp(self):
         cache.clear()
         owner = make_owner(90)
-        _, self.business, _ = submit_application(
+        _, self.business, _ = make_business(
             applicant=owner, business_type="restaurant", business_name="Kesh Restorani"
         )
         self.owner = User.objects.get(pk=owner.pk)
@@ -241,7 +241,7 @@ class ConcurrentBookingTest(TransactionTestCase):
             username="race_owner", password="StrongPass123!",
             full_name="Race Owner", phone_number="+998921111111", is_phone_verified=True,
         )
-        _, self.business, _ = submit_application(
+        _, self.business, _ = make_business(
             applicant=owner, business_type="restaurant", business_name="Race Restorani"
         )
         self.room = Room.objects.create(
@@ -300,7 +300,7 @@ class ConcurrentBookingTest(TransactionTestCase):
             username="venue_race_owner", password="StrongPass123!",
             full_name="Venue Owner", phone_number="+998922222222", is_phone_verified=True,
         )
-        _, venue, _ = submit_application(
+        _, venue, _ = make_business(
             applicant=owner, business_type="venue", business_name="Race To'yxonasi"
         )
         hall = Hall.objects.create(business=venue, name="Katta zal", people=500, all_price=9000000)

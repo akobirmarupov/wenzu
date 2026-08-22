@@ -13,11 +13,10 @@ from rest_framework.views import APIView
 
 from common.models import PlatformSettings
 from common.pagination import StandardResultsPagination
-from common.permissions import IsBusinessRole, IsPhoneVerified, IsSuperAdmin
-from common.services import get_owner_business
+from common.permissions import IsBusinessRole, IsCustomer, IsPhoneVerified, IsSuperAdmin
 from common.queue import enqueue
+from common.services import get_owner_business
 from common.throttles import ReservationCreateThrottle
-from reservations.tasks import send_reservation_notification_task
 from reservations.filters import ReservationFilter
 from reservations.models import Availability, Reservation
 from reservations.routes.serializers import (
@@ -26,6 +25,7 @@ from reservations.routes.serializers import (
     RestaurantReservationCreateSerializer,
     VenueReservationCreateSerializer,
 )
+from reservations.tasks import send_reservation_notification_task
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ class ReservationCreateAPIView(APIView):
     bajariladi (TZ 9-bo'lim talabi).
     """
 
-    permission_classes = [IsAuthenticated, IsPhoneVerified]
+    permission_classes = [IsAuthenticated, IsPhoneVerified, IsCustomer]
     throttle_classes = [ReservationCreateThrottle]
 
     @extend_schema(
@@ -246,27 +246,35 @@ class ReservationCancelAPIView(APIView):
         except Reservation.DoesNotExist:
             raise NotFound("Bron topilmadi")
 
-        if reservation.user_id != request.user.id and not request.user.is_staff:
+        is_staff = request.user.is_staff
+        if reservation.user_id != request.user.id and not is_staff:
             return Response(
                 {"detail": "Bu bronni bekor qila olmaysiz."},
                 status=status.HTTP_403_FORBIDDEN,
             )
+
+        # Muddat cheklovi FAQAT mijozga tegishli. Administrator nizoli
+        # holatni hal qilishi kerak bo'lsa, muddatdan qat'i nazar bekor
+        # qila oladi — aks holda har bir e'tiroz bazaga qo'lda kirishni
+        # talab qilardi.
+        allowed, reason = reservation.cancel_check()
+        if not allowed and not is_staff:
+            return Response({"detail": reason}, status=status.HTTP_400_BAD_REQUEST)
         if reservation.status in ("cancelled", "completed"):
-            return Response(
-                {"detail": f"Bu bron allaqachon \"{reservation.get_status_display()}\" holatida."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+            return Response({"detail": reason}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             # Qayta qulflab o'qiymiz: mijoz tugmani ikki marta bossa ham
             # yoki egasi ayni damda tasdiqlayotgan bo'lsa ham holat
-            # aralashib ketmasligi kerak.
+            # aralashib ketmasligi kerak. Muddat ham qulf ostida qayta
+            # tekshiriladi — ikki so'rov orasida u tugab qolishi mumkin.
             reservation = Reservation.objects.select_for_update().get(pk=reservation.pk)
+            allowed, reason = reservation.cancel_check()
+            if not allowed and not is_staff:
+                return Response({"detail": reason}, status=status.HTTP_400_BAD_REQUEST)
             if reservation.status in ("cancelled", "completed"):
-                return Response(
-                    {"detail": f"Bu bron allaqachon \"{reservation.get_status_display()}\" holatida."},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
+                return Response({"detail": reason}, status=status.HTTP_400_BAD_REQUEST)
+
             reservation.status = "cancelled"
             reservation.save(update_fields=["status"])
 

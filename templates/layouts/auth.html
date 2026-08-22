@@ -1,13 +1,28 @@
 {% extends "base.html" %}
 
+{% comment %}
+  Kirish / ro'yxatdan o'tish qobig'i.
+
+  Chap ustun (`auth-visual`) — restoran surati. Surat adminkadan
+  qo'yiladi: "Kontent → Bannerlar", joylashuvi "Kirish sahifasi".
+  Surat bo'lmasa standart zumrad gradient qoladi, sahifa hech qachon
+  bo'sh chiqmaydi.
+
+  Matn `.auth-text` ichida — suratli holatda u pastga yig'iladi va
+  kadrning eng chiroyli o'rta qismi ochiq qoladi.
+{% endcomment %}
+
 {% block body %}
 <div class="auth-wrap">
   <aside class="auth-visual">
-    <a href="/" class="logo" style="color:#fff"><span class="dot"></span>WENZU</a>
-    {% block visual %}
-    <h2>Joyni <em>oldindan</em> band qiling</h2>
-    <p data-i18n="home.heroLead"></p>
-    {% endblock %}
+    <a href="/" class="logo"><span class="dot"></span>WENZU</a>
+
+    <div class="auth-text">
+      {% block visual %}
+      <h2>Joyni <em>oldindan</em> band qiling</h2>
+      <p data-i18n="home.heroLead"></p>
+      {% endblock %}
+    </div>
   </aside>
 
   <main class="auth-form-side">

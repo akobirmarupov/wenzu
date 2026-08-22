@@ -13,4 +13,16 @@
 <link rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
 
-<link rel="stylesheet" href="{% static 'css/main.css' %}">
+{% comment %}
+  Uslublar ro'yxati `web/context_processors.py` da (STYLESHEETS) — tartibi
+  bilan birga. Har bir manzilga `?v=` belgisi qo'shiladi: fayl o'zgarsa
+  belgi ham o'zgaradi va brauzer yangisini oladi.
+
+  Nega bitta `main.css` + `@import` emas: `@import` qilingan fayllar
+  sahifadan alohida keshlanadi va versiya belgisi ularga o'tmaydi —
+  aynan shuning uchun CSS eskirib, sahifa buzilgandek ko'rinardi.
+  Qo'shimcha yutuq: alohida `<link>` teglari parallel yuklanadi.
+{% endcomment %}
+{% for sheet in stylesheets %}
+<link rel="stylesheet" href="{% static sheet %}?v={{ asset_version }}">
+{% endfor %}

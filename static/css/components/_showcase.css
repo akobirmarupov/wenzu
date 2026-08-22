@@ -1,0 +1,76 @@
+/* ===================================================================
+   Menyu vitrinasi — bosh sahifaning asosiy mazmuni.
+
+   Ikki xil ko'rinish, chunki ikki xil narsa:
+
+   RESTORAN taomi — rasm muhim (nima yeyishini ko'z bilan tanlaydi):
+     kichik kartochkalar, ikki qator, qatorda to'rtta, sekin almashib
+     turadi.
+
+   TO'YXONA taomi — narx va joy muhim (to'y menyusi ro'yxat bo'lib
+     tanlanadi): matn qatori, chapda nomi va narxi, o'ngda rasm.
+     "Bronlarim" ro'yxati bilan bir xil ritm.
+   =================================================================== */
+
+/* ---------- restoran taomlari ---------- */
+.dish-wall {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+.dish-wall.fading { opacity: 0; }
+.dish-wall { transition: opacity .45s ease; }
+
+.dish-tile {
+  position: relative; display: block; overflow: hidden;
+  border-radius: var(--radius-m);
+  background: var(--surface); border: 1px solid var(--line);
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+.dish-tile:hover { transform: translateY(-3px); border-color: var(--gold-500); box-shadow: var(--shadow); }
+.dish-tile img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--surface-2); }
+.dish-tile .body { padding: var(--sp-2) var(--sp-3) var(--sp-3); display: flex; flex-direction: column; gap: 1px; }
+.dish-tile .name {
+  font-size: var(--fs-sm); font-weight: 700; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.dish-tile .place { font-size: 11px; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dish-tile .price {
+  font-size: var(--fs-sm); font-weight: 800; margin-top: 2px;
+  background: var(--gold-shine); -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+@media (max-width: 900px) { .dish-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .dish-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Qaysi "sahifa" ko'rsatilayotganini bildiruvchi chiziqchalar */
+.wall-dots { display: flex; gap: 5px; }
+.wall-dots span { width: 20px; height: 3px; border-radius: 2px; background: var(--line); transition: background var(--transition); }
+.wall-dots span.active { background: var(--gold-shine); }
+
+/* ---------- to'yxona taomlari: matn qatori ---------- */
+.feast-list { display: flex; flex-direction: column; gap: var(--sp-2); }
+.feast-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto 88px;
+  align-items: center; gap: var(--sp-4);
+  padding: var(--sp-3); padding-right: var(--sp-3);
+  border: 1px solid var(--line); border-radius: var(--radius-m);
+  background: var(--surface);
+  transition: border-color var(--transition), transform var(--transition);
+}
+.feast-row:hover { border-color: var(--theme-accent); transform: translateX(3px); }
+.feast-row .info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.feast-row .info b { font-size: var(--fs-base); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feast-row .info .place { font-size: var(--fs-xs); color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feast-row .amount { text-align: right; display: flex; flex-direction: column; gap: 1px; }
+.feast-row .amount b { font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
+.feast-row .amount span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-faint); }
+.feast-row img {
+  width: 88px; height: 64px; border-radius: var(--radius-s);
+  object-fit: cover; background: var(--surface-2);
+}
+@media (max-width: 560px) {
+  .feast-row { grid-template-columns: minmax(0, 1fr) 64px; gap: var(--sp-3); }
+  .feast-row .amount { grid-column: 1; text-align: left; flex-direction: row; align-items: baseline; gap: var(--sp-2); }
+  .feast-row img { width: 64px; height: 64px; grid-column: 2; grid-row: 1 / span 2; }
+}

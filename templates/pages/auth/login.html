@@ -33,5 +33,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/auth/login.js' %}"></script>
+<script type="module" src="{% static 'js/pages/auth/login.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

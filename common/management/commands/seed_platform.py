@@ -6,14 +6,31 @@ from django.db import transaction
 from common.models import PlatformSettings
 from subscriptions.models import SubscriptionPlan
 
+# ===================================================================
+# Standart tarif narxlari (so'm).
+#
+# Uzoq muddat arzonroq tushadi — bu obunani uzaytirishga undaydi va
+# platformaga oldindan tushum beradi:
+#   restoran  3 oy: 600 000  (oyiga 200 000 — oylikdan 50 000 arzon)
+#   to'yxona  3 oy: 800 000  (oyiga ~266 667 — oylikdan ~33 333 arzon)
+#
+# Adminka orqali istalgan paytda o'zgartiriladi.
+# ===================================================================
+PLAN_PRICES = {
+    "restaurant": {1: 250000, 3: 600000},
+    "venue": {1: 300000, 3: 800000},
+}
+
 
 class Command(BaseCommand):
     help = "Platforma sozlamalari va tarif rejalarini yaratadi (mavjudlarini buzmaydi)."
 
     def add_arguments(self, parser):
         parser.add_argument("--telegram", default="uvente", help="Admin Telegram username (@ siz)")
-        parser.add_argument("--restaurant-price", type=int, default=255000)
-        parser.add_argument("--venue-price", type=int, default=255000)
+        parser.add_argument(
+            "--reset-prices", action="store_true",
+            help="Mavjud rejalarning narxini ham standartga qaytaradi.",
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -25,16 +42,27 @@ class Command(BaseCommand):
         else:
             self.stdout.write("• Platforma sozlamalari allaqachon mavjud — tegilmadi")
 
-        for business_type, price in (
-            ("restaurant", options["restaurant_price"]),
-            ("venue", options["venue_price"]),
-        ):
-            plan, created = SubscriptionPlan.objects.get_or_create(
-                business_type=business_type,
-                defaults={"monthly_price": price, "trial_days": settings_obj.trial_days},
-            )
-            mark = "✓ yaratildi" if created else "• mavjud"
-            self.stdout.write(f"{mark}: {plan.get_business_type_display()} — {plan.monthly_price} so'm/oy")
+        self.stdout.write("\nTarif rejalari:")
+        for business_type, durations in PLAN_PRICES.items():
+            for months, price in durations.items():
+                plan, created = SubscriptionPlan.objects.get_or_create(
+                    business_type=business_type,
+                    duration_months=months,
+                    defaults={"price": price, "trial_days": settings_obj.trial_days},
+                )
+                if created:
+                    mark = "✓ yaratildi"
+                elif options["reset_prices"] and plan.price != price:
+                    plan.price = price
+                    plan.save(update_fields=["price"])
+                    mark = "↻ narx yangilandi"
+                else:
+                    mark = "• mavjud"
+
+                per_month = f" (oyiga {plan.price_per_month:,.0f})" if months > 1 else ""
+                line = (f"  {mark}: {plan.get_business_type_display()} — "
+                        f"{plan.duration_label} — {plan.price:,.0f} so'm{per_month}")
+                self.stdout.write(line.replace(",", " "))
 
         self.stdout.write(self.style.SUCCESS("\nTayyor. Endi superuser yarating:"))
         self.stdout.write("  python manage.py createsuperuser")

@@ -5,6 +5,7 @@ import logging
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
@@ -62,7 +63,7 @@ class BusinessAvailabilityAPIView(APIView):
         )
         # Sana berilmasa, o'tib ketgan kunlarni ko'rsatishning ma'nosi yo'q.
         if not request.GET.get("date") and not request.GET.get("date_from"):
-            queryset = queryset.filter(date__gte=datetime.date.today())
+            queryset = queryset.filter(date__gte=timezone.localdate())
 
         queryset = AvailabilityFilter(request.GET, queryset=queryset).qs
 
@@ -146,7 +147,7 @@ class HallBusyDatesAPIView(APIView):
             hall=hall, status__in=["pending", "confirmed"]
         ).select_related("availability")
 
-        date_from = request.GET.get("date_from") or str(datetime.date.today())
+        date_from = request.GET.get("date_from") or str(timezone.localdate())
         queryset = queryset.filter(availability__date__gte=date_from)
         if request.GET.get("date_to"):
             queryset = queryset.filter(availability__date__lte=request.GET["date_to"])

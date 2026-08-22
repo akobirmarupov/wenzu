@@ -13,7 +13,7 @@
 
 .tag {
   display: inline-block; padding: 4px 10px; border-radius: var(--radius-pill);
-  background: var(--paper-dim); color: var(--ink-soft);
+  background: var(--surface-2); color: var(--ink-soft);
   font-size: var(--fs-xs); font-weight: 700;
 }
 .tag-accent { background: var(--theme-accent-dim); color: var(--theme-accent-dark); }

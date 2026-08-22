@@ -36,7 +36,9 @@ class AdminPaymentLogListCreateAPIView(APIView):
     @extend_schema(responses=PaymentLogSerializer(many=True))
     def get(self, request):
         queryset = (
-            PaymentLog.objects.select_related("subscription__business", "confirmed_by")
+            PaymentLog.objects.select_related(
+                "subscription__business", "subscription__business__owner", "confirmed_by"
+            )
             .order_by("-created_at")
         )
         queryset = PaymentLogFilter(request.GET, queryset=queryset).qs
@@ -71,7 +73,7 @@ class OwnerPaymentLogListAPIView(APIView):
         business = get_owner_business(request.user)
         queryset = (
             PaymentLog.objects.filter(subscription__business=business)
-            .select_related("subscription", "confirmed_by")
+            .select_related("subscription__business", "confirmed_by")
             .order_by("-created_at")
         )
         paginator = self.pagination_class()

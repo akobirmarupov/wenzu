@@ -2,9 +2,15 @@
    Bosh sahifa.
 
    Chap menyu bo'lgani uchun bu yerda gorizontal "hero" emas, balki
-   qidiruv paneli + spotlight karusel + banner + yangiliklar tartibi
-   ishlatiladi. Har bir bo'lim boshqa turdagi ma'lumot beradi, shunda
-   sahifa faqat kartochkalar ro'yxatiga aylanib qolmaydi.
+   quyidagi tartib ishlatiladi:
+
+     qidiruv → rasm lentasi (yozuvsiz) → banner → restoran taomlari
+     → to'yxona menyusi + yangiliklar → qanday ishlaydi → biznes ochish
+
+   Joy kartochkalari ("mashhur restoranlar", "to'yxonalar") ataylab
+   YO'Q: ular chap menyudagi katalog sahifalari bilan aynan bir xil
+   narsani ko'rsatardi. Bosh sahifa endi MENYU ko'rsatadi — foydalanuvchi
+   avval nima yeyishini tanlaydi, keyin qayerda ekanini.
    =================================================================== */
 .home-head {
   padding: var(--sp-8) 0 var(--sp-6);

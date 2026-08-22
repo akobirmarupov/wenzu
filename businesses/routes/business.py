@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 from businesses.filters import BusinessFilter
 from businesses.models import Business, Hall, Room
 from businesses.routes.serializers import (
+    BusinessAdminCreateSerializer,
     BusinessAdminSerializer,
     BusinessDetailSerializer,
     BusinessListSerializer,
@@ -227,7 +228,20 @@ class BusinessDetailAPIView(APIView):
 
     @extend_schema(responses=BusinessDetailSerializer)
     def get(self, request, pk):
-        cache_key = build_cache_key("biz:detail", pk)
+        # Kesh kalitiga KIRGAN/KIRMAGAN holati ham qo'shiladi.
+        #
+        # Aloqa ma'lumoti (telefon, Telegram) faqat ro'yxatdan o'tganlarga
+        # qaytadi. Kalit buni hisobga olmasa, keshni birinchi to'ldirgan
+        # so'rov hammaga xizmat qilardi:
+        #   · mehmon birinchi bo'lsa — kirgan foydalanuvchi ham aloqani
+        #     ko'rmasdi,
+        #   · kirgan birinchi bo'lsa — raqam MEHMONGA ham ketardi (aynan
+        #     shuning oldini olmoqchi edik).
+        #
+        # Ikkita variant yetarli — har bir foydalanuvchiga alohida yozuv
+        # emas, ya'ni kesh samarasi deyarli o'zgarmaydi.
+        audience = "auth" if request.user.is_authenticated else "anon"
+        cache_key = build_cache_key("biz:detail", pk, audience)
         data = cached_response(
             cache_key,
             settings.CACHE_TTL_BUSINESS_DETAIL,
@@ -369,6 +383,141 @@ class AdminBusinessListAPIView(APIView):
         page = paginator.paginate_queryset(queryset, request, view=self)
         serializer = BusinessAdminSerializer(page, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+class AdminBusinessCreateAPIView(APIView):
+    """
+    POST /api/admin/businesses/ — admin qo'lda biznes ochadi.
+
+    GET esa `AdminBusinessListAPIView` da. Bu yerda faqat yaratish, chunki
+    ro'yxat filtr va sahifalash bilan alohida view'da turadi.
+
+    Biznes ARIZA orqali yaratiladi (`submit_application`) — admin qo'lda
+    ochganda ham shunday, aks holda `Business.application` bo'sh qolib
+    ma'lumot butunligi buzilardi va obuna ham ochilmasdi.
+    """
+
+    permission_classes = [IsSuperAdmin]
+
+    @extend_schema(
+        request=BusinessAdminCreateSerializer,
+        responses={201: BusinessAdminSerializer},
+    )
+    def post(self, request):
+        from businesses.services import approve_application, submit_application
+
+        serializer = BusinessAdminCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        owner = data["owner"]
+
+        with transaction.atomic():
+            # `submit_application` uchtalikni qaytaradi: ariza, biznes, obuna.
+            application, business, _subscription = submit_application(
+                applicant=owner,
+                business_type=data["business_type"],
+                business_name=data["name"],
+            )
+
+            # Qo'shimcha maydonlar — ariza faqat nom va turni biladi.
+            business.district = data.get("district", "")
+            business.address = data.get("address", "")
+            business.telegram_username = data.get("telegram_username", "")
+            business.save(update_fields=["district", "address", "telegram_username"])
+
+            if data.get("approve"):
+                approve_application(application=application, approved_by=request.user)
+
+        logging.getLogger("django.security").info(
+            f"Business created by admin: business_id={business.id}, "
+            f"owner_id={owner.id}, by={request.user.id}"
+        )
+        business.refresh_from_db()
+        return Response(
+            BusinessAdminSerializer(business).data, status=status.HTTP_201_CREATED
+        )
+
+
+class AdminBusinessDetailAPIView(APIView):
+    """
+    GET/PATCH/DELETE /api/admin/businesses/{pk}/ — bitta biznesni to'liq
+    boshqarish.
+
+    O'chirish QAYTARIB BO'LMAYDI: biznes bilan birga uning xonalari,
+    menyusi, sharhlari va BRONLARI ham ketadi (CASCADE). Shuning uchun
+    faol bronlar bo'lsa o'chirish to'xtatiladi — mijozlar xabarsiz
+    bronsiz qolib ketmasligi kerak. Bunday holatda to'g'ri yechim —
+    bloklash (`toggle-block`).
+    """
+
+    permission_classes = [IsSuperAdmin]
+
+    def get_object(self, pk):
+        try:
+            return Business.objects.select_related("owner", "subscription").get(pk=pk)
+        except Business.DoesNotExist:
+            raise NotFound("Biznes topilmadi")
+
+    @extend_schema(responses=BusinessAdminSerializer)
+    def get(self, request, pk):
+        return Response(BusinessAdminSerializer(self.get_object(pk)).data)
+
+    @extend_schema(request=BusinessAdminSerializer, responses=BusinessAdminSerializer)
+    def patch(self, request, pk):
+        business = self.get_object(pk)
+
+        # Egasini va reytingni admin ham o'zgartira olmaydi: reyting
+        # sharhlardan hisoblanadi, egasi esa butun bron tarixini bog'lab
+        # turadi.
+        editable = {"name", "business_type", "address", "district", "is_visible",
+                    "telegram_username"}
+        payload = {k: v for k, v in request.data.items() if k in editable}
+        if not payload:
+            return Response(
+                {"detail": "O'zgartirish uchun maydon berilmadi."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = BusinessAdminSerializer(business, data=payload, partial=True)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            serializer.save()
+
+        invalidate_business_cache()
+        logging.getLogger("django.security").info(
+            f"Business updated by admin: business_id={business.id}, "
+            f"fields={sorted(payload)}, by={request.user.id}"
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @extend_schema(responses={204: None})
+    def delete(self, request, pk):
+        business = self.get_object(pk)
+
+        active = business.reservations.filter(status__in=["pending", "confirmed"]).count()
+        if active:
+            return Response(
+                {"detail": f"Bu biznesda {active} ta faol bron bor — o'chirib bo'lmaydi. "
+                           f"Avval bronlarni yakunlang yoki biznesni bloklang."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            business_id = business.id
+            owner = business.owner
+            business.delete()
+
+            # Egasida boshqa biznes qolmasa, roli oddiy foydalanuvchiga
+            # qaytadi — aks holda u bo'sh biznes paneliga tushib qolardi.
+            if owner.role == "business" and not owner.businesses.exists():
+                owner.role = "user"
+                owner.save(update_fields=["role"])
+
+        invalidate_business_cache()
+        logging.getLogger("django.security").warning(
+            f"Business DELETED by admin: business_id={business_id}, by={request.user.id}"
+        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class AdminBusinessToggleBlockAPIView(APIView):

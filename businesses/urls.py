@@ -1,6 +1,8 @@
 from django.urls import path
 
 from businesses.routes.business import (
+    AdminBusinessCreateAPIView,
+    AdminBusinessDetailAPIView,
     AdminBusinessListAPIView,
     AdminBusinessToggleBlockAPIView,
     AdminOverviewAPIView,
@@ -20,6 +22,7 @@ from businesses.routes.business_photo import (
     BusinessPhotoListAPIView,
     OwnerBusinessPhotoDetailAPIView,
     OwnerBusinessPhotoListCreateAPIView,
+    ShowcasePhotoListAPIView,
 )
 from businesses.routes.hall import (
     BusinessHallListAPIView,
@@ -45,6 +48,7 @@ urlpatterns = [
     path("businesses/<uuid:business_id>/rooms/", BusinessRoomListAPIView.as_view(), name="business-rooms"),
     path("businesses/<uuid:business_id>/halls/", BusinessHallListAPIView.as_view(), name="business-halls"),
     path("businesses/<uuid:business_id>/photos/", BusinessPhotoListAPIView.as_view(), name="business-photos"),
+    path("showcase/photos/", ShowcasePhotoListAPIView.as_view(), name="showcase-photos"),
     path("businesses/<uuid:business_id>/pricing/", BusinessPricingListAPIView.as_view(), name="business-pricing"),
 
     # --- ariza oqimi (oddiy foydalanuvchi) ---
@@ -68,5 +72,7 @@ urlpatterns = [
     path("admin/applications/<uuid:pk>/approve/", AdminApplicationApproveAPIView.as_view(), name="admin-application-approve"),
     path("admin/applications/<uuid:pk>/reject/", AdminApplicationRejectAPIView.as_view(), name="admin-application-reject"),
     path("admin/businesses/", AdminBusinessListAPIView.as_view(), name="admin-business-list"),
+    path("admin/businesses/create/", AdminBusinessCreateAPIView.as_view(), name="admin-business-create"),
+    path("admin/businesses/<uuid:pk>/", AdminBusinessDetailAPIView.as_view(), name="admin-business-detail"),
     path("admin/businesses/<uuid:pk>/toggle-block/", AdminBusinessToggleBlockAPIView.as_view(), name="admin-business-toggle-block"),
 ]

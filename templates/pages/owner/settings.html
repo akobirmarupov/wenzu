@@ -11,14 +11,24 @@
   <div class="panel-head">
     <h2 class="display h3">Rasm galereyasi</h2>
     <label class="btn btn-primary btn-sm" for="photo-input">+ Rasm qo'shish
-      <input type="file" id="photo-input" accept="image/*" hidden>
+      {% comment %}
+        `multiple` — egasi bir yo'la o'nlab suratni tanlab yuboradi:
+        tashqarisi, yo'lagi, zallari, stollari. Bittalab yuklash
+        real restoran uchun juda sekin edi.
+      {% endcomment %}
+      <input type="file" id="photo-input" accept="image/*" multiple hidden>
     </label>
   </div>
-  <p class="muted small" style="margin-bottom:var(--sp-4)">Eng ko'pi 10 ta rasm. Birinchi rasm karuselda birinchi ko'rinadi.</p>
+  <p class="muted small" style="margin-bottom:var(--sp-4)">
+    Bir vaqtda bir nechta rasm tanlashingiz mumkin (eng ko'pi 40 ta).
+    Detal sahifasida shu suratlar navbat bilan aylanadi — kirish eshigidan
+    tashqari ichkarisi, yo'lagi va stollarini ham qo'shing.
+    Tavsiya: kamida 1200 px kenglikdagi tiniq surat.
+  </p>
   <div class="grid grid-auto-sm" id="gallery"></div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/owner/settings.js' %}"></script>
+<script type="module" src="{% static 'js/pages/owner/settings.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

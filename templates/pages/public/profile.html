@@ -13,5 +13,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/public/profile.js' %}"></script>
+<script type="module" src="{% static 'js/pages/public/profile.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

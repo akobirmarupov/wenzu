@@ -8,27 +8,14 @@
 import { api } from "../../../core/api.js";
 import { t } from "../../../core/i18n.js";
 import { $, esc } from "../../../ui/dom.js";
-import { skeletonRows, emptyState, errorState } from "../../../ui/state.js";
-import { money, dateLabel, dateTimeLabel } from "../../../ui/format.js";
-
-const PLAN_TONE = { trial: "premium-plan-trial", active: "premium-plan-active", expired: "premium-plan-expired" };
+import { skeletonRows, errorState } from "../../../ui/state.js";
+import { pricingHtml, bindPricing } from "../../../components/pricing.js";
 
 export function render() {
   return `<div id="premium-root">${skeletonRows(3)}</div>`;
 }
 
-function benefitsHtml() {
-  return `
-    <div class="premium-benefits">
-      ${[1, 2, 3, 4].map((n) => `
-        <div class="premium-benefit">
-          <span class="tick" aria-hidden="true">✓</span>
-          <span>${esc(t(`premium.benefit${n}`))}</span>
-        </div>`).join("")}
-    </div>`;
-}
-
-function paymentStepsHtml(telegram) {
+function paymentStepsHtml() {
   return `
     <div class="panel">
       <div class="panel-head"><h2 class="display h3">${esc(t("premium.howTitle"))}</h2></div>
@@ -38,137 +25,184 @@ function paymentStepsHtml(telegram) {
             <p>${esc(t(`premium.how${n}`))}</p>
           </div>`).join("")}
       </div>
-      ${telegram ? `
-        <a class="btn btn-primary" style="margin-top:var(--sp-5)"
-           href="https://t.me/${esc(telegram.replace("@", ""))}" target="_blank" rel="noopener">
-          ✈️ ${esc(t("premium.contactAdmin"))} — ${esc(telegram)}
-        </a>` : ""}
     </div>`;
 }
 
 /** Biznes egasi ko'radigan ko'rinish. */
-function ownerHtml(subscription) {
-  const status = subscription.status;
-  const days = subscription.days_left;
-  const total = status === "active" ? 30 : 7;
-  const percent = days === null ? 0 : Math.max(0, Math.min(100, (days / total) * 100));
-  const low = days !== null && days <= 3;
-
+/**
+ * Tasdiqlangan egaga — panelga qisqa yo'l.
+ *
+ * Bu ekran odatda ko'rinmaydi (bo'lim menyudan olib tashlangan), lekin
+ * eski havola yoki xatcho'p bilan kirilsa bo'sh sahifa chiqmasligi
+ * kerak.
+ */
+function panelRedirectHtml(subscription) {
+  const isVenue = subscription.business_type === "venue";
   return `
-    <section class="premium-card">
-      <div class="premium-head">
-        <div class="stack stack-2">
-          <span class="premium-plan ${PLAN_TONE[status] || ""}">
-            ${status === "trial" ? "✦ " : ""}${esc(t(`status.${status}`))}
-          </span>
-          <div class="premium-price">
-            ${money(subscription.monthly_price, { withSuffix: false })}
-            <small>${esc(t("common.soum"))} / ${esc(t("premium.monthly"))}</small>
-          </div>
-        </div>
-        <div class="stack stack-1" style="text-align:right">
-          <span class="premium-plan" style="background:rgba(255,255,255,.10)">
-            ${esc(subscription.business_name || "")}
-          </span>
-        </div>
-      </div>
-
-      <div class="premium-meta">
-        <div class="item">
-          <span class="k">${esc(t("premium.daysLeft"))}</span>
-          <span class="v">${days !== null ? `${days} ${esc(t("premium.days"))}` : "—"}</span>
-        </div>
-        <div class="item">
-          <span class="k">${esc(t("premium.trial"))}</span>
-          <span class="v">${dateLabel(subscription.trial_ends_at)}</span>
-        </div>
-        ${subscription.subscription_ends_at ? `
-          <div class="item">
-            <span class="k">${esc(t("premium.current"))}</span>
-            <span class="v">${dateLabel(subscription.subscription_ends_at)}</span>
-          </div>` : ""}
-      </div>
-
-      <div class="premium-bar ${low ? "low" : ""}"><span style="width:${percent}%"></span></div>
-
-      ${benefitsHtml()}
-
-      <div class="premium-actions">
-        ${subscription.admin_telegram ? `
-          <a class="btn btn-gold btn-lg" href="https://t.me/${esc(subscription.admin_telegram.replace("@", ""))}"
-             target="_blank" rel="noopener">
-            ${esc(status === "expired" ? t("premium.upgrade") : t("premium.extend"))}
-          </a>` : ""}
-        <a class="btn btn-outline-light btn-lg" href="/panel/obuna/">${esc(t("premium.paymentHistory"))}</a>
-      </div>
-    </section>
-
-    ${paymentStepsHtml(subscription.admin_telegram)}
-
     <div class="panel">
-      <div class="panel-head"><h2 class="display h3">${esc(t("premium.paymentHistory"))}</h2></div>
-      <div id="premium-payments">${skeletonRows(2)}</div>
+      <div class="panel-head">
+        <div class="stack stack-1">
+          <h2 class="display h3">Obuna panelingizda</h2>
+          <span class="small muted">
+            Tarif tanlash, muddatni uzaytirish, to'lovlar tarixi va
+            administrator manzili — hammasi shu yerda.
+          </span>
+        </div>
+      </div>
+      <a class="card card-link shortcut-card" href="/panel/obuna/" style="max-width:340px">
+        <span class="ic" aria-hidden="true">${isVenue ? "🏛" : "🪑"}</span>
+        <b>${esc(t(isVenue ? "nav.panelVenue" : "nav.panelRestaurant"))}</b>
+        <span class="small muted">Obuna bo'limiga o'tish</span>
+        <span class="go" aria-hidden="true">→</span>
+      </a>
     </div>`;
 }
 
-/** Oddiy foydalanuvchi ko'radigan ko'rinish — Premium'ga taklif. */
-function guestHtml(settings) {
-  const plans = settings?.plans || [];
-  const telegram = settings?.admin_telegram;
-
+function awaitingHtml(subscription) {
+  const telegram = subscription.admin_telegram || "@uvente";
   return `
-    <section class="premium-card">
-      <div class="premium-head">
-        <div class="stack stack-2">
-          <span class="premium-plan premium-plan-trial">✦ ${esc(t("premium.trialOffer"))}</span>
-          <h2 class="display" style="font-size:clamp(22px,3vw,32px)">${esc(t("premium.guestTitle"))}</h2>
-          <p style="color:rgba(255,255,255,.78);max-width:48ch">${esc(t("premium.guestText"))}</p>
+    ${adminContactHtml(telegram)}
+
+    <div class="price-pending">
+      <span class="ic" aria-hidden="true">🕓</span>
+      <span>
+        <b>Arizangiz administrator tekshiruvida</b>
+        <span class="small">
+          Tasdiqlangach <b>7 kunlik bepul sinov</b> boshlanadi va joyingiz
+          qidiruvda ko'rinadi. Tezlashtirish uchun ${esc(telegram)} ga yozing.
+        </span>
+      </span>
+    </div>
+
+    ${/* Ikkinchi Telegram havolasi ATAYLAB yo'q: tepada allaqachon
+         "Admin bilan bog'lanish" tugmasi turibdi va u aynan shu joyga
+         olib boradi. Ikkita bir xil tugma bir ekranda — "qaysi biri
+         to'g'ri?" degan ortiqcha savol. */""}
+    <div class="panel" style="margin-top:var(--sp-5)">
+      <div class="panel-head">
+        <div class="stack stack-1">
+          <h2 class="display h3">${esc(t("premium.plansTitle"))}</h2>
+          <span class="small muted">${esc(t("premium.plansLead"))}</span>
         </div>
       </div>
-
-      <div class="premium-meta">
-        ${plans.map((plan) => `
-          <div class="item">
-            <span class="k">${esc(plan.business_type === "venue" ? t("nav.venues") : t("nav.restaurants"))}</span>
-            <span class="v">${money(plan.monthly_price)}</span>
-          </div>`).join("")}
-        <div class="item">
-          <span class="k">${esc(t("premium.trial"))}</span>
-          <span class="v">${settings?.trial_days ?? 7} ${esc(t("premium.days"))}</span>
-        </div>
+      <div id="premium-pricing">
+        ${pricingHtml({
+          plans: subscription.plans,
+          status: "awaiting_approval",
+          pending: subscription.pending_request,
+          ownedType: subscription.business_type,
+        })}
       </div>
-
-      ${benefitsHtml()}
-
-      <div class="premium-actions">
-        <button class="btn btn-gold btn-lg" data-goto-business>${esc(t("nav.business"))}</button>
-        ${telegram ? `
-          <a class="btn btn-outline-light btn-lg" href="https://t.me/${esc(telegram.replace("@", ""))}"
-             target="_blank" rel="noopener">${esc(t("premium.contactAdmin"))}</a>` : ""}
-      </div>
-    </section>
-
-    ${paymentStepsHtml(telegram)}`;
+    </div>`;
 }
 
-async function loadPayments() {
-  const container = $("#premium-payments");
-  if (!container) return;
-  try {
-    const data = await api.owner.payments();
-    container.innerHTML = data.results.length
-      ? data.results.map((payment) => `
-          <div class="list-row">
-            <div class="stack stack-1">
-              <b>${money(payment.amount)}</b>
-              <span class="small muted">${esc(payment.note || "—")}</span>
-            </div>
-            <span class="small muted nums">${dateTimeLabel(payment.created_at)}</span>
-          </div>`).join("")
-      : emptyState(t("premium.noPayments"), "", "🧾");
-  } catch (error) {
-    container.innerHTML = errorState(error.message);
-  }
+/**
+ * Platforma egasi ko'radigan ko'rinish.
+ *
+ * U obuna sotib olmaydi — obunalarni yaratadi, tasdiqlaydi va
+ * o'chiradi. Shuning uchun bu yerda narx emas, boshqaruv bo'limlariga
+ * qisqa yo'llar turadi.
+ */
+function adminHtml() {
+  const links = [
+    { href: "/boshqaruv/obunalar/", icon: "💎", title: "Obunalar",
+      text: "Arizalarni tasdiqlash, muddat va to'lovlar" },
+    { href: "/boshqaruv/arizalar/", icon: "📝", title: "Biznes arizalari",
+      text: "Yangi restoran va to'yxonalarni tasdiqlash" },
+    { href: "/boshqaruv/bizneslar/", icon: "🏢", title: "Bizneslar",
+      text: "Ochish, tahrirlash, bloklash va o'chirish" },
+    { href: "/boshqaruv/tolovlar/", icon: "💳", title: "To'lovlar",
+      text: "Qo'lda kelgan to'lovlar tarixi" },
+  ];
+
+  return `
+    <div class="panel">
+      <div class="panel-head">
+        <div class="stack stack-1">
+          <h2 class="display h3">Obunalarni boshqarish</h2>
+          <span class="small muted">
+            Platforma egasi obuna sotib olmaydi — uni yaratadi, tasdiqlaydi
+            va bekor qiladi. Quyidagi bo'limlar shu ish uchun.
+          </span>
+        </div>
+      </div>
+      <div class="grid grid-auto-sm">
+        ${links.map((link) => `
+          <a class="card card-link shortcut-card" href="${link.href}">
+            <span class="ic" aria-hidden="true">${link.icon}</span>
+            <b>${esc(link.title)}</b>
+            <span class="small muted">${esc(link.text)}</span>
+            <span class="go" aria-hidden="true">→</span>
+          </a>`).join("")}
+      </div>
+    </div>`;
+}
+
+/**
+ * Biznesi YO'Q foydalanuvchi ko'radigan ko'rinish.
+ *
+ * Bu yerda ham xuddi shu tarif kartochkalari turadi, faqat tugmalar
+ * boshqa ish qiladi: "1 oyni tanlash" bosilsa BIZNES OCHISH arizasi
+ * boshlanadi (rejaning turi restoranmi yoki to'yxonami — o'zi bilinadi).
+ *
+ * Nega shunday: "biznes ochish" va "tarif tanlash" foydalanuvchi uchun
+ * bitta qaror — "shu narxga ishlayman". Ilgari ular ikki alohida
+ * bo'limda edi va odam qayerdan boshlashni bilmasdi. Endi menyudagi
+ * "Biznes ochish" bandi ham olib tashlandi.
+ */
+function guestHtml(settings, user) {
+  const plans = settings?.plans || [];
+  const telegram = settings?.admin_telegram || "@uvente";
+
+  // Katta "hero" bloki ATAYLAB olib tashlandi.
+  //
+  // Unda tarif imkoniyatlari sanab o'tilardi, lekin AYNAN o'sha ro'yxat
+  // har bir kartochkaning ichida "Nimalar kiradi" bo'limida yana bir bor
+  // takrorlanardi. Bir xil to'rt qatorni ikki marta o'qitishning ma'nosi
+  // yo'q — ekran cho'zilib, asosiy narsa (narxlar) pastga tushib ketardi.
+  //
+  // Endi tartib sodda: admin bilan aloqa → tariflar → to'lov qanday ishlaydi.
+  return `
+    ${adminContactHtml(telegram)}
+
+    <div class="panel">
+      <div class="panel-head">
+        <div class="stack stack-1">
+          <h2 class="display h3">${esc(t("premium.plansTitle"))}</h2>
+          <span class="small muted">
+            ${esc(t("premium.guestText"))}
+            Tarifni tanlang — o'sha zahoti biznes ochish arizasi boshlanadi.
+          </span>
+        </div>
+        <span class="premium-plan premium-plan-trial">
+          ✦ ${settings?.trial_days ?? 7} ${esc(t("premium.days"))} ${esc(t("premium.trial")).toLowerCase()}
+        </span>
+      </div>
+      <div id="premium-pricing">
+        ${pricingHtml({ plans, status: "guest", trialUsed: user.has_used_trial })}
+      </div>
+    </div>
+
+    ${paymentStepsHtml()}`;
+}
+
+/**
+ * Administrator bilan bog'lanish — bo'limning TEPASIDA, doimiy.
+ *
+ * "Keyinroq bog'lanaman" degan odam admin manzilini qayta izlab
+ * yurmasligi kerak.
+ */
+function adminContactHtml(telegram) {
+  const handle = telegram.replace("@", "");
+  return `
+    <a class="admin-contact" href="https://t.me/${esc(handle)}" target="_blank" rel="noopener">
+      <span class="ic" aria-hidden="true">✈️</span>
+      <span class="text">
+        <b>${esc(t("business.contactAdmin"))}</b>
+        <span class="small">${esc(t("business.contactAdminText"))} · ${esc(telegram)}</span>
+      </span>
+      <span class="go" aria-hidden="true">→</span>
+    </a>`;
 }
 
 export async function load(user) {
@@ -176,17 +210,53 @@ export async function load(user) {
   if (!root) return;
 
   try {
+    // PLATFORMA EGASI uchun alohida ko'rinish.
+    //
+    // Unga tarif kartochkalari ko'rsatishning ma'nosi yo'q: u biznes
+    // ochmaydi va obuna sotib olmaydi — obunalarni BOSHQARADI. Ilgari
+    // unga "biznes ochish" kartochkalari chiqardi va bosganda server
+    // rad etardi.
+    if (user.is_staff) {
+      root.innerHTML = adminHtml();
+      return;
+    }
+
     if (user.role === "business" && user.business) {
       const subscription = await api.owner.subscription();
-      if (subscription.has_subscription === false) {
-        root.innerHTML = emptyState(t("common.empty"), "", "💎");
+
+      // TASDIQLANGAN egaga bu bo'lim KO'RSATILMAYDI.
+      //
+      // Obunani uzaytirish, to'lovlar tarixi va admin Telegrami —
+      // hammasi uning o'z panelida ("Obuna" bo'limi). Ikki joyda ikki
+      // xil ko'rinish saqlash "qaysinisi haqiqiy?" degan savol
+      // tug'dirardi. `profile.js` bu bo'limni menyuga umuman
+      // qo'shmaydi; bu yer faqat to'g'ridan-to'g'ri havola bilan
+      // kirilganda ishlaydi.
+      if (subscription.has_subscription !== false) {
+        root.innerHTML = panelRedirectHtml(subscription);
         return;
       }
-      root.innerHTML = ownerHtml(subscription);
-      loadPayments();
+
+      // `has_subscription === false` — bu XATO EMAS: ariza hali
+      // tasdiqlanmagan, ya'ni panelga kira olmaydi va obuna holatini
+      // faqat SHU YERDA ko'radi.
+      root.innerHTML = awaitingHtml(subscription);
+      bindPricing("#premium-pricing", {
+        plans: subscription.plans || [],
+        telegram: subscription.admin_telegram || "@uvente",
+        onSent: () => load(user),
+      });
     } else {
       const settings = await api.settings();
-      root.innerHTML = guestHtml(settings);
+      root.innerHTML = guestHtml(settings, user);
+
+      // Biznesi yo'q — tarif tanlash BIZNES OCHISH arizasini boshlaydi.
+      bindPricing("#premium-pricing", {
+        plans: settings?.plans || [],
+        telegram: settings?.admin_telegram || "@uvente",
+        mode: "open",
+        onSent: () => load(user),
+      });
     }
   } catch (error) {
     root.innerHTML = errorState(error.message);

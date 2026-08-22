@@ -56,10 +56,15 @@ class Banner(BaseModel, TranslatedMixin):
     PLACEMENT_HERO = "hero"
     PLACEMENT_INLINE = "inline"
     PLACEMENT_SIDEBAR = "sidebar"
+    PLACEMENT_AUTH = "auth"
     PLACEMENT_CHOICES = (
         (PLACEMENT_HERO, "Bosh banner (asosiy)"),
         (PLACEMENT_INLINE, "Sahifa ichida"),
         (PLACEMENT_SIDEBAR, "Yon panelda"),
+        # Kirish va ro'yxatdan o'tish sahifasining chap tomoni. Rasm
+        # qo'yilmasa standart zumrad gradient qoladi — sahifa hech qachon
+        # bo'sh chiqmaydi.
+        (PLACEMENT_AUTH, "Kirish sahifasi (chap tomon)"),
     )
 
     MEDIA_NONE = "none"

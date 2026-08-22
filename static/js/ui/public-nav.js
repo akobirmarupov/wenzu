@@ -1,16 +1,19 @@
 /**
  * Ommaviy sahifalarning CHAP yon menyusi.
  *
- * Menyu bandlari, til tanlagichi, tema tugmasi va foydalanuvchi bloki —
- * hammasi shu yerda quriladi. Sahifalar bu haqda bilmaydi, ular faqat
- * `initPublicNav()` ni chaqiradi.
+ * Bu yerda FAQAT yo'nalish bandlari bo'ladi: bosh sahifa, katalog,
+ * bronlarim, biznes va (egalari uchun) panel.
+ *
+ * Til tanlagichi, tema tugmasi, bildirishnoma qo'ng'irog'i va
+ * foydalanuvchi tugmasi — yuqori panelda (`topbar.js`), chiqish esa
+ * profil sahifasining ichida. Ilgari ular menyu pastida ham takrorlanardi
+ * va bir amalga bir necha tugma to'g'ri kelib qolgan edi.
  */
 import { auth } from "../core/auth.js";
 import { ROUTES } from "../core/config.js";
 import { api } from "../core/api.js";
 import { t } from "../core/i18n.js";
 import { $, esc } from "./dom.js";
-import { avatarHtml } from "./avatar.js";
 
 const MAIN_LINKS = [
   { href: ROUTES.home, icon: "◈", key: "nav.home" },
@@ -31,49 +34,48 @@ function linkHtml({ href, icon, key }) {
     </a>`;
 }
 
-function userBlockHtml() {
-  const user = auth.user();
-
-  if (!user) {
-    return `
-      <a class="btn btn-primary btn-block btn-sm" href="${ROUTES.login}">${esc(t("nav.login"))}</a>
-      <a class="btn btn-outline btn-block btn-sm" href="${ROUTES.register}">${esc(t("nav.register"))}</a>`;
-  }
-
-  const roleLabel = user.is_staff
-    ? t("nav.admin")
-    : user.business
-      ? t("nav.panel")
-      : t("nav.profile");
-  const panelHref = auth.homeFor(user);
-
-  return `
-    <a class="nav-user" href="${ROUTES.profile}">
-      ${avatarHtml(user, { size: "md" })}
-      <span class="meta">
-        <span class="name">${esc(user.full_name || "")}</span>
-        <span class="role">${esc(roleLabel)}</span>
-      </span>
-    </a>
-    ${panelHref !== ROUTES.home
-      ? `<a class="btn btn-outline btn-block btn-sm" href="${panelHref}">${esc(roleLabel)}</a>`
-      : ""}
-    <button class="btn btn-ghost btn-block btn-sm" type="button" data-logout>${esc(t("nav.logout"))}</button>`;
-}
-
 export function initPublicNav() {
   const nav = $("#side-nav");
   if (!nav) return;
 
   const user = auth.user();
-  // Bronlar va biznes — alohida sahifalar, profil ichidagi tab emas.
-  const secondary = user
-    ? [
-        { href: ROUTES.myBookings, icon: "📅", key: "nav.bookings" },
-        { href: ROUTES.openBusiness, icon: "🏢", key: user.business ? "business.mine" : "nav.business" },
-        { href: ROUTES.profile, icon: "👤", key: "nav.profile" },
-      ]
-    : [{ href: ROUTES.openBusiness, icon: "🏢", key: "nav.business" }];
+
+  // Menyuda faqat DOIM kerak bo'ladigan bandlar.
+  //
+  // "Biznes ochish" va "Biznesim" ATAYLAB YO'Q: biznes ochish endi
+  // profil ichidagi "Obuna va Premium" bo'limidan boshlanadi — tarifni
+  // tanlash va biznes ochish bitta qaror, ularni ikki joyga bo'lish
+  // foydalanuvchini chalkashtirardi.
+  // Platforma egasida "Bronlarim" YO'Q: u bron qilmaydi, bronlarni
+  // boshqaradi. Server ham unga bron yaratishga ruxsat bermaydi
+  // (`IsCustomer`), ya'ni bo'lim bo'lsa faqat bo'sh turardi.
+  const secondary = !user
+    ? []
+    : user.is_staff
+      ? [{ href: ROUTES.profile, icon: "👤", key: "nav.profile" }]
+      : [
+          { href: ROUTES.myBookings, icon: "📅", key: "nav.bookings" },
+          { href: ROUTES.profile, icon: "👤", key: "nav.profile" },
+        ];
+
+  // "Panelim" faqat ARIZA TASDIQLANGANDAN keyin ko'rinadi.
+  //
+  // Ilgari ariza yuborilishi bilan paydo bo'lardi va bosgan odam bo'sh,
+  // ishlamaydigan panelga tushardi (server yozishni baribir rad etardi).
+  // Endi band ko'rinsa — panel haqiqatan ochiq degani.
+  if (user?.is_staff) {
+    secondary.push({ href: ROUTES.adminHome, icon: "🛡", key: "nav.admin" });
+  } else if (user?.business?.is_approved) {
+    // Nomi TURGA qarab: restoran egasi "Restoran panelim"ni ko'radi,
+    // to'yxona egasi "To'yxona panelim"ni. Umumiy "Panelim" so'zi
+    // egasiga o'z joyini emas, mavhum bir bo'limni ko'rsatardi.
+    const isVenue = user.business.type === "venue";
+    secondary.push({
+      href: ROUTES.ownerHome,
+      icon: isVenue ? "🏛" : "🪑",
+      key: isVenue ? "nav.panelVenue" : "nav.panelRestaurant",
+    });
+  }
 
   nav.innerHTML = `
     <a class="brand" href="/"><span class="dot"></span>WENZU</a>
@@ -82,13 +84,7 @@ export function initPublicNav() {
     ${MAIN_LINKS.map(linkHtml).join("")}
 
     <div class="nav-group-label">${esc(t("nav.menu"))}</div>
-    ${secondary.map(linkHtml).join("")}
-
-    <div class="side-nav-bottom">
-      ${userBlockHtml()}
-    </div>`;
-
-  nav.querySelector("[data-logout]")?.addEventListener("click", () => auth.logout());
+    ${secondary.map(linkHtml).join("")}`;
 
   // Mobil: gamburger va orqa fon
   const toggle = $("[data-nav-toggle]");

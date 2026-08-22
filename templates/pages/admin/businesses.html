@@ -4,11 +4,15 @@
 {% block dashboard_content %}
 <div class="panel">
   <div class="panel-head">
-    <h2 class="display h3">Bizneslar</h2>
+    <div class="stack stack-1">
+      <h2 class="display h3">Bizneslar</h2>
+      <span class="small muted">Ochish, tahrirlash, bloklash va o'chirish — hammasi shu yerda.</span>
+    </div>
     <div class="filter-bar">
       <label class="search"><span>🔍</span>
         <input id="q" placeholder="Nomi yoki tuman" aria-label="Qidiruv"></label>
       <div class="row row-2" id="type-filters"></div>
+      <button class="btn btn-primary btn-sm" type="button" id="add-business">+ Biznes ochish</button>
     </div>
   </div>
   <div class="table-wrap"><table class="table">
@@ -20,5 +24,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/admin/businesses.js' %}"></script>
+<script type="module" src="{% static 'js/pages/admin/businesses.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

@@ -7,10 +7,12 @@ import { toast } from "../../ui/toast.js";
 import { initI18n } from "../../core/i18n.js";
 import { theme } from "../../core/theme.js";
 import { renderControls } from "../../ui/controls.js";
+import { initAuthVisual } from "../../ui/auth-visual.js";
 
 theme.init();
 await initI18n();
 renderControls("#auth-controls");
+initAuthVisual();
 
 const phone = storage.getPendingPhone();
 if (!phone) {

@@ -2,6 +2,22 @@
 {% load static %}
 
 {% block dashboard_content %}
+{% comment %}
+  Eng tepada — KUTILAYOTGAN arizalar. Admin bu ekranga aynan shular
+  uchun kiradi: biznes egasi to'lovni qilgan va tasdiq kutmoqda.
+  Pastdagi jadval esa umumiy holat uchun.
+{% endcomment %}
+<div class="panel" id="requests-panel">
+  <div class="panel-head">
+    <div class="stack stack-1">
+      <h2 class="display h3">Obuna arizalari</h2>
+      <span class="small muted">To'lovni tekshiring va tasdiqlang — muddat avtomatik uzayadi.</span>
+    </div>
+    <div class="row row-2 row-wrap" id="request-filters"></div>
+  </div>
+  <div id="requests"></div>
+</div>
+
 <div class="panel">
   <div class="panel-head">
     <h2 class="display h3">Obunalar</h2>
@@ -16,5 +32,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/admin/subscriptions.js' %}"></script>
+<script type="module" src="{% static 'js/pages/admin/subscriptions.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

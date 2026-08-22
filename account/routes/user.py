@@ -337,10 +337,21 @@ class AdminUserListAPIView(APIView):
         ],
     )
     def get(self, request):
-        queryset = User.objects.only(
-            "id", "username", "full_name", "phone_number", "role",
-            "is_phone_verified", "is_confirmed", "is_active", "is_staff", "date_joined",
-        ).order_by("-date_joined")
+        # `has_business` — admin panelida "bu odamga biznes ochish mumkinmi"
+        # degan savolga javob. `Exists()` bilan bitta so'rovda keladi;
+        # har bir qator uchun `businesses.exists()` chaqirish N+1 bo'lardi.
+        from django.db.models import Exists, OuterRef
+
+        from businesses.models import Business
+
+        queryset = (
+            User.objects.only(
+                "id", "username", "full_name", "phone_number", "role",
+                "is_phone_verified", "is_confirmed", "is_active", "is_staff", "date_joined",
+            )
+            .annotate(has_business=Exists(Business.objects.filter(owner=OuterRef("pk"))))
+            .order_by("-date_joined")
+        )
         queryset = UserFilter(request.GET, queryset=queryset).qs
 
         paginator = self.pagination_class()

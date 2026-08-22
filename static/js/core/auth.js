@@ -60,7 +60,14 @@ export const auth = {
   homeFor(user) {
     if (!user) return ROUTES.home;
     if (user.is_staff) return ROUTES.adminHome;
-    if (user.role === "business" && user.business) return ROUTES.ownerHome;
+
+    if (user.role === "business" && user.business) {
+      // Arizasi hali tasdiqlanmagan bo'lsa panelga emas, "Biznes ochish"
+      // sahifasiga — u yerda arizasi qanday holatda ekani yozilgan.
+      // To'g'ridan-to'g'ri shu yerda hal qilamiz, aks holda odam avval
+      // panelni ko'rib, keyin quvib chiqarilardi (ekran "sakrab" ketardi).
+      return user.business.is_approved === false ? ROUTES.premium : ROUTES.ownerHome;
+    }
     return ROUTES.home;
   },
 

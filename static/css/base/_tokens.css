@@ -30,17 +30,24 @@
                                         #E0C05A 62%, #A8842A 100%);
   --gold-glow: 0 0 22px rgba(201, 162, 39, .22);
 
-  /* --- yuzalar (kunduzgi) --- */
-  --ground:     #F1F4F2;   /* sal zumradga og'gan neytral fon */
-  --ground-alt: #E7EDE9;
-  --surface:    #FFFFFF;
-  --surface-2:  #F6F8F7;
-  --ink:        #12211C;
-  --ink-soft:   #4A5A53;
-  --ink-faint:  #7C8B84;
-  --line:       #DCE4DF;
-  --line-soft:  #E9EEEB;
-  --overlay-bg: rgba(8, 50, 42, .45);
+  /* --- yuzalar (kunduzgi) ---
+     Sof oq (#FFFFFF) ataylab ISHLATILMAYDI: yorug' ekranda u ko'zni
+     qamashtiradi. O'rniga sal sarg'ish "fil suyagi" oq — qog'ozga
+     yaqin, uzoq qarab o'tirsa ham charchatmaydi va oltin aksent
+     ustida issiq ko'rinadi. */
+  --ground:     #F7F3E8;   /* sarg'ish oq asosiy fon */
+  --ground-alt: #F1EADA;
+  --surface:    #FFFDF6;   /* kartochka — fondan bir pog'ona yorug' */
+  --surface-2:  #F4EEE0;
+  --ink:        #1A2019;
+  --ink-soft:   #55605A;
+  --ink-faint:  #8A9088;
+  --line:       #E4DDCB;
+  --line-soft:  #EEE8DA;
+  --overlay-bg: rgba(20, 26, 20, .74);
+
+  /* Sof oq — RANG sifatida (rangli fon ustidagi matn uchun), yuza emas. */
+  --white: #FFFFFF;
 
   /* --- holat ranglari --- */
   --ok:     #1B7A52;  --ok-dim:     #DCF0E5;
@@ -95,7 +102,8 @@
     --ink-faint:  #6E8299;
     --line:       #22314A;
     --line-soft:  #1A2739;
-    --overlay-bg: rgba(4, 9, 17, .72);
+    --overlay-bg: rgba(3, 7, 13, .88);
+    --white:      #FFFFFF;
 
     --emerald-100: #10302A;
     --emerald-600: #22A583;
@@ -136,7 +144,8 @@
   --ink-faint:  #6E8299;
   --line:       #22314A;
   --line-soft:  #1A2739;
-  --overlay-bg: rgba(4, 9, 17, .72);
+  --overlay-bg: rgba(3, 7, 13, .88);
+  --white:      #FFFFFF;
 
   --emerald-100: #10302A;
   --emerald-600: #22A583;

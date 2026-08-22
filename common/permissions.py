@@ -100,11 +100,27 @@ class IsBusinessRole(BasePermission):
     message = "Bu bo'lim faqat biznes egalari uchun."
 
     def has_permission(self, request, view):
-        return bool(
-            request.user
-            and request.user.is_authenticated
-            and request.user.role == "business"
-        )
+        if not (request.user and request.user.is_authenticated):
+            return False
+
+        # PLATFORMA EGASI bu bo'limlarga KIRMAYDI.
+        #
+        # Uning ishi boshqa: barcha ma'lumotni ko'rish, tasdiqlash,
+        # o'chirish va platformani boshqarish. Uning o'z restorani yoki
+        # to'yxonasi bo'lmaydi, ya'ni "xona qo'shish", "menyu tahrirlash"
+        # kabi amallar unga umuman tegishli emas.
+        #
+        # Ilgari faqat rol tekshirilardi va `is_staff` bo'lgan odam
+        # `role='business'` ham bo'lsa, ikkala panelga ham kirardi —
+        # ikki xil vazifa bir hisobda aralashib ketardi.
+        if request.user.is_staff or request.user.is_superuser:
+            self.message = (
+                "Platforma egasi biznes panelidan foydalanmaydi — "
+                "boshqaruv paneliga o'ting."
+            )
+            return False
+
+        return request.user.role == "business"
 
 
 class IsOwnerOfBusinessType(IsBusinessRole):
@@ -166,5 +182,37 @@ class HasActiveSubscription(BasePermission):
 
         subscription = getattr(business, "subscription", None)
         if subscription is None:
-            return True  # obuna hali yaratilmagan — bloklamaymiz
+            # Obuna YO'Q = ariza hali tasdiqlanmagan.
+            #
+            # Ilgari bu holatda ruxsat berilardi ("obuna hali yaratilmagan —
+            # bloklamaymiz"). Endi obuna faqat admin tasdig'idan keyin
+            # ochilgani uchun, obunasizlik "hali tekshirilmagan" degani —
+            # bunday biznes ma'lumot kirita olmasligi kerak.
+            self.message = (
+                "Arizangiz hali tasdiqlanmagan. Administrator tekshirgach, "
+                "7 kunlik bepul sinov boshlanadi va barcha bo'limlar ochiladi."
+            )
+            return False
         return subscription.status in ("trial", "active")
+
+
+class IsCustomer(BasePermission):
+    """
+    Bron qilish va sharh qoldirish uchun — PLATFORMA EGASIDAN tashqari
+    hamma kira oladi.
+
+    Nega platforma egasi bron qila olmaydi: u tizimni boshqaradi, undan
+    foydalanmaydi. Uning broni statistikani buzardi (o'z platformasida
+    o'zi mijoz bo'lib chiqardi) va "bu bronni kim tasdiqlaydi?" degan
+    chalkash holat tug'ilardi.
+    """
+
+    message = (
+        "Platforma egasi bron qila olmaydi — bu bo'lim mijozlar uchun. "
+        "Bronlarni boshqarish uchun boshqaruv panelidan foydalaning."
+    )
+
+    def has_permission(self, request, view):
+        if not (request.user and request.user.is_authenticated):
+            return False
+        return not (request.user.is_staff or request.user.is_superuser)

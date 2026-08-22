@@ -80,16 +80,23 @@ async function loadPlans() {
   try {
     const data = await api.admin.plans();
     const plans = data.results || data;
+    // Har bir tur uchun bir nechta muddat bor (1 oylik, 3 oylik) —
+    // shuning uchun qatorda muddat ham ko'rsatiladi, aks holda ikkita
+    // "Restoran" qatori bir xil ko'rinib, qaysi biri qaysiligi bilinmasdi.
     container.innerHTML = plans.map((plan) => `
       <div class="list-row">
         <div class="stack stack-1">
-          <b>${esc(businessTypeLabel(plan.business_type))}</b>
-          <span class="small muted">Bepul sinov: ${plan.trial_days} kun</span>
+          <b>${esc(businessTypeLabel(plan.business_type))} — ${esc(plan.duration_label)}</b>
+          <span class="small muted">
+            Bepul sinov: ${plan.trial_days} kun
+            ${plan.duration_months > 1
+              ? ` · oyiga ${Math.round(plan.price_per_month).toLocaleString("ru-RU")} so'm` : ""}
+          </span>
         </div>
         <div class="list-row-actions">
-          <input class="input nums" style="width:150px" type="number" min="0"
-                 value="${Math.round(plan.monthly_price)}" data-price="${esc(plan.id)}">
-          <span class="small muted">so'm/oy</span>
+          <input class="input nums" style="width:150px" type="number" min="0" step="10000"
+                 value="${Math.round(plan.price)}" data-price="${esc(plan.id)}">
+          <span class="small muted">so'm / ${esc(plan.duration_label)}</span>
           <button class="btn btn-sm btn-primary" data-save-plan="${esc(plan.id)}">Saqlash</button>
         </div>
       </div>`).join("");
@@ -123,7 +130,7 @@ function init() {
     const input = document.querySelector(`[data-price="${id}"]`);
     const done = busy(button);
     try {
-      await api.admin.updatePlan(id, { monthly_price: input.value });
+      await api.admin.updatePlan(id, { price: input.value });
       toast.ok("Tarif narxi yangilandi.");
     } catch (error) {
       toast.fromError(error);

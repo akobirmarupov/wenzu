@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 
 from web import views
 
@@ -11,8 +12,17 @@ urlpatterns = [
     path("toyxonalar/", views.VenueListView.as_view(), name="venues"),
     path("biznes/<uuid:pk>/", views.BusinessDetailView.as_view(), name="business-detail"),
     path("profil/", views.ProfileView.as_view(), name="profile"),
+
+    # Eski manzil — biznes ochish endi profil ichidagi "Obuna va Premium"
+    # bo'limida. Sahifa olib tashlangan, lekin havola foydalanuvchining
+    # xatcho'pida yoki tashqi saytda qolgan bo'lishi mumkin: 404 o'rniga
+    # to'g'ri joyga olib boramiz.
+    path(
+        "biznes-ochish/",
+        RedirectView.as_view(url="/profil/?tab=premium", permanent=True),
+        name="open-business-legacy",
+    ),
     path("bronlarim/", views.MyBookingsView.as_view(), name="my-bookings"),
-    path("biznes-ochish/", views.OpenBusinessView.as_view(), name="open-business"),
 
     # --- autentifikatsiya ---
     path("kirish/", views.LoginView.as_view(), name="login"),
@@ -36,6 +46,8 @@ urlpatterns = [
     path("boshqaruv/foydalanuvchilar/", views.AdminUsersView.as_view(), name="admin-users"),
     path("boshqaruv/bizneslar/", views.AdminBusinessesView.as_view(), name="admin-businesses"),
     path("boshqaruv/obunalar/", views.AdminSubscriptionsView.as_view(), name="admin-subscriptions"),
+    path("boshqaruv/bronlar/", views.AdminReservationsView.as_view(), name="admin-reservations"),
+    path("boshqaruv/tolovlar/", views.AdminPaymentsView.as_view(), name="admin-payments"),
     path("boshqaruv/kontent/", views.AdminContentView.as_view(), name="admin-content"),
     path("boshqaruv/sozlamalar/", views.AdminSettingsView.as_view(), name="admin-settings"),
 ]

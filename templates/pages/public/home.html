@@ -33,19 +33,46 @@
     <div class="home-stats" id="home-stats"></div>
   </section>
 
+  {% comment %}
+    Rasm lentasi — yozuvsiz. Platformadagi barcha joylarning suratlari
+    uzluksiz siljib turadi. Ilgari bu yerda "Yangi qo'shilganlar" sarlavhali
+    karusel edi; endi sarlavha ham, matn ham yo'q — faqat suratlar.
+  {% endcomment %}
+  <section class="section-sm" id="photo-marquee"></section>
+
   {# --- reklama / e'lon banneri (admin panelda boshqariladi) --- #}
   <section class="section-sm" id="banner-slot"></section>
 
-  {# --- yangi qo'shilgan joylar karuseli + yangiliklar lentasi --- #}
+  {% comment %}
+    Restoran taomlari — ikki qator, qatorda to'rtta, sekin almashadi.
+    Bosh sahifada endi joy kartochkalari emas, MENYU ko'rsatiladi:
+    foydalanuvchi avval nima yeyishini tanlaydi, keyin qayerda ekanini.
+  {% endcomment %}
+  <section class="section-sm">
+    <div class="section-title">
+      <div>
+        <span class="eyebrow" data-i18n="home.dishesEyebrow"></span>
+        <h2 class="display h2" data-i18n="home.dishesTitle"></h2>
+      </div>
+      <div class="wall-dots" id="dish-dots" aria-hidden="true"></div>
+    </div>
+    <div id="dish-wall"></div>
+  </section>
+
+  {% comment %}
+    To'yxona menyusi — MATN qatorlari: chapda taom nomi va to'yxona,
+    o'ngda kishi boshiga narx, eng o'ngda kichik rasm.
+  {% endcomment %}
   <section class="section-sm home-split">
     <div class="stack stack-4">
-      <div class="section-title">
+      <div class="section-title" style="margin-bottom:0">
         <div>
-          <span class="eyebrow" data-i18n="home.newPlaces">Yangi qo'shilganlar</span>
-          <h2 class="display h2" data-i18n="home.newPlacesLead"></h2>
+          <span class="eyebrow" data-i18n="home.feastEyebrow"></span>
+          <h2 class="display h2" data-i18n="home.feastTitle"></h2>
         </div>
+        <a class="btn btn-ghost btn-sm" href="/toyxonalar/"><span data-i18n="home.viewAll"></span> →</a>
       </div>
-      <div id="spotlight"></div>
+      <div id="feast-list"></div>
     </div>
 
     <div class="panel stack stack-3">
@@ -57,30 +84,6 @@
       </div>
       <div class="news-strip" id="news-strip"></div>
     </div>
-  </section>
-
-  {# --- mashhur restoranlar --- #}
-  <section class="section-sm">
-    <div class="section-title">
-      <div>
-        <span class="eyebrow" data-i18n="home.topRestaurantsEyebrow"></span>
-        <h2 class="display h2" data-i18n="home.topRestaurants"></h2>
-      </div>
-      <a class="btn btn-ghost" href="/restoranlar/"><span data-i18n="home.viewAll"></span> →</a>
-    </div>
-    <div class="grid grid-auto" id="top-restaurants"></div>
-  </section>
-
-  {# --- to'yxonalar --- #}
-  <section class="section-sm">
-    <div class="section-title">
-      <div>
-        <span class="eyebrow" data-i18n="home.topVenuesEyebrow"></span>
-        <h2 class="display h2" data-i18n="home.topVenues"></h2>
-      </div>
-      <a class="btn btn-ghost" href="/toyxonalar/"><span data-i18n="home.viewAll"></span> →</a>
-    </div>
-    <div class="grid grid-auto" id="top-venues"></div>
   </section>
 
   {# --- yangiliklar kartochkalari --- #}
@@ -123,7 +126,7 @@
         <h2 class="display" data-i18n="home.ctaTitle"></h2>
         <p data-i18n="home.ctaText"></p>
       </div>
-      <a class="btn btn-gold btn-lg" href="/biznes-ochish/" data-i18n="home.ctaButton"></a>
+      <a class="btn btn-gold btn-lg" href="/profil/?tab=premium" data-i18n="home.ctaButton"></a>
     </div>
   </section>
 
@@ -131,5 +134,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/public/home.js' %}"></script>
+<script type="module" src="{% static 'js/pages/public/home.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

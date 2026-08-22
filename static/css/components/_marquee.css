@@ -1,0 +1,83 @@
+/* ===================================================================
+   Rasm lentasi (marquee).
+
+   Bosh sahifaning tepasida platformadagi BARCHA joylarning suratlari
+   hech qanday yozuvsiz, uzluksiz siljib turadi. Matn ataylab yo'q:
+   bu bo'lim ma'lumot bermaydi, kayfiyat beradi — qaysi joylar borligini
+   ko'z bilan ilg'ab olish uchun.
+
+   Uzluksizlik hiylasi: ro'yxat ikki marta chiziladi va lenta aynan
+   yarmiga (-50%) suriladi. Shunda takrorlanish nuqtasi ko'rinmaydi.
+   =================================================================== */
+.marquee {
+  position: relative; overflow: hidden;
+  border-radius: var(--radius-l);
+  padding: var(--sp-5) 0;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(201, 162, 39, .16), transparent 42%),
+    radial-gradient(circle at 88% 100%, rgba(18, 119, 95, .18), transparent 45%),
+    linear-gradient(120deg, var(--surface-2) 0%, var(--ground-alt) 100%);
+  border: 1px solid var(--line);
+}
+:root[data-theme="dark"] .marquee {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(224, 188, 85, .14), transparent 42%),
+    radial-gradient(circle at 88% 100%, rgba(34, 165, 131, .16), transparent 45%),
+    linear-gradient(120deg, #10192A 0%, #0C1421 100%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .marquee {
+    background:
+      radial-gradient(circle at 12% 0%, rgba(224, 188, 85, .14), transparent 42%),
+      radial-gradient(circle at 88% 100%, rgba(34, 165, 131, .16), transparent 45%),
+      linear-gradient(120deg, #10192A 0%, #0C1421 100%);
+  }
+}
+
+/* Chekkalarda yumshoq so'nish — lenta kesilgandek emas, davom etayotgandek */
+.marquee::before, .marquee::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 84px; z-index: 2;
+  pointer-events: none;
+}
+.marquee::before { left: 0; background: linear-gradient(90deg, var(--ground) 0%, transparent 100%); }
+.marquee::after { right: 0; background: linear-gradient(270deg, var(--ground) 0%, transparent 100%); }
+
+.marquee-track {
+  display: flex; gap: var(--sp-4); width: max-content;
+  animation: marquee-scroll 46s linear infinite;
+}
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Bitta kadr. Kengligi konteynerning ~to'rtdan biri — bir qatorda
+   taxminan to'rtta surat ko'rinadi. */
+.marquee-item {
+  position: relative; flex: 0 0 auto;
+  width: clamp(150px, 21vw, 260px); aspect-ratio: 4 / 3;
+  border-radius: var(--radius-m); overflow: hidden;
+  background: var(--surface-2);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.marquee-item:hover { transform: translateY(-4px) scale(1.02); box-shadow: var(--shadow-lg); }
+.marquee-item img { width: 100%; height: 100%; object-fit: cover; }
+.marquee-item::after {
+  content: ""; position: absolute; inset: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .10);
+  border-radius: inherit;
+}
+
+/* Ikkinchi qator teskari yo'nalishda — lenta "tirik" ko'rinadi */
+.marquee-track.reverse { animation-direction: reverse; animation-duration: 58s; }
+.marquee-row + .marquee-row { margin-top: var(--sp-4); }
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+  .marquee { overflow-x: auto; }
+}
+@media (max-width: 720px) {
+  .marquee::before, .marquee::after { width: 40px; }
+}

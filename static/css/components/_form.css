@@ -7,7 +7,7 @@
 
 .input, .select, .textarea {
   width: 100%; padding: 11px 14px;
-  background: var(--white); color: var(--ink);
+  background: var(--surface); color: var(--ink);
   border: 1.5px solid var(--line); border-radius: var(--radius-s);
   transition: border-color var(--transition), box-shadow var(--transition);
 }
@@ -27,7 +27,7 @@
 /* Qidiruv qatori */
 .search {
   display: flex; align-items: center; gap: var(--sp-2);
-  background: var(--white); border: 1.5px solid var(--line);
+  background: var(--surface); border: 1.5px solid var(--line);
   border-radius: var(--radius-pill); padding: 8px 16px;
   flex: 1 1 240px; min-width: 0;
 }
@@ -36,7 +36,7 @@
 /* Filtr chipi */
 .chip {
   padding: 8px 16px; border-radius: var(--radius-pill);
-  border: 1.5px solid var(--line); background: var(--white);
+  border: 1.5px solid var(--line); background: var(--surface);
   font-size: var(--fs-sm); font-weight: 700; color: var(--ink-soft);
   transition: all var(--transition);
 }

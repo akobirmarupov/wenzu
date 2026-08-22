@@ -2,31 +2,92 @@
 
 from rest_framework import serializers
 
-from subscriptions.models import PaymentLog, Subscription, SubscriptionPlan
+from subscriptions.models import (
+    PaymentLog,
+    Subscription,
+    SubscriptionPlan,
+    SubscriptionRequest,
+)
 
 
 class SubscriptionPlanSerializer(serializers.ModelSerializer):
+    """
+    Tarif rejasi.
+
+    `price` — shu muddat uchun to'liq summa. `price_per_month` esa
+    taqqoslash uchun: uzoq muddatli reja qanchaga arzon tushishini
+    foydalanuvchi bir qarashda ko'rsin.
+    """
+
     business_type_display = serializers.CharField(source="get_business_type_display", read_only=True)
+    duration_label = serializers.CharField(read_only=True)
+    price_per_month = serializers.DecimalField(
+        max_digits=12, decimal_places=2, read_only=True
+    )
+    savings = serializers.SerializerMethodField()
 
     class Meta:
         model = SubscriptionPlan
         fields = [
             "id", "business_type", "business_type_display",
-            "monthly_price", "trial_days", "created_at",
+            "duration_months", "duration_label",
+            "price", "price_per_month", "savings",
+            "trial_days", "created_at",
         ]
-        read_only_fields = ["id", "created_at"]
+        read_only_fields = ["id", "created_at", "duration_label", "price_per_month", "savings"]
+
+    def get_savings(self, obj) -> str | None:
+        """
+        Oylik rejaga nisbatan qancha tejalgani.
+
+        Bir oylik rejaning o'zida tejash yo'q — `null` qaytadi va
+        frontend nishonni umuman ko'rsatmaydi.
+        """
+        if obj.duration_months <= 1:
+            return None
+
+        monthly = (
+            SubscriptionPlan.objects.filter(
+                business_type=obj.business_type, duration_months=1
+            )
+            .values_list("price", flat=True)
+            .first()
+        )
+        if monthly is None:
+            return None
+
+        saved = monthly * obj.duration_months - obj.price
+        return str(saved) if saved > 0 else None
 
 
 class PaymentLogSerializer(serializers.ModelSerializer):
+    """
+    To'lov yozuvi.
+
+    Admin jadvalida qaysi BIZNES to'laganini ko'rish kerak — bitta
+    `subscription` UUID'i hech narsa aytmaydi. Nomlar `select_related`
+    orqali keladi, qo'shimcha so'rov yo'q.
+    """
+
     confirmed_by_name = serializers.CharField(source="confirmed_by.full_name", read_only=True)
+    business_name = serializers.CharField(source="subscription.business.name", read_only=True)
+    business_type = serializers.CharField(
+        source="subscription.business.business_type", read_only=True
+    )
+    owner_phone = serializers.CharField(
+        source="subscription.business.owner.phone_number", read_only=True
+    )
 
     class Meta:
         model = PaymentLog
         fields = [
-            "id", "subscription", "amount", "confirmed_by",
-            "confirmed_by_name", "note", "created_at",
+            "id", "subscription", "business_name", "business_type", "owner_phone",
+            "amount", "confirmed_by", "confirmed_by_name", "note", "created_at",
         ]
-        read_only_fields = ["id", "confirmed_by", "created_at"]
+        read_only_fields = [
+            "id", "confirmed_by", "created_at",
+            "business_name", "business_type", "owner_phone",
+        ]
 
 
 class SubscriptionSerializer(serializers.ModelSerializer):
@@ -40,8 +101,8 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     owner_name = serializers.CharField(source="business.owner.full_name", read_only=True)
     owner_phone = serializers.CharField(source="business.owner.phone_number", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
-    monthly_price = serializers.DecimalField(
-        source="plan.monthly_price", max_digits=12, decimal_places=2, read_only=True
+    price = serializers.DecimalField(
+        source="plan.price", max_digits=12, decimal_places=2, read_only=True
     )
     days_left = serializers.SerializerMethodField()
     payments = PaymentLogSerializer(many=True, read_only=True)
@@ -50,7 +111,7 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         model = Subscription
         fields = [
             "id", "business", "business_name", "business_type", "owner_name", "owner_phone",
-            "plan", "monthly_price", "status", "status_display",
+            "plan", "price", "status", "status_display",
             "trial_ends_at", "subscription_ends_at", "days_left",
             "approved_by", "payments", "created_at",
         ]
@@ -72,3 +133,35 @@ class SubscriptionActivateSerializer(serializers.Serializer):
 
     amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
     note = serializers.CharField(max_length=255, required=False, allow_blank=True)
+
+
+class SubscriptionRequestSerializer(serializers.ModelSerializer):
+    """Obunani uzaytirish arizasi — egasi va admin ekranlarida bir xil."""
+
+    business_name = serializers.CharField(source="business.name", read_only=True)
+    business_type = serializers.CharField(source="business.business_type", read_only=True)
+    owner_name = serializers.CharField(source="business.owner.full_name", read_only=True)
+    owner_phone = serializers.CharField(source="business.owner.phone_number", read_only=True)
+    plan_label = serializers.CharField(source="plan.duration_label", read_only=True)
+    duration_months = serializers.IntegerField(source="plan.duration_months", read_only=True)
+    status_display = serializers.CharField(source="get_status_display", read_only=True)
+
+    class Meta:
+        model = SubscriptionRequest
+        fields = [
+            "id", "business", "business_name", "business_type",
+            "owner_name", "owner_phone",
+            "plan", "plan_label", "duration_months", "price",
+            "status", "status_display", "note", "admin_note",
+            "reviewed_at", "reviewed_by", "created_at",
+        ]
+        read_only_fields = fields
+
+
+class SubscriptionRequestCreateSerializer(serializers.Serializer):
+    """Egasi yuboradigan ariza: qaysi rejani tanlagani."""
+
+    plan = serializers.UUIDField()
+    note = serializers.CharField(
+        required=False, allow_blank=True, default="", max_length=255
+    )

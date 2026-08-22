@@ -63,7 +63,7 @@ function showLock(subscription) {
       <h3>Obunangiz tugadi</h3>
       <p class="small">Profilingiz ommaviy qidiruvda ko'rinmayapti va yangi ma'lumot
          qo'sha olmaysiz. Davom ettirish uchun ${esc(telegram)} bilan bog'laning
-         (oyiga ${money(subscription.monthly_price)}).</p>
+         (tarif: ${money(subscription.price)}).</p>
     </div>
     <a class="btn btn-primary" href="https://t.me/${esc(telegram.replace("@", ""))}"
        target="_blank" rel="noopener">✈️ Administrator bilan bog'lanish</a>`;

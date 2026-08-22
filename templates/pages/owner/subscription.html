@@ -5,11 +5,18 @@
 <div id="subscription-root"></div>
 
 <div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">Yuborilgan arizalar</h2>
+  </div>
+  <div id="requests"></div>
+</div>
+
+<div class="panel">
   <div class="panel-head"><h2 class="display h3">To'lovlar tarixi</h2></div>
   <div id="payments"></div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/owner/subscription.js' %}"></script>
+<script type="module" src="{% static 'js/pages/owner/subscription.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

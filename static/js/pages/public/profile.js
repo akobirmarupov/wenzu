@@ -36,14 +36,33 @@ let user = requireAuth();
 if (user) start();
 
 /* ---------- bo'limlar ro'yxati ----------
-   "Bronlarim" va "Biznes ochish" bu yerda YO'Q — ular alohida
-   sahifalarga chiqarildi (`/bronlarim/`, `/biznes-ochish/`).
-   Profil ichida ularga faqat qisqa yo'l kartochkalari qoladi. */
+   "Bronlarim" alohida sahifada (`/bronlarim/`) — profil ichida unga
+   faqat qisqa yo'l kartochkasi qoladi.
+
+   "Biznes ochish" esa "Premium" bo'limining ICHIDA: tarif tanlash va
+   biznes ochish foydalanuvchi uchun bitta qaror. */
 function sectionsFor(current) {
   const items = [
     { key: "info", icon: "👤", label: () => t("profile.info"), module: infoSection, group: "account" },
-    { key: "premium", icon: "💎", label: () => t("premium.title"), module: premiumSection, group: "account" },
   ];
+
+  // "Obuna va Premium" — TASDIQLANGAN biznes egasida YO'Q.
+  //
+  // Uning obunasi o'z panelida ("Obuna" bo'limi): tarif tanlash,
+  // muddatni uzaytirish, to'lovlar tarixi va administrator manzili —
+  // hammasi bir joyda. Profilda ikkinchi nusxa saqlash "qaysinisi
+  // haqiqiy?" degan savol tug'dirardi va ikkalasi bir kun bir-biriga
+  // zid bo'lib qolardi.
+  //
+  // Arizasi hali tasdiqlanmagan egada esa BOR: u panelga kira olmaydi
+  // va holatni faqat shu yerdan ko'radi.
+  const isApprovedOwner = Boolean(current.business?.is_approved);
+  if (!isApprovedOwner) {
+    items.push({
+      key: "premium", icon: "💎", label: () => t("premium.title"),
+      module: premiumSection, group: "account",
+    });
+  }
 
   if (current.is_staff) {
     items.push({ key: "admin", icon: "🛡", label: () => t("admin.title"), module: adminSection, group: "manage" });
@@ -53,27 +72,33 @@ function sectionsFor(current) {
 
 /** Profil ichidagi qisqa yo'llar — alohida sahifalarga olib boradi. */
 function shortcutsHtml(current) {
-  const cards = [
-    {
-      href: ROUTES.myBookings,
-      icon: "📅",
-      title: t("profile.bookings"),
-      text: t("bookingsPage.lead"),
-    },
-    {
-      href: ROUTES.openBusiness,
-      icon: current.business ? "🏢" : "✦",
-      title: current.business ? t("business.mine") : t("nav.business"),
-      text: current.business ? t("business.ownerHint") : t("business.trialNote"),
-    },
-  ];
+  // "Biznes ochish" kartochkasi ATAYLAB yo'q: biznes ochish endi shu
+  // sahifadagi "Obuna va Premium" bo'limidan boshlanadi — tarifni
+  // tanlash va biznes ochish bitta qaror.
+  // Platforma egasida "Bronlarim" yo'q — u bron qilmaydi, boshqaradi.
+  const cards = current.is_staff
+    ? [{
+        href: ROUTES.adminHome,
+        icon: "🛡",
+        title: t("nav.admin"),
+        text: t("panel.overview"),
+      }]
+    : [{
+        href: ROUTES.myBookings,
+        icon: "📅",
+        title: t("profile.bookings"),
+        text: t("bookingsPage.lead"),
+      }];
 
-  if (current.business) {
+  // Panelga qisqa yo'l faqat ariza TASDIQLANGANDAN keyin — aks holda
+  // odam bo'sh, ishlamaydigan panelga tushardi.
+  if (current.business?.is_approved) {
+    const isVenue = current.business.type === "venue";
     cards.push({
       href: ROUTES.ownerHome,
-      icon: "◈",
-      title: t("business.goToPanel"),
-      text: t("panel.overview"),
+      icon: isVenue ? "🏛" : "🪑",
+      title: t(isVenue ? "nav.panelVenue" : "nav.panelRestaurant"),
+      text: esc(current.business.name),
     });
   }
 
@@ -89,6 +114,29 @@ function shortcutsHtml(current) {
             <span class="go" aria-hidden="true">→</span>
           </a>`).join("")}
       </div>
+    </div>
+
+    ${signOutHtml()}`;
+}
+
+/**
+ * Chiqish bloki.
+ *
+ * Chiqish tugmasi ATAYLAB shu yerda — yon menyu pastida emas. Bu
+ * "hisobim" bilan bog'liq amal, shuning uchun hisob sahifasida turishi
+ * kerak; yon menyuda esa u har sahifada ko'rinib, tasodifan bosilishi
+ * mumkin edi.
+ */
+function signOutHtml() {
+  return `
+    <div class="panel sign-out">
+      <div class="stack stack-1">
+        <b>${esc(t("nav.logout"))}</b>
+        <span class="small muted">${esc(t("profile.logoutHint"))}</span>
+      </div>
+      <button class="btn btn-outline" type="button" data-logout>
+        ↩ ${esc(t("nav.logout"))}
+      </button>
     </div>`;
 }
 
@@ -187,8 +235,10 @@ async function paint() {
 
   // Qisqa yo'llar faqat asosiy bo'limda ko'rinadi — Premium yoki
   // Boshqaruv ochilganda ular e'tiborni tortib turmasligi kerak.
-  const shortcuts = activeKey === "info" ? shortcutsHtml(user) : "";
-  render("#profile-content", section.module.render(user) + shortcuts);
+  // Qisqa yo'llar faqat asosiy bo'limda; chiqish tugmasi esa har doim
+  // sahifaning eng pastida turadi.
+  const extra = activeKey === "info" ? shortcutsHtml(user) : signOutHtml();
+  render("#profile-content", section.module.render(user) + extra);
 
   section.module.bind?.({
     onUpdated: (fresh) => {
@@ -196,7 +246,7 @@ async function paint() {
       render("#profile-cover", coverHtml(user));
     },
     onGoToBusiness: () => {
-      window.location.href = ROUTES.openBusiness;
+      window.location.href = ROUTES.premium;
     },
   });
   await section.module.load?.(user);
@@ -222,6 +272,7 @@ async function start() {
   await paint();
 
   delegate("#profile-menu", "[data-section]", (button) => switchTo(button.dataset.section));
+  delegate("#profile-content", "[data-logout]", () => auth.logout());
 
   // --- avatar yuklash ---
   document.addEventListener("change", async (event) => {

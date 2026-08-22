@@ -1,12 +1,12 @@
 /**
  * Bron qilish oynasi — restoran va to'yxona uchun ikki xil oqim.
  *
- * Restoran: sana → soat oralig'i (grid) → mehmonlar → taom (ixtiyoriy)
+ * Restoran: sana → vaqt oralig'i (XOHLAGANCHA davomiylik) → mehmonlar → taom
  * To'yxona: sana → taom soni (1/2/3) → mehmonlar → taomlar (majburiy)
  *
- * Ikkalasi ham "tasdiqlash" qadamida yakuniy summani va depozitni
- * ko'rsatadi, chunki to'lov Telegram orqali qo'lda amalga oshadi va
- * foydalanuvchi nima to'lashini oldindan bilishi kerak.
+ * Menyu bu yerda MATN QATORI ko'rinishida: chapda nomi va narxi, o'ngda
+ * kichik rasm. Detal sahifasidagi katta kartochkali to'r tanlash uchun
+ * noqulay edi — narx rasm ostida qolib ketardi.
  */
 import { api } from "../core/api.js";
 import { auth } from "../core/auth.js";
@@ -16,23 +16,46 @@ import { toast } from "../ui/toast.js";
 import { esc, busy } from "../ui/dom.js";
 import { money, timeLabel, todayISO, dateLabel, imageUrl } from "../ui/format.js";
 
+/** Vaqt tanlash qadami (daqiqa). 30 daqiqa — 1 soatlik ham, 5 soatlik ham bo'ladi. */
+const STEP_MIN = 30;
+
 const state = {
   type: null,       // "restaurant" | "venue"
   business: null,
   room: null,
   hall: null,
   date: "",
-  startHour: null,
-  endHour: null,
+  startMin: null,   // yarim tundan boshlab daqiqa
+  endMin: null,
   busyRanges: [],
   openHour: 8,
   closeHour: 23,
+  isOpen: false,
   guests: 2,
   dishCount: 1,
   menuIds: [],
+  menu: [],
   note: "",
   step: "form",
 };
+
+/* ---------- vaqt yordamchilari ---------- */
+function toMin(value) {
+  const [h, m] = String(value).split(":");
+  return Number(h) * 60 + Number(m || 0);
+}
+function fromMin(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+function rangeIsBusy(startMin, endMin) {
+  return state.busyRanges.some((range) => {
+    const busyStart = toMin(range.start_time);
+    const busyEnd = toMin(range.end_time);
+    return startMin < busyEnd && endMin > busyStart;
+  });
+}
 
 /** Bron qilishdan oldin kirish va telefon tasdig'i talab qilinadi. */
 function ensureCanBook() {
@@ -41,6 +64,16 @@ function ensureCanBook() {
     return false;
   }
   const user = auth.user();
+
+  // Platforma egasi bron QILMAYDI — u bronlarni boshqaradi.
+  // Server ham rad etadi (`IsCustomer`); bu yerda sababni oldindan
+  // aytamiz, aks holda odam formani to'ldirib, oxirida xato ko'rardi.
+  if (user?.is_staff) {
+    toast.error(
+      "Platforma egasi bron qila olmaydi. Bronlarni boshqaruv panelidan ko'ring."
+    );
+    return false;
+  }
   if (user && !user.is_phone_verified) {
     toast.error("Avval telefon raqamingizni tasdiqlang.");
     window.location.href = ROUTES.verify;
@@ -57,7 +90,7 @@ export async function openRoomBooking(business, room) {
 
   Object.assign(state, {
     type: "restaurant", business, room, hall: null,
-    date: todayISO(1), startHour: null, endHour: null,
+    date: todayISO(1), startMin: null, endMin: null,
     guests: Math.min(2, room.capacity), menuIds: [], note: "", step: "form",
   });
 
@@ -70,8 +103,8 @@ async function loadBusyHours() {
   try {
     const data = await api.rooms.busyHours(state.room.id, state.date);
     state.busyRanges = data.busy_ranges || [];
-    state.openHour = data.open_time ? parseInt(data.open_time, 10) : null;
-    state.closeHour = data.close_time ? parseInt(data.close_time, 10) : null;
+    state.openHour = data.open_time ? parseInt(data.open_time, 10) : 8;
+    state.closeHour = data.close_time ? parseInt(data.close_time, 10) : 23;
     state.isOpen = data.is_open;
   } catch {
     state.busyRanges = [];
@@ -80,28 +113,22 @@ async function loadBusyHours() {
 }
 
 function hourIsBusy(hour) {
-  return state.busyRanges.some((range) => {
-    const start = parseInt(range.start_time, 10);
-    const end = parseInt(range.end_time, 10);
-    return hour >= start && hour < end;
-  });
+  return rangeIsBusy(hour * 60, (hour + 1) * 60);
 }
 
+/** Gridda soat bosilishi: birinchi bosish — boshlanish, ikkinchisi — tugash. */
 function clickHour(hour) {
-  if (state.startHour === null || state.endHour !== null) {
-    state.startHour = hour;
-    state.endHour = null;
-  } else if (hour <= state.startHour) {
-    state.startHour = hour;
+  const clicked = hour * 60;
+  if (state.startMin === null || state.endMin !== null || clicked <= state.startMin) {
+    state.startMin = clicked;
+    state.endMin = null;
   } else {
-    // Tanlangan oraliq ichida band soat bo'lmasligi kerak.
-    for (let h = state.startHour; h < hour + 1; h += 1) {
-      if (hourIsBusy(h)) {
-        toast.error("Tanlangan oraliqda band soat bor.");
-        return;
-      }
+    const end = clicked + 60;
+    if (rangeIsBusy(state.startMin, end)) {
+      toast.error("Tanlangan oraliqda band vaqt bor.");
+      return;
     }
-    state.endHour = hour + 1;
+    state.endMin = end;
   }
   renderBody();
 }
@@ -114,9 +141,9 @@ function hourGridHtml() {
   for (let hour = state.openHour; hour < state.closeHour; hour += 1) {
     const busyCell = hourIsBusy(hour);
     const selected =
-      state.startHour !== null &&
-      hour >= state.startHour &&
-      hour < (state.endHour ?? state.startHour + 1);
+      state.startMin !== null &&
+      hour * 60 >= state.startMin &&
+      hour * 60 < (state.endMin ?? state.startMin + 60);
     const cls = busyCell ? "busy" : selected ? "sel" : "free";
     cells += `<button type="button" class="hour-cell ${cls}" ${busyCell ? "disabled" : ""}
                 data-hour="${hour}">${String(hour).padStart(2, "0")}:00</button>`;
@@ -124,10 +151,56 @@ function hourGridHtml() {
   return `
     <div class="hour-grid">${cells}</div>
     <div class="hour-legend">
-      <span><i style="background:#fff;border:1.5px solid var(--line)"></i>Bo'sh</span>
-      <span><i style="background:var(--theme-accent)"></i>Tanlangan</span>
-      <span><i style="background:var(--danger-dim)"></i>Band</span>
+      <span><i class="l-free"></i>Bo'sh</span>
+      <span><i class="l-sel"></i>Tanlangan</span>
+      <span><i class="l-busy"></i>Band</span>
     </div>`;
+}
+
+/**
+ * Aniq vaqt tanlagichi.
+ *
+ * Grid faqat soatma-soat ko'rsatadi; bu yerda esa yarim soatlik qadam
+ * bilan XOHLAGANCHA davomiylikni tanlash mumkin — 1 soatdan tortib
+ * kechgacha. Ilgari oraliq amalda ikki soatga qotib qolgandek edi.
+ */
+function timePickerHtml() {
+  if (!state.isOpen) return "";
+
+  const openMin = state.openHour * 60;
+  const closeMin = state.closeHour * 60;
+
+  const options = (selected, from, to) => {
+    let html = "";
+    for (let m = from; m <= to; m += STEP_MIN) {
+      html += `<option value="${m}" ${selected === m ? "selected" : ""}>${fromMin(m)}</option>`;
+    }
+    return html;
+  };
+
+  const start = state.startMin ?? openMin;
+  const duration = state.startMin !== null && state.endMin !== null
+    ? state.endMin - state.startMin
+    : null;
+
+  return `
+    <div class="field-row" style="margin-top:var(--sp-3)">
+      <div class="field">
+        <label for="bk-start">Boshlanish</label>
+        <select class="select" id="bk-start">${options(state.startMin, openMin, closeMin - STEP_MIN)}</select>
+      </div>
+      <div class="field">
+        <label for="bk-end">Tugash</label>
+        <select class="select" id="bk-end">${options(state.endMin, start + STEP_MIN, closeMin)}</select>
+      </div>
+    </div>
+    <p class="small muted">
+      ${duration
+        ? `Tanlangan: <b>${fromMin(state.startMin)} – ${fromMin(state.endMin)}</b>
+           (${(duration / 60).toFixed(duration % 60 ? 1 : 0)} soat) ·
+           <button type="button" class="link-btn" data-reset-hours>tozalash</button>`
+        : "Vaqt oralig'ini xohlaganingizcha tanlashingiz mumkin — chegara yo'q."}
+    </p>`;
 }
 
 // ===================================================================
@@ -174,25 +247,32 @@ function depositAmount() {
 // ===================================================================
 // Chizish
 // ===================================================================
-function menuGridHtml(items, { max }) {
+/**
+ * Menyu ro'yxati — chapda nomi va narxi, o'ngda kichik rasm.
+ * Bron oynasida faqat SHU ko'rinish ishlatiladi; detal sahifasidagi
+ * to'liq menyu kartochkali holida qoladi.
+ */
+function menuPickHtml(items, { max }) {
   if (!items?.length) return "";
+
+  const title = state.type === "venue"
+    ? `Taomlarni tanlang (${state.menuIds.length}/${max})`
+    : `Menyudan taom tanlash — ixtiyoriy (${state.menuIds.length} ta)`;
+
   return `
-    <label class="small strong" style="display:block;margin-top:var(--sp-4)">
-      ${state.type === "venue"
-        ? `Taomlarni tanlang (${state.menuIds.length}/${max})`
-        : "Menyudan taom tanlash (ixtiyoriy)"}
-    </label>
-    <div class="menu-grid" style="margin-top:var(--sp-2)">
+    <label class="small strong" style="display:block;margin:var(--sp-5) 0 var(--sp-2)">${esc(title)}</label>
+    <div class="pick-list">
       ${items.map((item) => `
-        <div class="menu-item selectable ${state.menuIds.includes(item.id) ? "checked" : ""}"
-             data-menu="${esc(item.id)}">
-          <div class="check">✓</div>
-          <img src="${esc(imageUrl(item.photo))}" alt="${esc(item.name)}" loading="lazy">
-          <div class="body">
-            <b class="small">${esc(item.name)}</b>
-            <span class="xs muted">${item.price ? money(item.price) : esc(item.category_display || "")}</span>
-          </div>
-        </div>`).join("")}
+        <button type="button" class="pick-row ${state.menuIds.includes(item.id) ? "checked" : ""}"
+                data-menu="${esc(item.id)}">
+          <span class="tick" aria-hidden="true">✓</span>
+          <span class="info">
+            <b>${esc(item.name)}</b>
+            <span>${esc(item.category_display || state.business.name)}</span>
+          </span>
+          <span class="price">${item.price ? money(item.price) : "—"}</span>
+          <img class="thumb" src="${esc(imageUrl(item.photo))}" alt="" loading="lazy">
+        </button>`).join("")}
     </div>`;
 }
 
@@ -211,11 +291,6 @@ function renderBody() {
 }
 
 function restaurantFormHtml() {
-  const selectedLabel =
-    state.startHour !== null && state.endHour !== null
-      ? `${String(state.startHour).padStart(2, "0")}:00 – ${String(state.endHour).padStart(2, "0")}:00`
-      : null;
-
   return `
     <h2>${esc(state.room.name)}</h2>
     <p class="muted small">${esc(state.business.name)} · 🕗 ${timeLabel(state.business.open_time) || "—"}–${timeLabel(state.business.close_time) || "—"}</p>
@@ -227,15 +302,14 @@ function restaurantFormHtml() {
 
     <label class="small strong" style="display:block;margin:var(--sp-4) 0 var(--sp-2)">Bo'sh vaqtni tanlang</label>
     ${hourGridHtml()}
-    ${selectedLabel ? `<p class="small muted">Tanlangan: <b>${selectedLabel}</b> ·
-        <button type="button" class="btn-ghost small" data-reset-hours style="text-decoration:underline">tozalash</button></p>` : ""}
+    ${timePickerHtml()}
 
     <div class="field" style="margin-top:var(--sp-4)">
       <label for="bk-guests">Mehmonlar soni (${state.room.capacity} kishigacha)</label>
       <input class="input" id="bk-guests" type="number" min="1" max="${state.room.capacity}" value="${state.guests}">
     </div>
 
-    ${menuGridHtml(state.menu, { max: 99 })}
+    ${menuPickHtml(state.menu, { max: 99 })}
 
     <div class="field" style="margin-top:var(--sp-4)">
       <label for="bk-note">Qo'shimcha istak (ixtiyoriy)</label>
@@ -244,7 +318,7 @@ function restaurantFormHtml() {
     </div>
 
     <button class="btn btn-primary btn-block btn-lg" style="margin-top:var(--sp-5)"
-            data-next ${state.endHour === null ? "disabled" : ""}>Joyni band qilish</button>`;
+            data-next ${state.endMin === null ? "disabled" : ""}>Joyni band qilish</button>`;
 }
 
 function venueFormHtml() {
@@ -278,7 +352,7 @@ function venueFormHtml() {
       <input class="input" id="bk-guests" type="number" min="1" max="${state.hall.people}" value="${state.guests}">
     </div>
 
-    ${menuGridHtml(state.menu, { max: state.dishCount })}
+    ${menuPickHtml(state.menu, { max: state.dishCount })}
 
     <div class="total-box" style="margin-top:var(--sp-5)">
       <div class="row"><span>Kishi boshiga</span><b>${perPerson !== null ? money(perPerson) : "—"}</b></div>
@@ -303,7 +377,7 @@ function confirmHtml() {
     <div class="total-box" style="margin-top:var(--sp-4)">
       <div class="row"><span>Sana</span><b>${dateLabel(state.date)}</b></div>
       ${isRestaurant
-        ? `<div class="row"><span>Vaqt</span><b>${String(state.startHour).padStart(2, "0")}:00 – ${String(state.endHour).padStart(2, "0")}:00</b></div>`
+        ? `<div class="row"><span>Vaqt</span><b>${fromMin(state.startMin)} – ${fromMin(state.endMin)}</b></div>`
         : `<div class="row"><span>Taom soni</span><b>${state.dishCount} xil</b></div>`}
       <div class="row"><span>Mehmonlar</span><b>${state.guests} kishi</b></div>
       ${!isRestaurant ? `<div class="row grand"><span>Umumiy summa</span><b>${money(totalPrice())}</b></div>` : ""}
@@ -320,6 +394,7 @@ function doneHtml() {
   const telegram = state.business.telegram_username
     ? `@${state.business.telegram_username}`
     : "@uvente";
+  const handle = telegram.replace("@", "");
   return `
     <h2>Ariza yuborildi ✅</h2>
     <div class="notice">
@@ -327,18 +402,20 @@ function doneHtml() {
       <p>Bronni yakuniy tasdiqlash uchun <b>${esc(telegram)}</b> administratoriga
          Telegram orqali murojaat qiling va <b>${money(depositAmount())}</b> depozitni to'lang.</p>
     </div>
-    <a class="tg-line" href="https://t.me/${esc(telegram.replace("@", ""))}" target="_blank" rel="noopener">
-      ✈️ Telegram: ${esc(telegram)}
+    <a class="tg-line" style="margin-top:var(--sp-4)" href="https://t.me/${esc(handle)}"
+       target="_blank" rel="noopener">
+      <span class="ic" aria-hidden="true">✈️</span>
+      <span>Telegram: ${esc(telegram)} — bosing va yozing</span>
     </a>
     <a class="btn btn-primary btn-block btn-lg" style="margin-top:var(--sp-5)"
-       href="${ROUTES.profile}?tab=bookings">Bronlarimga o'tish</a>`;
+       href="${ROUTES.myBookings}">Bronlarimga o'tish</a>`;
 }
 
 function bindEvents(container) {
   container.querySelector("#bk-date")?.addEventListener("change", async (event) => {
     state.date = event.target.value;
-    state.startHour = null;
-    state.endHour = null;
+    state.startMin = null;
+    state.endMin = null;
     if (state.type === "restaurant") await loadBusyHours();
     renderBody();
   });
@@ -356,9 +433,27 @@ function bindEvents(container) {
     button.addEventListener("click", () => clickHour(Number(button.dataset.hour)));
   });
 
+  container.querySelector("#bk-start")?.addEventListener("change", (event) => {
+    state.startMin = Number(event.target.value);
+    if (state.endMin !== null && state.endMin <= state.startMin) state.endMin = null;
+    renderBody();
+  });
+
+  container.querySelector("#bk-end")?.addEventListener("change", (event) => {
+    const end = Number(event.target.value);
+    const start = state.startMin ?? state.openHour * 60;
+    if (rangeIsBusy(start, end)) {
+      toast.error("Tanlangan oraliqda band vaqt bor.");
+      return;
+    }
+    state.startMin = start;
+    state.endMin = end;
+    renderBody();
+  });
+
   container.querySelector("[data-reset-hours]")?.addEventListener("click", () => {
-    state.startHour = null;
-    state.endHour = null;
+    state.startMin = null;
+    state.endMin = null;
     renderBody();
   });
 
@@ -409,8 +504,8 @@ function bindEvents(container) {
         ? {
             room: state.room.id,
             date: state.date,
-            start_time: `${String(state.startHour).padStart(2, "0")}:00`,
-            end_time: `${String(state.endHour).padStart(2, "0")}:00`,
+            start_time: fromMin(state.startMin),
+            end_time: fromMin(state.endMin),
             guests_count: state.guests,
             menu_items: state.menuIds,
             special_request: state.note,

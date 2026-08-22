@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 from businesses.models import Business, Hall, Room
 from common.models import BaseModel
@@ -142,6 +143,21 @@ class Availability(BaseModel):
         return len(created), skipped
 
 
+# ===================================================================
+# Bekor qilish oynasi.
+#
+# Bron TASDIQLANGANDAN keyin mijoz bir soat ichida fikridan qaytishi
+# mumkin. Undan keyin yo'q: joy egasi o'sha vaqtni band deb belgilab,
+# boshqa mijozlarni rad etgan bo'ladi. Oxirgi daqiqadagi bekor qilish
+# uning uchun to'g'ridan-to'g'ri zarar.
+#
+# Hali tasdiqlanmagan (`pending`) so'rovga bu chegara TEGISHLI EMAS —
+# u hali hech kimni bog'lamagan.
+# ===================================================================
+CANCEL_WINDOW_HOURS = 1
+CANCEL_WINDOW = datetime.timedelta(hours=CANCEL_WINDOW_HOURS)
+
+
 class Reservation(BaseModel):
     STATUS_CHOICES = (
         ("pending", "Kutilmoqda"),
@@ -189,6 +205,10 @@ class Reservation(BaseModel):
 
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default="pending", db_index=True)
 
+    # Bron QACHON tasdiqlangani. Bekor qilish oynasi shu vaqtdan
+    # boshlab hisoblanadi (`CANCEL_WINDOW`ga qarang).
+    confirmed_at = models.DateTimeField(null=True, blank=True, verbose_name="Tasdiqlangan vaqti")
+
     class Meta:
         ordering = ["-created_at"]
         indexes = [
@@ -203,6 +223,60 @@ class Reservation(BaseModel):
 
     def __str__(self):
         return f"{self.user} — {self.business} ({self.status})"
+
+    def save(self, *args, **kwargs):
+        """
+        Tasdiqlangan vaqtni AVTOMATIK yozadi.
+
+        Nega view'da emas, shu yerda: bron holati bir necha joydan
+        o'zgaradi — biznes egasining paneli, Django adminkasi, demo
+        to'ldirgich. Har birida qo'lda yozish bitta joyni unutishga
+        olib kelardi va o'sha bronni keyin bekor qilib bo'lmay qolardi.
+
+        `update_fields` bilan saqlanganda uni ham to'ldiramiz, aks holda
+        yangi qiymat bazaga yozilmasdi.
+        """
+        if self.status == "confirmed" and self.confirmed_at is None:
+            self.confirmed_at = timezone.now()
+            update_fields = kwargs.get("update_fields")
+            if update_fields is not None:
+                kwargs["update_fields"] = set(update_fields) | {"confirmed_at"}
+        super().save(*args, **kwargs)
+
+    # ---------------- bekor qilish qoidasi ----------------
+    def cancel_deadline(self):
+        """
+        Mijoz uchun bekor qilishning oxirgi muddati.
+
+        Hali tasdiqlanmagan bronda muddat YO'Q: joy egasi hali javob
+        bermagan, depozit ham to'lanmagan — bunday so'rovni istalgan
+        paytda qaytarib olish mumkin.
+        """
+        if self.status != "confirmed" or self.confirmed_at is None:
+            return None
+        return self.confirmed_at + CANCEL_WINDOW
+
+    def cancel_check(self):
+        """
+        Mijoz bu bronni hozir bekor qila oladimi?
+
+        Qaytaradi: (mumkinmi, sabab). Sabab foydalanuvchiga ko'rsatiladi,
+        shuning uchun "nima qilish kerak"ligi ham yozilgan.
+        """
+        if self.status in ("cancelled", "completed"):
+            return False, f'Bu bron allaqachon "{self.get_status_display()}" holatida.'
+
+        deadline = self.cancel_deadline()
+        if deadline is None:
+            return True, ""
+
+        if timezone.now() > deadline:
+            return False, (
+                "Bekor qilish muddati tugagan. Tasdiqlangan bronni faqat "
+                f"{CANCEL_WINDOW_HOURS} soat ichida bekor qilish mumkin — "
+                "endi joy egasi bilan bevosita bog'laning."
+            )
+        return True, ""
 
     def clean(self):
         is_restaurant = self.business.business_type == Business.TYPE_RESTAURANT

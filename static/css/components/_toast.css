@@ -6,7 +6,7 @@
   pointer-events: none;
 }
 .toast {
-  background: var(--ink); color: var(--paper);
+  background: var(--ink); color: var(--ground);
   padding: 12px 20px; border-radius: var(--radius-pill);
   font-size: var(--fs-sm); font-weight: 600;
   box-shadow: var(--shadow-lg);

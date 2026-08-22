@@ -41,14 +41,54 @@ class OwnerSubscriptionAPIView(APIView):
             .prefetch_related("payments")
             .first()
         )
-        if subscription is None:
-            return Response(
-                {"has_subscription": False, "detail": "Obuna topilmadi."},
-                status=status.HTTP_200_OK,
+        from subscriptions.models import SubscriptionPlan, SubscriptionRequest
+        from subscriptions.routes.serializers import (
+            SubscriptionPlanSerializer,
+            SubscriptionRequestSerializer,
+        )
+
+        # Barcha tariflar — egasi o'z turini ham, ikkala muddatni ham
+        # BITTA ekranda ko'radi. Alohida so'rov qilishning ma'nosi yo'q:
+        # bu ro'yxatda to'rtta qator bor, xolos.
+        plans = SubscriptionPlanSerializer(
+            SubscriptionPlan.objects.all().order_by("business_type", "duration_months"),
+            many=True,
+        ).data
+        telegram = f"@{PlatformSettings.get_solo().admin_telegram_username}"
+
+        # Ochiq ariza — "tugma bosilganmi?" degan savolga javob. Bo'lsa,
+        # ekranda tarif kartochkalari o'rniga "ariza ko'rib chiqilmoqda"
+        # holati chiqadi.
+        pending = (
+            SubscriptionRequest.objects.filter(
+                business=business, status=SubscriptionRequest.STATUS_PENDING
             )
+            .select_related("business", "business__owner", "plan")
+            .first()
+        )
+        pending_data = SubscriptionRequestSerializer(pending).data if pending else None
+
+        if subscription is None:
+            # Obuna yo'q = ariza hali tasdiqlanmagan. Bu XATO EMAS, oddiy
+            # holat — shuning uchun 200 qaytadi va ekran nima kutilayotganini
+            # tushuntiradi.
+            return Response({
+                "has_subscription": False,
+                "status": "awaiting_approval",
+                "detail": "Arizangiz administrator tekshiruvida. "
+                          "Tasdiqlangach 7 kunlik bepul sinov boshlanadi.",
+                "business_type": business.business_type,
+                "admin_telegram": telegram,
+                "plans": plans,
+                "pending_request": pending_data,
+            }, status=status.HTTP_200_OK)
 
         data = SubscriptionSerializer(subscription).data
-        data["admin_telegram"] = f"@{PlatformSettings.get_solo().admin_telegram_username}"
+        data["has_subscription"] = True
+        data["admin_telegram"] = telegram
+        data["plans"] = plans
+        data["pending_request"] = pending_data
+
         return Response(data, status=status.HTTP_200_OK)
 
 

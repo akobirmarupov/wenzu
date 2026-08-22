@@ -70,10 +70,29 @@ class BusinessBriefSerializer(serializers.Serializer):
     type = serializers.CharField(source="business_type", read_only=True)
     is_visible = serializers.BooleanField(read_only=True)
 
+    # Ariza tasdiqlanganmi.
+    #
+    # Obuna faqat admin tasdig'idan keyin ochiladi, ya'ni obunaning
+    # MAVJUDLIGI — "tasdiqlangan"ning o'zi. Frontend shu bayroqqa qarab
+    # boshqaruv paneliga kiritadi yoki "ariza ko'rib chiqilmoqda"
+    # sahifasiga qaytaradi.
+    is_approved = serializers.SerializerMethodField()
+    subscription_status = serializers.SerializerMethodField()
+
+    def get_is_approved(self, obj) -> bool:
+        return hasattr(obj, "subscription")
+
+    def get_subscription_status(self, obj) -> str | None:
+        subscription = getattr(obj, "subscription", None)
+        return subscription.status if subscription else None
+
 
 def build_user_payload(user, request=None):
     """Login va /me/ javoblarida bir xil ko'rinishdagi user obyektini quradi."""
-    business = user.businesses.first() if user.role == "business" else None
+    business = (
+        user.businesses.select_related("subscription").first()
+        if user.role == "business" else None
+    )
 
     avatar = user.avatar.url if user.avatar else None
     if avatar and request is not None:
@@ -88,6 +107,9 @@ def build_user_payload(user, request=None):
         "is_staff": user.is_staff,
         "is_phone_verified": user.is_phone_verified,
         "is_confirmed": user.is_confirmed,
+        # Frontend shu bayroqqa qarab "Bepul sinov" kartochkasining
+        # tugmasini ochiq yoki yopiq qiladi.
+        "has_used_trial": user.has_used_trial,
         "avatar": avatar,
         "initials": user.initials,
         "preferred_language": user.preferred_language,
@@ -140,16 +162,18 @@ class UserSerializer(serializers.ModelSerializer):
             "id", "username", "full_name", "phone_number",
             "avatar", "initials", "bio", "birth_date", "preferred_language",
             "role", "is_staff", "is_phone_verified", "is_confirmed",
-            "business", "stats", "date_joined",
+            "has_used_trial", "business", "stats", "date_joined",
         ]
         read_only_fields = [
             "id", "username", "phone_number", "role", "is_staff",
-            "is_phone_verified", "is_confirmed", "business", "stats",
+            "is_phone_verified", "is_confirmed", "has_used_trial", "business", "stats",
             "initials", "date_joined",
         ]
 
     def get_business(self, obj) -> dict | None:
-        business = obj.businesses.first()
+        # `select_related` — `is_approved` obunaga qaraydi, alohida
+        # so'rov bo'lmasin.
+        business = obj.businesses.select_related("subscription").first()
         return BusinessBriefSerializer(business).data if business else None
 
     def get_stats(self, obj) -> dict:
@@ -180,11 +204,14 @@ class UserAdminSerializer(serializers.ModelSerializer):
     """Vazifasi: admin panelidagi "Foydalanuvchilar" jadvali uchun."""
 
     role_display = serializers.CharField(source="get_role_display", read_only=True)
+    # Queryset'da `Exists()` bilan annotate qilinadi; annotatsiyasiz
+    # chaqirilsa (masalan bitta obyekt uchun) False bo'lib qoladi.
+    has_business = serializers.BooleanField(read_only=True, default=False)
 
     class Meta:
         model = User
         fields = [
             "id", "username", "full_name", "phone_number",
             "role", "role_display", "is_phone_verified", "is_confirmed",
-            "is_active", "is_staff", "date_joined",
+            "is_active", "is_staff", "has_business", "date_joined",
         ]

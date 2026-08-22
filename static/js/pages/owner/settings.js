@@ -74,10 +74,22 @@ function formHtml(business) {
         <span class="field-hint">Mijoz depozit to'lovi uchun shu manzilga yozadi</span>
       </div>
       <div class="field">
+        <label for="phone_number">Aloqa raqami</label>
+        <input class="input" id="phone_number" name="phone_number" type="tel"
+               value="${esc(business.phone_number || "")}" placeholder="+998901234567">
+        <span class="field-hint">Mijozlar shu raqamga qo'ng'iroq qiladi</span>
+      </div>
+      <div class="field">
         <label for="cover">Asosiy rasm</label>
         <input class="input" id="cover" name="cover_photo" type="file" accept="image/*">
       </div>
     </div>
+
+    <p class="small muted" style="margin-top:calc(var(--sp-2) * -1)">
+      🔒 Telegram va telefon raqamingiz faqat <b>ro'yxatdan o'tgan</b>
+      foydalanuvchilarga ko'rinadi — ochiq turgan raqam spam-botlar
+      ro'yxatiga tushib qolmasligi uchun.
+    </p>
 
     <div class="field-row">
       <div class="field">
@@ -116,10 +128,11 @@ async function loadGallery() {
   try {
     const photos = await api.owner.photos();
     gallery.innerHTML = photos.length
-      ? photos.map((photo) => `
+      ? photos.map((photo, index) => `
         <div class="card">
           <img class="card-media card-media-sm" src="${esc(photo.image)}" alt="" loading="lazy">
           <div class="card-body">
+            <span class="xs faint">Karuselda ${index + 1}-o'rin</span>
             <button class="btn btn-sm btn-danger btn-block" data-delete-photo="${esc(photo.id)}">🗑 O'chirish</button>
           </div>
         </div>`).join("")
@@ -179,21 +192,37 @@ function init() {
     );
   });
 
+  // Bir nechta surat birdaniga: fayllar KETMA-KET yuboriladi.
+  // Barchasini bir vaqtda yuborish serverni va foydalanuvchi
+  // internetini bo'g'ib qo'yardi; ketma-ket yuborishda esa qaysi
+  // fayl xato bo'lganini aniq aytish mumkin.
   $("#photo-input").addEventListener("change", async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("image", file);
-    formData.append("order", "0");
-    try {
-      await api.owner.addPhoto(formData);
-      toast.ok("Rasm qo'shildi.");
-      loadGallery();
-    } catch (error) {
-      toast.fromError(error);
-    } finally {
-      event.target.value = "";
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+
+    const label = document.querySelector('label[for="photo-input"]');
+    const done = label ? busy(label) : () => {};
+    let uploaded = 0;
+    const failed = [];
+
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("order", "0");
+      try {
+        await api.owner.addPhoto(formData);
+        uploaded += 1;
+      } catch (error) {
+        failed.push(`${file.name}: ${error.message}`);
+      }
     }
+
+    done();
+    event.target.value = "";
+
+    if (uploaded) toast.ok(`${uploaded} ta rasm qo'shildi.`);
+    if (failed.length) toast.error(failed[0]);
+    loadGallery();
   });
 
   delegate("#gallery", "[data-delete-photo]", async (button) => {

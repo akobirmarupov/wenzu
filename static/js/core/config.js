@@ -21,7 +21,13 @@ export const ROUTES = {
   detail: (id) => `/biznes/${id}/`,
   profile: "/profil/",
   myBookings: "/bronlarim/",
-  openBusiness: "/biznes-ochish/",
+
+  // Biznes ochish va obuna — BITTA joyda, profil ichidagi "Obuna va
+  // Premium" bo'limida. Ilgari alohida `/biznes-ochish/` sahifasi bor
+  // edi, lekin u tarif tanlash bilan bir xil qarorni ikkiga bo'lardi:
+  // odam "tarifni qayerdan tanlayman, biznesni qayerdan ochaman?" deb
+  // ikkalasini ham izlab yurardi.
+  premium: "/profil/?tab=premium",
   login: "/kirish/",
   register: "/royxat/",
   verify: "/tasdiqlash/",

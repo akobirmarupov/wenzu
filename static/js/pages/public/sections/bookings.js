@@ -39,8 +39,12 @@ function row(reservation) {
     ? dateLabel(reservation.date)
     : `${dateLabel(reservation.date)} · ${timeLabel(reservation.start_time)}–${timeLabel(reservation.end_time)}`;
 
-  const canCancel = ["pending", "confirmed"].includes(reservation.status);
+  // Bekor qilish mumkinmi — SERVER hal qiladi (`can_cancel`).
+  // Qoidani bu yerda qaytadan yozish ikki manbaga olib kelardi va
+  // ular albatta bir kun bir-biriga zid bo'lib qolardi.
+  const canCancel = reservation.can_cancel;
   const canReview = reservation.status === "completed";
+  const blocked = !canCancel && ["pending", "confirmed"].includes(reservation.status);
 
   return `
     <div class="list-row">
@@ -49,6 +53,7 @@ function row(reservation) {
         <span class="small muted">${when} · ${reservation.guests_count} ${esc(t("common.people"))}
           ${reservation.total_price ? ` · ${money(reservation.total_price)}` : ""}</span>
         <span class="xs faint">${esc(t("detail.deposit"))}: ${money(reservation.deposit_amount)}</span>
+        ${cancelHintHtml(reservation, blocked)}
       </div>
       <div class="list-row-actions">
         ${statusSeal(reservation.status)}
@@ -56,6 +61,28 @@ function row(reservation) {
         ${canCancel ? `<button class="btn btn-sm btn-danger" data-cancel="${esc(reservation.id)}">${esc(t("profile.cancel"))}</button>` : ""}
       </div>
     </div>`;
+}
+
+/**
+ * Bekor qilish muddati haqidagi izoh.
+ *
+ * Ikki holatda ko'rinadi: muddat hali ketayotganda (qancha qolganini
+ * aytadi) va tugaganda (nega tugma yo'qligini aytadi). Aks holda mijoz
+ * tugma qayoqqa g'oyib bo'lganini tushunmasdi.
+ */
+function cancelHintHtml(reservation, blocked) {
+  if (blocked) {
+    return `<span class="xs faint">⏱ ${esc(reservation.cancel_blocked_reason || t("profile.cancelExpired"))}</span>`;
+  }
+  if (!reservation.cancel_deadline) return "";
+
+  const left = new Date(reservation.cancel_deadline) - Date.now();
+  if (left <= 0) return "";
+
+  const minutes = Math.ceil(left / 60000);
+  return `<span class="xs" style="color:var(--warn)">⏱ ${esc(
+    t("profile.cancelWindow", { minutes })
+  )}</span>`;
 }
 
 export async function load() {

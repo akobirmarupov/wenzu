@@ -68,5 +68,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/auth/register.js' %}"></script>
+<script type="module" src="{% static 'js/pages/auth/register.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

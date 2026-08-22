@@ -13,7 +13,7 @@ class PaymentLogInline(TabularInline):
 
 @admin.register(SubscriptionPlan)
 class SubscriptionPlanAdmin(ModelAdmin):
-    list_display = ("business_type", "monthly_price", "trial_days")
+    list_display = ("business_type", "price", "trial_days")
     list_filter = ("business_type",)
     list_filter_submit = True
     search_fields = ("business_type",)

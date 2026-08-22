@@ -20,5 +20,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/admin/users.js' %}"></script>
+<script type="module" src="{% static 'js/pages/admin/users.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

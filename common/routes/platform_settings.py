@@ -32,7 +32,7 @@ class PublicSettingsAPIView(APIView):
         from subscriptions.routes.serializers import SubscriptionPlanSerializer
 
         platform = PlatformSettings.get_solo()
-        plans = SubscriptionPlan.objects.all().order_by("business_type")
+        plans = SubscriptionPlan.objects.all().order_by("business_type", "duration_months")
 
         return Response({
             "admin_telegram": f"@{platform.admin_telegram_username}",

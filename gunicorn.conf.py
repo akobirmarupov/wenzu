@@ -13,9 +13,9 @@ bind = os.getenv("GUNICORN_BIND", "0.0.0.0:8000")
 # Django I/O ga bog'liq (baza, Redis, tashqi API) — CPU emas. Shuning uchun
 # `gthread`: har bir worker bir nechta so'rovni parallel kutib turadi va
 # 10 000+ foydalanuvchida jarayonlar soni portlab ketmaydi.
-workers = int(os.getenv("GUNICORN_WORKERS", multiprocessing.cpu_count() * 2 + 1))
+workers = int(os.getenv("GUNICORN_WORKERS", str(multiprocessing.cpu_count() * 2 + 1)))
 worker_class = "gthread"
-threads = int(os.getenv("GUNICORN_THREADS", 4))
+threads = int(os.getenv("GUNICORN_THREADS", "4"))
 worker_connections = 1000
 
 # Bitta so'rov cheksiz osilib qolmasin (nginx timeout'idan kichikroq bo'lsin).

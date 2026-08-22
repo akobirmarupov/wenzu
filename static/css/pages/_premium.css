@@ -75,3 +75,61 @@
   font-family: var(--font-mono); font-weight: 700; font-size: var(--fs-sm);
   background: var(--theme-accent-dim); color: var(--theme-accent-dark);
 }
+
+/* ===================================================================
+   Tariflar jadvali — to'rttala reja bitta oynada.
+
+   Ikki ustun (restoran / to'yxona), har birida ikki qator (1 oy / 3 oy).
+   Foydalanuvchi ikki qarorni birdan qabul qiladi: qaysi tur va qancha
+   muddat. Ularni ikki ekranga bo'lish taqqoslashni qiyinlashtirardi.
+   =================================================================== */
+.plan-table {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4);
+}
+@media (max-width: 700px) { .plan-table { grid-template-columns: 1fr; } }
+
+.plan-col {
+  border: 1px solid var(--line); border-radius: var(--radius-m);
+  background: var(--surface); overflow: hidden;
+  transition: opacity var(--transition);
+}
+/* O'z turi bo'lmagan ustun so'niqroq — lekin YASHIRILMAYDI:
+   egasi ikkinchi turni ham ochmoqchi bo'lishi mumkin. */
+.plan-col.dim { opacity: .62; }
+.plan-col.dim:hover { opacity: 1; }
+
+.plan-col-head {
+  display: flex; align-items: center; gap: var(--sp-2);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface-2); border-bottom: 1px solid var(--line);
+}
+.plan-col-head .ic { font-size: 17px; }
+.plan-col-head b { font-size: var(--fs-sm); letter-spacing: .02em; }
+
+.plan-row {
+  position: relative;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-3); padding: var(--sp-4);
+  border-bottom: 1px solid var(--line-soft);
+}
+.plan-row:last-child { border-bottom: 0; }
+.plan-row .term { display: flex; flex-direction: column; gap: 1px; }
+.plan-row .term b { font-size: var(--fs-md); }
+.plan-row .amount { text-align: right; display: flex; align-items: baseline; gap: 4px; }
+.plan-row .amount b {
+  font-family: var(--font-display); font-size: 24px; font-weight: 600;
+  font-variant-numeric: tabular-nums; line-height: 1;
+}
+
+/* Uzoq muddatli reja — foydaliroq, shuning uchun ajratib ko'rsatiladi */
+.plan-row.best { background: var(--gold-100); }
+.plan-row.best .amount b {
+  background: var(--gold-shine);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.plan-row .save {
+  position: absolute; top: 6px; right: var(--sp-4);
+  padding: 2px 8px; border-radius: var(--radius-pill);
+  background: var(--ok-dim); color: var(--ok);
+  font-size: 10px; font-weight: 800; letter-spacing: .04em;
+}

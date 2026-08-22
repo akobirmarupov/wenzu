@@ -9,7 +9,7 @@
 
 /* Skeleton — ma'lumot kelguncha sahifa "sakramasligi" uchun */
 .skeleton {
-  background: linear-gradient(90deg, var(--paper-dim) 25%, var(--line-soft) 37%, var(--paper-dim) 63%);
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--line-soft) 37%, var(--surface-2) 63%);
   background-size: 400% 100%;
   animation: shimmer 1.3s ease-in-out infinite;
   border-radius: var(--radius-s);

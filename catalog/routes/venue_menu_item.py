@@ -3,6 +3,7 @@
 import logging
 
 from django.db import transaction
+from django.db.models import Min, OuterRef, Subquery
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -15,7 +16,10 @@ from rest_framework.views import APIView
 from businesses.models import Business
 from catalog.filters import VenueMenuItemFilter
 from catalog.models import VenueMenuItem
-from catalog.routes.serializers import VenueMenuItemSerializer
+from catalog.routes.serializers import (
+    ShowcaseVenueMenuItemSerializer,
+    VenueMenuItemSerializer,
+)
 from common.pagination import StandardResultsPagination
 from common.permissions import HasActiveSubscription, IsOwnerOfBusinessType
 from common.services import get_owner_business
@@ -47,6 +51,49 @@ class BusinessVenueMenuAPIView(APIView):
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request, view=self)
         serializer = VenueMenuItemSerializer(page, many=True, context={"request": request})
+        return paginator.get_paginated_response(serializer.data)
+
+
+class ShowcaseVenueMenuAPIView(APIView):
+    """
+    GET /api/menu/venue/ — ommaviy: PLATFORMADAGI barcha to'yxona taomlari
+    (bosh sahifadagi to'yxona menyusi ro'yxati uchun).
+
+    Har bir taom bilan birga o'sha to'yxonaning eng arzon "kishi boshiga"
+    narxi ham keladi. Narx `VenuePricing` jadvalida turadi va `Subquery`
+    bilan olinadi — JOIN qilib qatorlarni ko'paytirmaslik uchun.
+    """
+
+    permission_classes = [AllowAny]
+    queryset = VenueMenuItem.objects.none()
+    pagination_class = StandardResultsPagination
+
+    @extend_schema(responses=ShowcaseVenueMenuItemSerializer(many=True))
+    def get(self, request):
+        from businesses.models import VenuePricing
+
+        cheapest = (
+            VenuePricing.objects.filter(business=OuterRef("business_id"))
+            .values("business")
+            .annotate(low=Min("price_per_person"))
+            .values("low")[:1]
+        )
+
+        queryset = (
+            VenueMenuItem.objects.filter(
+                business__is_visible=True,
+                business__business_type=Business.TYPE_VENUE,
+            )
+            .select_related("business")
+            .annotate(min_price=Subquery(cheapest))
+            .order_by("-created_at")
+        )
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = ShowcaseVenueMenuItemSerializer(
+            page, many=True, context={"request": request}
+        )
         return paginator.get_paginated_response(serializer.data)
 
 

@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from account.validators import validate_phone_number
 from common.models import BaseModel
 from common.validators import validate_image_file, validate_latitude, validate_longitude
 
@@ -26,6 +27,19 @@ class BusinessApplication(BaseModel):
     applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="applications")
     business_type = models.CharField(max_length=15, choices=BUSINESS_TYPE_CHOICES)
     business_name = models.CharField(max_length=200)
+
+    # Ariza QAYSI tarif bilan berilgani.
+    #
+    # `None` — bepul sinov: tasdiqlangach 7 kunlik muddat ochiladi.
+    # Reja ko'rsatilgan — pullik: tasdiqlangach obuna darhol o'sha
+    # muddatga faollashadi, sinov berilmaydi (odam pul to'lagan, unga
+    # yana bepul kun qo'shishning ma'nosi yo'q).
+    plan = models.ForeignKey(
+        "subscriptions.SubscriptionPlan", null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="applications",
+        verbose_name="Tanlangan tarif",
+        help_text="Bo'sh — bepul sinov arizasi.",
+    )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING, db_index=True)
     approved_at = models.DateTimeField(null=True, blank=True)
     approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="approved_applications")
@@ -86,9 +100,22 @@ class Business(BaseModel):
     )
     open_time = models.TimeField(null=True, blank=True, help_text="Ish boshlanish vaqti (restoran).")
     close_time = models.TimeField(null=True, blank=True, help_text="Ish tugash vaqti (restoran).")
+    # --- aloqa ---
+    #
+    # MUHIM: bu ikki maydon faqat RO'YXATDAN O'TGAN foydalanuvchiga
+    # ko'rinadi (`BusinessDetailSerializer` ga qarang). Sabab oddiy:
+    # ochiq turgan telefon va Telegram bir kunda spam-botlar ro'yxatiga
+    # tushadi, joy egasi esa buni bizdan biladi. Bron qilish uchun
+    # baribir kirish kerak — ya'ni haqiqiy mijoz hech narsa yo'qotmaydi.
     telegram_username = models.CharField(
         max_length=32, blank=True,
-        help_text="@ belgisiz. Mijoz depozit to'lovi uchun shu manzilga yozadi.",
+        help_text="@ belgisiz. Mijoz depozit to'lovi uchun shu manzilga yozadi. "
+                  "Faqat ro'yxatdan o'tgan foydalanuvchilarga ko'rinadi.",
+    )
+    phone_number = models.CharField(
+        max_length=13, blank=True, validators=[validate_phone_number],
+        verbose_name="Aloqa raqami",
+        help_text="+998XXXXXXXXX. Faqat ro'yxatdan o'tgan foydalanuvchilarga ko'rinadi.",
     )
 
     # --- holat va denormalizatsiya ---
@@ -260,7 +287,7 @@ class VenuePricing(BaseModel):
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="pricings")
     dish_count = models.PositiveSmallIntegerField(choices=DISH_COUNT_CHOICES)
     price_per_person = models.DecimalField(
-        max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0"))]
+        max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal(0))]
     )
 
     class Meta:

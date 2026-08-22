@@ -36,5 +36,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/auth/verify.js' %}"></script>
+<script type="module" src="{% static 'js/pages/auth/verify.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

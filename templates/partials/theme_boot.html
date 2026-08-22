@@ -1,5 +1,11 @@
-{# Sahifa chizilishidan OLDIN temani qo'yamiz — aks holda tungi rejimda
-   bir lahza oq ekran "miltillab" ketadi (flash of wrong theme). #}
+{% comment %}
+  Sahifa chizilishidan OLDIN temani qo'yamiz — aks holda tungi rejimda
+  bir lahza oq ekran "miltillab" ketadi (flash of wrong theme).
+
+  MUHIM: bu yerda `{# ... #}` ishlatib bo'lmaydi — Django'da u bir
+  qatorlik izoh, ko'p qatorga cho'zilsa sahifaning eng tepasida MATN
+  bo'lib chiqib qoladi. Ko'p qatorlik izoh faqat `{% comment %}`.
+{% endcomment %}
 <script>
   (function () {
     try {

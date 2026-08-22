@@ -15,6 +15,7 @@ from rest_framework.test import APIClient
 
 from account.routes.user import SMS_CACHE_KEY
 from businesses.models import Business, Room
+from businesses.services import approve_application
 from reservations.models import Availability, Reservation
 
 User = get_user_model()
@@ -78,12 +79,37 @@ class FullFlowTest(TestCase):
             "business_type": "restaurant", "business_name": "Shoxona Restorani",
         }, format="json")
         self.assertEqual(response.status_code, 201, response.data)
-        self.assertIn("7 kunlik BEPUL", response.data["message"])
+        self.assertIn("BEPUL sinov", response.data["message"])
 
         owner.refresh_from_db()
         self.assertEqual(owner.role, "business", "Ariza yuborilgach rol business bo'lishi kerak")
 
         business = Business.objects.get(owner=owner)
+
+        # MUHIM: ariza yuborilgani bilan biznes hali ISHLAMAYDI —
+        # qidiruvda ko'rinmaydi va obunasi yo'q. Bepul sinov faqat admin
+        # tasdiqlagach boshlanadi. Aks holda istalgan foydalanuvchi bir
+        # daqiqada "restoran" ochib, tekshiruvsiz bir hafta bepul
+        # ishlatib ketardi.
+        self.assertFalse(business.is_visible, "Tasdiqlanmagan biznes yashirin turishi kerak")
+        self.assertFalse(hasattr(business, "subscription"), "Sinov hali boshlanmasligi kerak")
+
+        # --- 4b. Admin arizani tasdiqlaydi → 7 kunlik sinov ochiladi ---
+        approver = User.objects.create_user(
+            username="early_admin", password="StrongPass123!",
+            full_name="Tasdiqlovchi", phone_number="+998900000777",
+            is_staff=True, is_superuser=True,
+        )
+        approval = self.auth(approver).get("/api/admin/applications/")
+        self.assertEqual(approval.status_code, 200, approval.data)
+        first_application = approval.data["results"][0]["id"]
+        self.assertEqual(
+            self.auth(approver).post(f"/api/admin/applications/{first_application}/approve/").status_code,
+            200,
+        )
+
+        business.refresh_from_db()
+        self.assertTrue(business.is_visible, "Tasdiqdan keyin biznes qidiruvga chiqadi")
         self.assertEqual(business.subscription.status, "trial")
 
         # --- 5. Qayta login: endi business.type qaytadi ---------------
@@ -208,11 +234,26 @@ class FullFlowTest(TestCase):
         # Oddiy foydalanuvchiga admin bo'limi yopiq
         self.assertEqual(customer_client.get("/api/admin/overview/").status_code, 403)
 
-        response = admin_client.get("/api/admin/applications/")
-        self.assertEqual(response.status_code, 200, response.data)
-        application_id = response.data["results"][0]["id"]
+        # Ariza 4b-qadamda tasdiqlangan edi — endi PULLIK obunaga o'tamiz.
+        # Bu alohida oqim: egasi tarif tanlaydi → ariza → admin to'lovni
+        # tasdiqlaydi. Tasdiq "bu haqiqiy joy" degani, to'lov emas.
+        from subscriptions.models import SubscriptionPlan
 
-        response = admin_client.post(f"/api/admin/applications/{application_id}/approve/")
+        plan = SubscriptionPlan.objects.get(business_type="restaurant", duration_months=1)
+        response = owner_client.post("/api/owner/subscription/requests/", {
+            "plan": str(plan.id), "note": "To'lov chekini yubordim",
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        request_id = response.data["id"]
+
+        # Tugmani ikki marta bosish yangi ariza YARATMASLIGI kerak.
+        again = owner_client.post("/api/owner/subscription/requests/", {
+            "plan": str(plan.id),
+        }, format="json")
+        self.assertEqual(again.status_code, 200, "Ochiq ariza bo'lsa mavjudi qaytariladi")
+        self.assertEqual(again.data["id"], request_id)
+
+        response = admin_client.post(f"/api/admin/subscription-requests/{request_id}/approve/")
         self.assertEqual(response.status_code, 200, response.data)
 
         business.refresh_from_db()
@@ -250,6 +291,24 @@ class VenueFlowTest(TestCase):
         owner.refresh_from_db()
         business = Business.objects.get(owner=owner)
         self.assertEqual(business.business_type, "venue")
+
+        # Tasdiqlanmaguncha ma'lumot kiritib bo'lmaydi.
+        blocked = client.post("/api/owner/halls/", {
+            "name": "Erta zal", "people": 100, "all_price": "1000000",
+        }, format="json")
+        self.assertEqual(blocked.status_code, 403,
+                         "Tasdiqlanmagan biznes zal qo'sha olmasligi kerak")
+
+        # Admin tasdiqlaydi → 7 kunlik bepul sinov boshlanadi.
+        approve_application(
+            application=business.application,
+            approved_by=User.objects.create_user(
+                username="venue_admin", password="StrongPass123!",
+                full_name="Admin", phone_number="+998900000888", is_staff=True,
+            ),
+        )
+        business.refresh_from_db()
+        self.assertEqual(business.subscription.status, "trial")
 
         # Xonalar bo'limi to'yxona egasiga yopiq
         self.assertEqual(client.get("/api/owner/rooms/").status_code, 403)

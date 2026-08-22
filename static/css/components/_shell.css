@@ -79,6 +79,15 @@
 
 /* Asosiy maydon */
 .shell-main { min-width: 0; display: flex; flex-direction: column; background: var(--ground); }
+
+/* Poyloq DOIM pastda tursin.
+
+   Mazmuni kalta sahifada (masalan bo'sh "Bronlarim") poyloq ekran
+   o'rtasiga ko'tarilib qolardi — chunki flex ustunda o'sadigan element
+   yo'q edi. Asosiy maydonga `flex: 1` berilgach, u bo'sh joyni to'ldiradi
+   va poyloq pastga yopishadi. */
+.shell-main > main { flex: 1 0 auto; }
+.shell-main > .footer { flex-shrink: 0; }
 .dash-content { padding: var(--sp-6) var(--sp-8) var(--sp-16); display: flex; flex-direction: column; gap: var(--sp-5); }
 
 /* --- mobil --- */

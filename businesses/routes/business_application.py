@@ -16,7 +16,13 @@ from businesses.routes.serializers import (
     BusinessApplicationCreateSerializer,
     BusinessApplicationSerializer,
 )
-from businesses.services import approve_application, reject_application, submit_application
+from businesses.services import (
+    BusinessLimitReached,
+    TrialNotAvailable,
+    approve_application,
+    reject_application,
+    submit_application,
+)
 from common.models import PlatformSettings
 from common.pagination import StandardResultsPagination
 from common.permissions import IsPhoneVerified, IsSuperAdmin
@@ -48,32 +54,84 @@ class BusinessApplicationCreateAPIView(APIView):
         serializer = BusinessApplicationCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        pending = BusinessApplication.objects.filter(
-            applicant=request.user, status="pending_payment"
-        ).exists()
+        # Ochiq ariza — lekin faqat BIZNESI HALI BOR bo'lgani.
+        #
+        # Biznes o'chirilgan bo'lsa (masalan adminkadan), ariza yetim
+        # qolib ketadi. Ilgari o'sha yetim ariza yangi ariza berishni
+        # MANGU to'sib qo'yardi: odam "ko'rib chiqilayotgan arizangiz
+        # bor" degan xabarni ko'rardi, lekin hech qanday joyi yo'q edi
+        # va bu holatdan chiqib ketolmasdi.
+        pending = any(
+            hasattr(application, "business")
+            for application in BusinessApplication.objects.filter(
+                applicant=request.user, status="pending_payment"
+            )
+        )
         if pending:
             return Response(
                 {"detail": "Sizda ko'rib chiqilayotgan ariza allaqachon bor."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        application, business, subscription = submit_application(
-            applicant=request.user,
-            business_type=serializer.validated_data["business_type"],
-            business_name=serializer.validated_data["business_name"],
-        )
+        plan = serializer.validated_data.get("plan")
 
-        admin_telegram = PlatformSettings.get_solo().admin_telegram_username
+        try:
+            application, business, _ = submit_application(
+                applicant=request.user,
+                business_type=serializer.validated_data["business_type"],
+                business_name=serializer.validated_data["business_name"],
+                plan=plan,
+            )
+        except BusinessLimitReached as error:
+            return Response(
+                {"detail": str(error), "code": "business_limit"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except TrialNotAvailable as error:
+            # Sinov ikkinchi marta so'ralgan — sabab aniq aytiladi va
+            # frontend "pullik tarif tanlang" ekraniga o'tkazadi.
+            return Response(
+                {"detail": str(error), "code": "trial_used"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except ValueError as error:
+            return Response({"detail": str(error)}, status=status.HTTP_400_BAD_REQUEST)
+
+        settings_obj = PlatformSettings.get_solo()
+        admin_telegram = settings_obj.admin_telegram_username
+
+        # `trial_ends_at` ATAYLAB yo'q: bu bosqichda sinov hali
+        # boshlanmagan. Ilgari ariza yuborilishi bilan 7 kunlik bepul
+        # muddat ochilardi — ya'ni istalgan odam bir daqiqada "restoran"
+        # ochib, hech kim tekshirmagan holda platformani bir hafta bepul
+        # ishlatib ketishi mumkin edi. Endi sinov admin tasdig'idan
+        # keyin boshlanadi.
+        # Xabar tarifga qarab boshqacha: bepul sinovda "7 kun bepul",
+        # pullik tarifda esa to'lov va muddat haqida. Ilgari ikkalasida
+        # ham "7 kun bepul" yozilardi va pul to'laydigan odam ham bepul
+        # kun kutardi.
+        if plan is None:
+            message = (
+                "Arizangiz qabul qilindi! Administrator uni tekshiradi va "
+                f"tasdiqlagach sizga {settings_obj.trial_days} kunlik BEPUL sinov "
+                "ochiladi — shu muddat ichida platformaning barcha imkoniyatlaridan "
+                "foydalanasiz. Tasdiqni tezlashtirish uchun Telegram orqali "
+                f"administrator bilan bog'laning: @{admin_telegram}"
+            )
+        else:
+            message = (
+                f"Arizangiz qabul qilindi! Tanlangan tarif — {plan.duration_label}, "
+                f"{plan.price:,.0f} so'm. To'lovni Telegram orqali amalga oshiring: "
+                f"@{admin_telegram}. Administrator tasdiqlagach obunangiz o'sha "
+                f"kundan boshlab {plan.duration_label}ga faollashadi."
+            ).replace(",", " ")
+
         return Response({
             "application": BusinessApplicationSerializer(application).data,
             "business_id": str(business.id),
-            "trial_ends_at": subscription.trial_ends_at,
-            "message": (
-                "Arizangiz qabul qilindi! Sizga 7 kunlik BEPUL Pro versiya ochib berildi — "
-                "shu muddat ichida platformaning barcha imkoniyatlaridan foydalanishingiz "
-                f"mumkin. Obunani davom ettirish uchun Telegram orqali administrator bilan "
-                f"bog'laning: @{admin_telegram}"
-            ),
+            "is_trial": plan is None,
+            "trial_days": settings_obj.trial_days if plan is None else None,
+            "message": message,
             "admin_telegram": f"@{admin_telegram}",
         }, status=status.HTTP_201_CREATED)
 

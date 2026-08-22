@@ -10,6 +10,7 @@ from businesses.models import (
     Room,
     VenuePricing,
 )
+from subscriptions.models import SubscriptionPlan
 
 
 # ===================================================================
@@ -120,6 +121,11 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
     dish_pricing = serializers.SerializerMethodField()
     owner_username = serializers.CharField(source="owner.username", read_only=True)
 
+    # --- aloqa (faqat ro'yxatdan o'tganlarga) ---
+    telegram_username = serializers.SerializerMethodField()
+    phone_number = serializers.SerializerMethodField()
+    contacts_locked = serializers.SerializerMethodField()
+
     class Meta:
         model = Business
         fields = [
@@ -127,10 +133,39 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
             "address", "district", "latitude", "longitude",
             "description", "cover_photo", "gallery",
             "cuisine", "cuisine_display", "open_time", "close_time",
-            "rating_avg", "reviews_count", "telegram_username",
+            "rating_avg", "reviews_count",
+            "telegram_username", "phone_number", "contacts_locked",
             "is_visible", "owner_username",
             "rooms", "halls", "menu", "dish_pricing", "created_at",
         ]
+
+    # ===================================================================
+    # Aloqa ma'lumotlari YOPIQ turadi
+    #
+    # Telefon va Telegram faqat kirgan foydalanuvchiga qaytadi. Ochiq
+    # turgan raqam bir kunda spam-botlar ro'yxatiga tushadi va joy egasi
+    # buni bizdan biladi.
+    #
+    # Muhim tafsilot: yashirish SERVER tomonda. Frontendda `display: none`
+    # qilish yetarli emas — ma'lumot baribir javobda kelardi va uni
+    # yig'ib olish uchun brauzer konsolini ochish kifoya bo'lardi.
+    #
+    # Mijoz hech narsa yo'qotmaydi: bron qilish uchun baribir kirish
+    # kerak, ya'ni haqiqiy foydalanuvchi ro'yxatdan o'tgan bo'ladi.
+    # ===================================================================
+    def _can_see_contacts(self) -> bool:
+        request = self.context.get("request")
+        return bool(request and request.user and request.user.is_authenticated)
+
+    def get_telegram_username(self, obj) -> str | None:
+        return obj.telegram_username if self._can_see_contacts() else None
+
+    def get_phone_number(self, obj) -> str | None:
+        return obj.phone_number if self._can_see_contacts() else None
+
+    def get_contacts_locked(self, obj) -> bool:
+        """Frontend shu bayroqqa qarab "kirish kerak" blokini ko'rsatadi."""
+        return not self._can_see_contacts()
 
     def get_rooms(self, obj) -> list:
         if obj.business_type != Business.TYPE_RESTAURANT:
@@ -173,7 +208,8 @@ class BusinessUpdateSerializer(serializers.ModelSerializer):
         fields = [
             "id", "name", "business_type", "address", "district",
             "latitude", "longitude", "description", "cover_photo",
-            "cuisine", "open_time", "close_time", "telegram_username",
+            "cuisine", "open_time", "close_time",
+            "telegram_username", "phone_number",
             "rating_avg", "reviews_count", "is_visible",
         ]
         read_only_fields = ["id", "business_type", "rating_avg", "reviews_count", "is_visible"]
@@ -210,19 +246,71 @@ class BusinessAdminSerializer(serializers.ModelSerializer):
         return subscription.status if subscription else None
 
 
+class BusinessAdminCreateSerializer(serializers.Serializer):
+    """
+    Admin panelidan biznes ochish.
+
+    Odatda biznes ARIZA orqali tug'iladi (foydalanuvchi o'zi ariza beradi).
+    Lekin adminga qo'lda ochish ham kerak bo'ladi: joy egasi telefon orqali
+    murojaat qilsa yoki ko'rgazma uchun namuna kerak bo'lsa. Shu sababli
+    bu yerda ham AYNAN o'sha oqim ishlatiladi — ariza yozuvi baribir
+    yaratiladi, aks holda `Business.application` bo'sh qolib, tarix uzilardi.
+    """
+
+    owner = serializers.IntegerField(help_text="Egasi bo'ladigan foydalanuvchi ID'si")
+    business_type = serializers.ChoiceField(choices=Business.TYPE_CHOICES)
+    name = serializers.CharField(max_length=200)
+    district = serializers.CharField(max_length=100, required=False, allow_blank=True, default="")
+    address = serializers.CharField(max_length=255, required=False, allow_blank=True, default="")
+    telegram_username = serializers.CharField(
+        max_length=32, required=False, allow_blank=True, default=""
+    )
+    approve = serializers.BooleanField(
+        default=False,
+        help_text="True bo'lsa ariza darhol tasdiqlanadi va obuna faollashadi.",
+    )
+
+    def validate_owner(self, value):
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(pk=value, is_active=True)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Bunday foydalanuvchi topilmadi.")
+
+        # Bitta egada bitta biznes: panel menyusi va obuna ham shunga
+        # tayanadi (`user.businesses.first()`).
+        if user.businesses.exists():
+            raise serializers.ValidationError(
+                "Bu foydalanuvchida allaqachon biznes bor."
+            )
+        return user
+
+
 # ===================================================================
 # BusinessApplication
 # ===================================================================
 class BusinessApplicationCreateSerializer(serializers.ModelSerializer):
     """
-    "Restoran/To'yxona ochish" arizasi. TZ bo'yicha foydalanuvchidan faqat
-    2 ta maydon so'raladi — biznes turi va nomi. Qolgan ma'lumot (ism,
-    telefon, username) tokendagi foydalanuvchidan olinadi.
+    "Restoran/To'yxona ochish" arizasi.
+
+    Foydalanuvchidan uchta narsa: biznes turi, nomi va TARIF. Qolgan
+    ma'lumot (ism, telefon, username) tokendagi foydalanuvchidan olinadi.
+
+    `plan` bo'sh qoldirilsa — bepul sinov arizasi. Har bir foydalanuvchi
+    sinovni bir marta oladi, keyin faqat pullik tarif tanlay oladi.
     """
+
+    plan = serializers.PrimaryKeyRelatedField(
+        queryset=SubscriptionPlan.objects.all(),
+        required=False, allow_null=True,
+        help_text="Bo'sh — 7 kunlik bepul sinov arizasi.",
+    )
 
     class Meta:
         model = BusinessApplication
-        fields = ["business_type", "business_name"]
+        fields = ["business_type", "business_name", "plan"]
 
     def validate_business_name(self, value):
         value = value.strip()

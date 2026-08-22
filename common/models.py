@@ -54,15 +54,15 @@ class PlatformSettings(models.Model):
 
     # --- depozit narxlari ---
     room_deposit_premium = models.DecimalField(
-        max_digits=12, decimal_places=2, default=Decimal("99000"),
+        max_digits=12, decimal_places=2, default=Decimal(99000),
         help_text="Restoran Premium xonasi uchun oldindan to'lov.",
     )
     room_deposit_pro = models.DecimalField(
-        max_digits=12, decimal_places=2, default=Decimal("49000"),
+        max_digits=12, decimal_places=2, default=Decimal(49000),
         help_text="Restoran Pro xonasi uchun oldindan to'lov.",
     )
     venue_deposit = models.DecimalField(
-        max_digits=12, decimal_places=2, default=Decimal("599000"),
+        max_digits=12, decimal_places=2, default=Decimal(599000),
         help_text="To'yxona zalini bron qilishda oldindan to'lov.",
     )
 

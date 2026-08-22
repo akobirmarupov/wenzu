@@ -3,6 +3,7 @@
 import logging
 
 from django.db import transaction
+from django.db.models import Case, IntegerField, Value, When
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -15,7 +16,10 @@ from rest_framework.views import APIView
 from businesses.models import Business
 from catalog.filters import RestaurantMenuItemFilter
 from catalog.models import RestaurantMenuItem
-from catalog.routes.serializers import RestaurantMenuItemSerializer
+from catalog.routes.serializers import (
+    RestaurantMenuItemSerializer,
+    ShowcaseRestaurantMenuItemSerializer,
+)
 from common.pagination import StandardResultsPagination
 from common.permissions import HasActiveSubscription, IsOwnerOfBusinessType
 from common.services import get_owner_business
@@ -50,6 +54,54 @@ class BusinessRestaurantMenuAPIView(APIView):
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request, view=self)
         serializer = RestaurantMenuItemSerializer(page, many=True, context={"request": request})
+        return paginator.get_paginated_response(serializer.data)
+
+
+class ShowcaseRestaurantMenuAPIView(APIView):
+    """
+    GET /api/menu/restaurant/ — ommaviy: PLATFORMADAGI barcha restoran
+    taomlari (bosh sahifadagi menyu vitrinasi uchun).
+
+    Nega kerak: bosh sahifa endi "mashhur restoranlar" kartochkalarini
+    emas, taomlarning o'zini ko'rsatadi. Har bir joyning menyusini alohida
+    so'rash 20 ta so'rov demak bo'lardi — bu esa bitta so'rov.
+    """
+
+    permission_classes = [AllowAny]
+    queryset = RestaurantMenuItem.objects.none()
+    pagination_class = StandardResultsPagination
+
+    @extend_schema(responses=ShowcaseRestaurantMenuItemSerializer(many=True))
+    def get(self, request):
+        # BARCHA mavjud taomlar chiqadi — rasmi yo'qlari ham.
+        #
+        # Ilgari rasmsizlari umuman tashlab yuborilardi va yangi restoran
+        # menyusini rasmsiz kiritsa, uning taomlari bosh sahifada hech
+        # qachon ko'rinmasdi. Endi ular ham chiqadi, faqat oxirroqda:
+        # rasmlilari birinchi turadi, chunki vitrina ko'z bilan tanlanadi.
+        queryset = (
+            RestaurantMenuItem.objects.filter(
+                is_available=True,
+                business__is_visible=True,
+                business__business_type=Business.TYPE_RESTAURANT,
+            )
+            .select_related("business")
+            .annotate(
+                has_photo=Case(
+                    When(photo="", then=Value(0)),
+                    When(photo__isnull=True, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("-has_photo", "-created_at")
+        )
+
+        paginator = self.pagination_class()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        serializer = ShowcaseRestaurantMenuItemSerializer(
+            page, many=True, context={"request": request}
+        )
         return paginator.get_paginated_response(serializer.data)
 
 

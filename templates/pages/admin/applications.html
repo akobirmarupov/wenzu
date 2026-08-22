@@ -17,5 +17,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/admin/applications.js' %}"></script>
+<script type="module" src="{% static 'js/pages/admin/applications.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

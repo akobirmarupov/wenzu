@@ -2,6 +2,7 @@
 
 import datetime
 
+from django.utils import timezone
 from rest_framework import serializers
 
 from businesses.models import Business, Hall, Room
@@ -85,6 +86,13 @@ class ReservationSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     date = serializers.DateField(source="availability.date", read_only=True)
 
+    # Bekor qilish oynasi. Frontend tugmani KO'RSATISH-ko'rsatmaslikni
+    # shu maydonlarga qarab hal qiladi — qoida ikki joyda takrorlanmasin
+    # va mijoz bosib bo'lmaydigan tugmani bosmasin.
+    can_cancel = serializers.SerializerMethodField()
+    cancel_deadline = serializers.SerializerMethodField()
+    cancel_blocked_reason = serializers.SerializerMethodField()
+
     class Meta:
         model = Reservation
         fields = [
@@ -94,9 +102,22 @@ class ReservationSerializer(serializers.ModelSerializer):
             "availability", "date", "start_time", "end_time",
             "guests_count", "special_request", "selected_menu",
             "dish_count", "price_per_person", "total_price", "deposit_amount",
-            "status", "status_display", "created_at",
+            "status", "status_display", "confirmed_at",
+            "can_cancel", "cancel_deadline", "cancel_blocked_reason",
+            "created_at",
         ]
         read_only_fields = fields
+
+    def get_can_cancel(self, obj) -> bool:
+        return obj.cancel_check()[0]
+
+    def get_cancel_deadline(self, obj) -> str | None:
+        deadline = obj.cancel_deadline()
+        return deadline.isoformat() if deadline else None
+
+    def get_cancel_blocked_reason(self, obj) -> str:
+        allowed, reason = obj.cancel_check()
+        return "" if allowed else reason
 
 
 MAX_BOOKING_DAYS_AHEAD = 365
@@ -128,7 +149,7 @@ class RestaurantReservationCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError(
                 {"end_time": "Tugash vaqti boshlanish vaqtidan keyin bo'lishi kerak."}
             )
-        today = datetime.date.today()
+        today = timezone.localdate()
         if attrs["date"] < today:
             raise serializers.ValidationError({"date": "O'tib ketgan sanaga bron qilib bo'lmaydi."})
         if (attrs["date"] - today).days > MAX_BOOKING_DAYS_AHEAD:
@@ -199,7 +220,7 @@ class VenueReservationCreateSerializer(serializers.Serializer):
     def validate(self, attrs):
         from businesses.models import VenuePricing
 
-        today = datetime.date.today()
+        today = timezone.localdate()
         if attrs["date"] < today:
             raise serializers.ValidationError({"date": "O'tib ketgan sanaga bron qilib bo'lmaydi."})
         if (attrs["date"] - today).days > MAX_BOOKING_DAYS_AHEAD:

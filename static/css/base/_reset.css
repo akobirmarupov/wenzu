@@ -12,7 +12,7 @@ body {
   font-size: var(--fs-base);
   line-height: 1.55;
   color: var(--ink);
-  background: var(--paper);
+  background: var(--ground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -22,6 +22,9 @@ p { margin: 0; }
 ul, ol { margin: 0; padding: 0; list-style: none; }
 a { color: inherit; text-decoration: none; }
 img, svg, video { max-width: 100%; display: block; }
+/* Rasm kichraytirilganda brauzer sifatli algoritm tanlasin — aks holda
+   katta surat kichik kartochkada donador/xira ko'rinadi. */
+img { image-rendering: auto; }
 
 button, input, select, textarea { font: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: none; padding: 0; }

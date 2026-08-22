@@ -1,6 +1,7 @@
 import datetime
 
 from django import forms
+from django.utils import timezone
 from unfold.widgets import (
     UnfoldAdminCheckboxSelectMultipleWidget,
     UnfoldAdminSelectWidget,
@@ -66,7 +67,7 @@ class GenerateAvailabilityForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        current_year = datetime.date.today().year
+        current_year = timezone.localdate().year
         year_choices = [(y, str(y)) for y in range(current_year, current_year + 3)]
         self.fields["year"].choices = year_choices
         self.fields["year"].initial = current_year

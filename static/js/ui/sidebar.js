@@ -5,7 +5,6 @@
  * to'yxona egasida "Zallar", adminda butunlay boshqa ro'yxat. Bu farq
  * shu faylda bir marta belgilangan, sahifalar bu haqda bilmaydi.
  */
-import { auth } from "../core/auth.js";
 import { t } from "../core/i18n.js";
 import { $, esc } from "./dom.js";
 
@@ -32,15 +31,31 @@ const ADMIN_MAIN = [
 const ADMIN_MANAGE = [
   { href: "/boshqaruv/foydalanuvchilar/", icon: "👥", label: () => t("panel.users") },
   { href: "/boshqaruv/bizneslar/", icon: "🏢", label: () => t("panel.businesses") },
+  { href: "/boshqaruv/bronlar/", icon: "📅", label: () => t("panel.allBookings") },
   { href: "/boshqaruv/obunalar/", icon: "💎", label: () => t("panel.subscriptions") },
+  { href: "/boshqaruv/tolovlar/", icon: "💳", label: () => t("panel.payments") },
 ];
 const ADMIN_CONTENT = [
   { href: "/boshqaruv/kontent/", icon: "📢", label: () => t("panel.content") },
   { href: "/boshqaruv/sozlamalar/", icon: "⚙", label: () => t("panel.settings") },
 ];
 
+/**
+ * Foydalanuvchi PLATFORMA EGASIMI.
+ *
+ * Faqat `is_staff` ga qaraydi — biznesi bor-yo'qligiga EMAS.
+ *
+ * Ilgari `is_staff && !business` edi va biznesi ham bor xodim boshqaruv
+ * sahifalarida turib, yon menyuda "RESTORAN EGASI" va "Xonalar / Menyu"
+ * bandlarini ko'rardi. Ya'ni ekran bir panelniki, menyu boshqasiniki
+ * bo'lib qolardi.
+ *
+ * Endi rol yagona hal qiluvchi: platforma egasi — boshqaruv menyusi,
+ * biznes egasi — biznes menyusi. Server ham xuddi shunday ajratadi
+ * (`IsBusinessRole` xodimni biznes endpointlariga kiritmaydi).
+ */
 export function isAdminUser(user) {
-  return Boolean(user?.is_staff && !user?.business);
+  return Boolean(user?.is_staff);
 }
 
 function panelFor(user) {
@@ -89,19 +104,21 @@ export function initSidebar(user) {
          [...(user.business?.type === "venue" ? OWNER_VENUE : OWNER_RESTAURANT), ...OWNER_TAIL], path)}
        ${groupHtml(t("panel.groupAccount"), OWNER_ACCOUNT, path)}`;
 
+  // Pastda: saytga qaytish va profil.
+  //
+  // "Chiqish" ATAYLAB bu yerda yo'q — u profil sahifasining ichida.
+  // Har sahifada ko'rinib turgan chiqish tugmasi tasodifan bosiladi,
+  // hisob bilan bog'liq amal esa hisob sahifasida turishi to'g'ri.
   sidebar.innerHTML = `
     <a class="brand" href="/"><span class="dot"></span>WENZU</a>
     <span class="role-pill">${esc(roleLabel(user))}</span>
     ${body}
     <div class="side-nav-bottom">
-      ${admin ? "" : `<a class="nav-item" href="/"><span class="ic">🌐</span><span>${esc(t("nav.home"))}</span></a>`}
-      <a class="nav-item" href="/profil/"><span class="ic">👤</span><span>${esc(t("nav.profile"))}</span></a>
-      <button class="nav-item" type="button" data-logout>
-        <span class="ic">↩</span><span>${esc(t("nav.logout"))}</span>
-      </button>
+      <a class="nav-item" href="/"><span class="ic">🌐</span><span>${esc(t("nav.home"))}</span></a>
+      <a class="nav-item ${path === "/profil/" ? "active" : ""}" href="/profil/">
+        <span class="ic">👤</span><span>${esc(t("nav.profile"))}</span>
+      </a>
     </div>`;
-
-  sidebar.querySelector("[data-logout]")?.addEventListener("click", () => auth.logout());
 
   // Mobil: gamburger va orqa fon
   const scrim = $("#nav-scrim");

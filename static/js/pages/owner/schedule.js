@@ -125,6 +125,26 @@ function init() {
     load();
   });
 
+  // Qo'lda band qilish/bo'shatish.
+  //
+  // Kerak bo'ladi: to'y yoki katta ziyofat ba'zan telefon orqali,
+  // saytdan tashqarida kelishiladi. Egasi o'sha kunni qo'lda band deb
+  // belgilamasa, mijoz shu kunga bron qilib qo'yardi va ikki to'y bir
+  // kunga tushib qolardi.
+  delegate("#schedule-list", "[data-toggle]", async (button) => {
+    const nowBooked = button.dataset.booked === "true";
+    const done = busy(button);
+    try {
+      await api.owner.updateAvailability(button.dataset.toggle, { is_booked: !nowBooked });
+      toast.ok(nowBooked ? "Kun bo'shatildi." : "Kun band deb belgilandi.");
+      load();
+    } catch (error) {
+      toast.fromError(error);
+    } finally {
+      done();
+    }
+  });
+
   delegate("#schedule-list", "[data-delete]", async (button) => {
     const ok = await confirmDialog({
       title: "Bu kunni yopasizmi?",
@@ -158,8 +178,16 @@ async function load() {
           <td>${row.is_booked
             ? '<span class="seal seal-bad">Band</span>'
             : '<span class="seal seal-ok">Bo\'sh</span>'}</td>
-          <td class="right">${row.is_booked ? "" :
-            `<button class="btn btn-sm btn-danger" data-delete="${esc(row.id)}">Yopish</button>`}</td>
+          <td class="right">
+            <div class="row row-2" style="justify-content:flex-end">
+              <button class="btn btn-sm btn-outline" data-toggle="${esc(row.id)}"
+                      data-booked="${row.is_booked}">
+                ${row.is_booked ? "Bo'shatish" : "Band qilish"}
+              </button>
+              ${row.is_booked ? "" :
+                `<button class="btn btn-sm btn-danger" data-delete="${esc(row.id)}">Yopish</button>`}
+            </div>
+          </td>
         </tr>`).join("")
       : `<tr><td colspan="5"><p class="muted center" style="padding:var(--sp-8)">
            Hali kun ochilmagan — yuqoridagi forma orqali yarating.</p></td></tr>`;

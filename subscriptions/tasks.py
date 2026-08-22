@@ -25,11 +25,24 @@ def check_expired_subscriptions_task():
 @shared_task(name="subscriptions.tasks.notify_expiring_subscriptions_task")
 def notify_expiring_subscriptions_task():
     """
-    Har kuni 09:00 da: 3 kun ichida tugaydigan obunalar egasiga eslatma.
+    Har kuni 09:00 da ishlaydi va IKKI xil eslatma yuboradi:
+
+      1. Biznes EGASIGA — saytdagi qo'ng'iroqcha ostiga, tugashiga
+         5 / 3 / 2 kun qolganda (`send_expiry_reminders`). Egasi shu
+         xabarni bosib, obunani uzaytirish arizasini yuboradi.
+
+      2. ADMINGA — Telegramga, 3 kun ichida tugaydiganlar ro'yxati.
+         Bu operatorga "kim bilan bog'lanish kerak"ligini ko'rsatadi.
+
     Obuna to'satdan o'chib qolmasligi — biznes egasi uchun eng og'riqli holat.
     """
     from common.telegram import send_telegram_message
     from subscriptions.models import Subscription
+    from subscriptions.services import send_expiry_reminders
+
+    # 1) Egalariga — saytdagi bildirishnoma.
+    reminded = send_expiry_reminders()
+    logger.info(f"notify_expiring_subscriptions_task: {reminded} ta egaga eslatma")
 
     now = timezone.now()
     deadline = now + timedelta(days=3)
@@ -58,5 +71,5 @@ def notify_expiring_subscriptions_task():
         )
         notified += 1
 
-    logger.info(f"notify_expiring_subscriptions_task: {notified} ta eslatma yuborildi")
-    return notified
+    logger.info(f"notify_expiring_subscriptions_task: adminga {notified} ta xabar")
+    return {"owners": reminded, "admin": notified}

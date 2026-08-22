@@ -10,7 +10,8 @@ hamma joyda bir xil struktura bo'ladi:
 
 import logging
 
-from django.core.exceptions import PermissionDenied, ValidationError as DjangoValidationError
+from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import DatabaseError, IntegrityError
 from django.http import Http404
 from rest_framework import status

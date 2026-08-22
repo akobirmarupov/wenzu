@@ -28,6 +28,16 @@ class User(AbstractUser):
 
     is_phone_verified = models.BooleanField(default=False)
     is_confirmed = models.BooleanField(default=False)
+
+    # 7 kunlik bepul sinov FOYDALANUVCHIGA bir marta beriladi.
+    #
+    # Biznesga emas, aynan foydalanuvchiga: aks holda odam biznesini
+    # o'chirib, yangisini ochib, sinovni cheksiz qayta olardi. Bayroq
+    # `start_trial` da qo'yiladi va hech qachon qaytarilmaydi.
+    has_used_trial = models.BooleanField(
+        default=False, verbose_name="Bepul sinov ishlatilgan",
+        help_text="Bir marta berilgach qaytarilmaydi.",
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = "username"

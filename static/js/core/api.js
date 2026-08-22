@@ -35,9 +35,27 @@ export const api = {
   },
   plans: () => http.get("/subscription-plans/", null, { auth: false }),
 
+  /**
+   * Bosh sahifa vitrinasi — BUTUN platforma bo'yicha menyu.
+   * Har bir joyning menyusini alohida so'rash o'nlab so'rov bo'lardi.
+   */
+  showcase: {
+    photos: (params) => http.get("/showcase/photos/", params, { auth: false }),
+    restaurantMenu: (params) => http.get("/menu/restaurant/", params, { auth: false }),
+    venueMenu: (params) => http.get("/menu/venue/", params, { auth: false }),
+  },
+
   businesses: {
     list: (params) => http.get("/businesses/", params, { auth: false }),
-    detail: (id) => http.get(`/businesses/${id}/`, null, { auth: false }),
+    // `auth: false` ATAYLAB YO'Q.
+    //
+    // Bu endpoint javobi kirgan/kirmaganga qarab farq qiladi: aloqa
+    // ma'lumoti (telefon, Telegram) faqat ro'yxatdan o'tganlarga
+    // qaytadi. Token yuborilmasa server har doim "mehmon" deb ko'radi va
+    // kirgan foydalanuvchi ham raqamni ko'rmasdi.
+    //
+    // Mehmon uchun ham xavfsiz: token bo'lmasa sarlavha qo'shilmaydi.
+    detail: (id) => http.get(`/businesses/${id}/`),
     rooms: (id, params) => http.get(`/businesses/${id}/rooms/`, params, { auth: false }),
     halls: (id, params) => http.get(`/businesses/${id}/halls/`, params, { auth: false }),
     menu: (id, params) => http.get(`/businesses/${id}/menu/`, params, { auth: false }),
@@ -74,6 +92,14 @@ export const api = {
   applications: {
     create: (data) => http.post("/business-applications/", data),
     mine: () => http.get("/business-applications/my/"),
+  },
+
+  /** Bildirishnomalar — yuqoridagi qo'ng'iroqcha. */
+  notifications: {
+    list: (params) => http.get("/notifications/", params),
+    unreadCount: () => http.get("/notifications/unread-count/"),
+    read: (id) => http.patch(`/notifications/${id}/read/`),
+    readAll: () => http.post("/notifications/read-all/"),
   },
 
   // ---------------- biznes egasi ----------------
@@ -119,7 +145,10 @@ export const api = {
       http.patch(`/owner/reservations/${id}/status/`, { status }),
 
     reviews: (params) => http.get("/owner/reviews/", params),
+
     subscription: () => http.get("/owner/subscription/"),
+    subscriptionRequests: (params) => http.get("/owner/subscription/requests/", params),
+    requestRenewal: (data) => http.post("/owner/subscription/requests/", data),
     payments: () => http.get("/owner/payments/"),
   },
 
@@ -134,16 +163,24 @@ export const api = {
     updateUser: (id, data) => http.patch(`/admin/users/${id}/`, data),
 
     businesses: (params) => http.get("/admin/businesses/", params),
+    createBusiness: (data) => http.post("/admin/businesses/create/", data),
+    updateBusiness: (id, data) => http.patch(`/admin/businesses/${id}/`, data),
+    deleteBusiness: (id) => http.delete(`/admin/businesses/${id}/`),
     toggleBlock: (id) => http.patch(`/admin/businesses/${id}/toggle-block/`),
 
     subscriptions: (params) => http.get("/admin/subscriptions/", params),
     activateSubscription: (id, data) => http.post(`/admin/subscriptions/${id}/activate/`, data),
     expireSubscription: (id) => http.post(`/admin/subscriptions/${id}/expire/`),
 
+    subscriptionRequests: (params) => http.get("/admin/subscription-requests/", params),
+    approveRequest: (id, data) => http.post(`/admin/subscription-requests/${id}/approve/`, data || {}),
+    rejectRequest: (id, data) => http.post(`/admin/subscription-requests/${id}/reject/`, data || {}),
+
     plans: () => http.get("/admin/subscription-plans/"),
     updatePlan: (id, data) => http.patch(`/admin/subscription-plans/${id}/`, data),
 
     payments: (params) => http.get("/admin/payments/", params),
+    createPayment: (data) => http.post("/admin/payments/", data),
     reservations: (params) => http.get("/admin/reservations/", params),
 
     settings: () => http.get("/admin/settings/"),

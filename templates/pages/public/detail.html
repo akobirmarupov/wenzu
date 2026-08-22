@@ -10,5 +10,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="module" src="{% static 'js/pages/public/detail.js' %}"></script>
+<script type="module" src="{% static 'js/pages/public/detail.js' %}?v={{ asset_version }}"></script>
 {% endblock %}

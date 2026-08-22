@@ -3,8 +3,8 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from account.routes.user import (
     AdminUserDetailAPIView,
-    AvatarAPIView,
     AdminUserListAPIView,
+    AvatarAPIView,
     LoginAPIView,
     LogoutAPIView,
     MeAPIView,

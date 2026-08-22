@@ -1,10 +1,15 @@
 /**
- * Yuqori panel — o'ng burchakda til tanlagichi, tema tugmasi va
- * foydalanuvchi bloki.
+ * Yuqori panel — o'ng burchakda bildirishnoma qo'ng'irog'i, til
+ * tanlagichi, tema tugmasi va foydalanuvchi bloki.
  *
- * Til tanlagichi ataylab yuqorida: u sahifaning har qanday joyidan
- * bir xil masofada bo'lishi kerak, yon menyuda esa pastga tushib
- * ketardi va uzun ro'yxatda ko'rinmay qolardi.
+ * MUHIM qoida: profilga o'tishning YAGONA yo'li shu yerdagi
+ * foydalanuvchi tugmasi. Ilgari uchta yo'l bor edi — yon menyudagi
+ * "Profil" bandi, yon menyu pastidagi karta va shu tugma — bu esa
+ * "qaysi biri to'g'ri?" degan chalkashlik tug'dirardi. Chiqish (logout)
+ * ham endi profil sahifasining ichida.
+ *
+ * Kirmagan foydalanuvchiga esa shu burchakda "Kirish" va "Ro'yxatdan
+ * o'tish" tugmalari turadi.
  */
 import { auth } from "../core/auth.js";
 import { ROUTES } from "../core/config.js";
@@ -12,6 +17,7 @@ import { getLanguage, setLanguage, LANGUAGES, t } from "../core/i18n.js";
 import { themeToggleHtml, bindThemeToggle } from "../core/theme.js";
 import { $, esc } from "./dom.js";
 import { avatarHtml } from "./avatar.js";
+import { bellHtml, bindBell } from "./notifications.js";
 
 function langSelectHtml() {
   const current = getLanguage();
@@ -59,12 +65,16 @@ export function initTopbar({ showUser = true } = {}) {
   const container = $("#topbar-right");
   if (!container) return;
 
+  const signedIn = auth.isAuthenticated();
+
   container.innerHTML = `
+    ${signedIn ? bellHtml() : ""}
     ${langSelectHtml()}
     ${themeToggleHtml()}
     ${showUser ? userHtml() : ""}`;
 
   bindThemeToggle(container);
+  if (signedIn) bindBell(container);
 
   // --- til menyusi ---
   const menu = container.querySelector("[data-lang-menu]");

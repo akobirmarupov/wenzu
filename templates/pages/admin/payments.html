@@ -1,0 +1,28 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+<div class="grid grid-2" id="summary"></div>
+
+<div class="panel">
+  <div class="panel-head">
+    <div class="stack stack-1">
+      <h2 class="display h3">To'lovlar jurnali</h2>
+      <span class="small muted">To'lov Telegram orqali qo'lda qabul qilinadi — bu yerda qayd etiladi.</span>
+    </div>
+    <button class="btn btn-primary btn-sm" type="button" id="add-payment">+ To'lov qo'shish</button>
+  </div>
+
+  <div class="table-wrap"><table class="table">
+    <thead><tr>
+      <th>Biznes</th><th class="right">Summa</th><th>Kim qabul qildi</th><th>Izoh</th><th class="right">Sana</th>
+    </tr></thead>
+    <tbody id="list"></tbody>
+  </table></div>
+  <div id="pager"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/admin/payments.js' %}?v={{ asset_version }}"></script>
+{% endblock %}

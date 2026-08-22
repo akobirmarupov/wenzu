@@ -6,6 +6,7 @@ XAVFSIZ tomonga og'ib turadi: `.env` unutilsa loyiha production rejimida
 ochilib qolmaydi, balki DEBUG=False bilan qattiq sozlamalarda ishlaydi.
 """
 
+import sys
 from datetime import timedelta
 from pathlib import Path
 
@@ -25,7 +26,7 @@ DEBUG = config("DEBUG", default=False, cast=bool)
 # Production'da aniq domenlar ko'rsatilishi SHART — '*' faqat DEBUG uchun.
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv())
 if DEBUG:
-    ALLOWED_HOSTS = ALLOWED_HOSTS + ["*"]
+    ALLOWED_HOSTS = [*ALLOWED_HOSTS, "*"]
 
 AUTH_USER_MODEL = "account.User"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -46,6 +47,24 @@ DJANGO_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+
+    # MUHIM: `staticfiles` dan OLDIN turishi shart.
+    #
+    # `runserver` odatda statik fayllarni o'zi tarqatadi va buni butun
+    # middleware zanjiridan OLDIN qiladi — ya'ni fayllarga hech qanday
+    # sarlavha qo'shib bo'lmaydi. Brauzer esa `Cache-Control` bo'lmasa
+    # faylni O'ZI "hali yangi" deb bir necha o'n daqiqa ushlab turadi.
+    #
+    # Bu ES modullarda ayniqsa og'riqli: kirish skriptiga `?v=` belgisini
+    # qo'ysa bo'ladi, lekin uning ichidagi `import "../ui/topbar.js"`
+    # bu belgini MEROS QILIB OLMAYDI. Natijada sahifa yangilanadi-yu,
+    # yon menyu va yuqori panel eski holida qolib ketadi.
+    #
+    # `runserver_nostatic` o'sha ichki tarqatgichni o'chiradi va fayllarni
+    # WhiteNoise beradi — u middleware bo'lgani uchun sarlavha qo'ya oladi
+    # (pastdagi `WHITENOISE_MAX_AGE` ga qarang). Productionda hech narsa
+    # o'zgarmaydi: u yerda fayllar allaqachon WhiteNoise orqali kelardi.
+    "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
 ]
 
@@ -68,6 +87,7 @@ LOCAL_APPS = [
     "reviews",
     "subscriptions",
     "content",
+    "notifications",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + EXTERNAL_APPS + LOCAL_APPS
@@ -97,6 +117,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                # CSS/JS manzillariga versiya belgisi qo'shadi — eskirgan
+                # kesh tufayli "buzilgan sahifa" muammosini yopadi.
+                "web.context_processors.asset_version",
             ],
         },
     },
@@ -226,9 +249,19 @@ SPECTACULAR_SETTINGS = {
     "SCHEMA_PATH_PREFIX": "/api",
     # `category` nomi ikki joyda (menyu turkumi va yangilik turkumi) uchraydi —
     # schema'da avtomatik nom to'qnashmasligi uchun aniq nom beramiz.
+    # Bir xil nomli maydonlar (`status`, `category`) har xil variantlar
+    # to'plamiga ega — nomlarni qo'lda ajratmasak, hujjatda "Status2c5Enum"
+    # kabi o'qib bo'lmaydigan nomlar paydo bo'ladi.
     "ENUM_NAME_OVERRIDES": {
         "MenuCategoryEnum": "catalog.models.MenuCategory.choices",
         "NewsCategoryEnum": "content.models.News.CATEGORY_CHOICES",
+        "ReservationStatusEnum": "reservations.models.Reservation.STATUS_CHOICES",
+        "SubscriptionStatusEnum": "subscriptions.models.Subscription.STATUS_CHOICES",
+        # Ariza va obuna so'rovi AYNAN bir xil holatlarga ega
+        # (to'lov kutilmoqda / tasdiqlangan / rad etilgan), shuning uchun
+        # ikkalasiga bitta nom beriladi — aks holda drf-spectacular
+        # "bir to'plamga ikki nom" deb ogohlantiradi.
+        "ApprovalStatusEnum": "businesses.models.BusinessApplication.STATUS_CHOICES",
     },
 }
 
@@ -261,6 +294,25 @@ SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"
 
 # Ommaviy ro'yxat/detal javoblarining kesh muddati (sekund).
+# ===================================================================
+# Testlar uchun kesh ALOHIDA.
+#
+# Aks holda `manage.py test` ishlab turgan dev serveri bilan BIR XIL
+# Redis'ni ishlatadi: test bazasi alohida bo'lsa ham, kesh umumiy qoladi.
+# Natijada testlar bir-birining va dasturchining ma'lumotini o'qib,
+# tushunarsiz "goh o'tadi, goh yiqiladi" holatiga tushardi.
+#
+# Xotiradagi kesh har bir test jarayonida toza boshlanadi.
+# ===================================================================
+if "test" in sys.argv:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "wenzu-tests",
+        }
+    }
+
+
 CACHE_TTL_BUSINESS_LIST = config("CACHE_TTL_BUSINESS_LIST", default=60, cast=int)
 CACHE_TTL_BUSINESS_DETAIL = config("CACHE_TTL_BUSINESS_DETAIL", default=120, cast=int)
 
@@ -349,6 +401,20 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
 }
 
+if DEBUG:
+    # Ishlab chiqishda kesh umuman kerak emas: fayl o'zgargan zahoti
+    # brauzer yangisini olsin. `max-age=0` — brauzer har safar serverdan
+    # so'raydi; fayl o'zgarmagan bo'lsa server 304 qaytaradi, ya'ni
+    # trafik baribir tejaladi.
+    WHITENOISE_MAX_AGE = 0
+    # Fayllar disk kesh emas, har so'rovda diskdan o'qilsin — server
+    # qayta ishga tushirmasdan tahrirlash uchun.
+    WHITENOISE_AUTOREFRESH = True
+else:
+    # Productionda fayl nomida hash bo'ladi (ManifestStaticFilesStorage),
+    # shuning uchun bir yilga keshlash mutlaqo xavfsiz.
+    WHITENOISE_MAX_AGE = 31536000
+
 # S3-mos ombor (MinIO / AWS) yoqilgan bo'lsa, media fayllar o'sha yerga boradi.
 if config("USE_S3", default=False, cast=bool):
     STORAGES["default"] = {"BACKEND": "storages.backends.s3.S3Storage"}
@@ -419,5 +485,6 @@ LOGGING = {
         "subscriptions": {"handlers": ["console", "file"], "level": LOG_LEVEL, "propagate": False},
         "common": {"handlers": ["console", "file"], "level": LOG_LEVEL, "propagate": False},
         "content": {"handlers": ["console", "file"], "level": LOG_LEVEL, "propagate": False},
+        "notifications": {"handlers": ["console", "file"], "level": LOG_LEVEL, "propagate": False},
     },
 }
