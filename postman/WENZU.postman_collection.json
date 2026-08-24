@@ -323,64 +323,31 @@
     },
     {
       "name": "01 · Autentifikatsiya",
-      "description": "To'liq oqim: **1 → 2 → 3 → 4** tartibida yuboring. Login'dan keyin token avtomatik saqlanadi.",
+      "description": "SMS-kod va parol bilan ro'yxatdan o'tish OLIB TASHLANGAN.\n\nRo'yxatdan o'tishning yagona yo'li — Google. Pochtani Google tekshirgani uchun qo'shimcha tasdiq kerak emas.\n\n`/api/auth/login/` (parol bilan) faqat ESKI hisoblar va administrator uchun qoldirilgan.",
       "item": [
         {
-          "name": "1. Ro'yxatdan o'tish",
+          "name": "Google orqali kirish — 1-qadam (brauzerda ochiladi)",
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "method": "GET",
+            "header": [],
             "url": {
-              "raw": "{{base_url}}/api/auth/register/",
+              "raw": "{{base_url}}/api/auth/google/start/",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "auth",
-                "register"
+                "google",
+                "start"
               ]
             },
-            "description": "Yangi foydalanuvchi. Rol avtomatik `user` bo'ladi, telefon hali tasdiqlanmagan.\n\n**Username qoidasi:** faqat `a-z`, `0-9`, `_` — 3 dan 30 belgigacha. Bosh harf, defis, nuqta, probel TAQIQLANADI.\n\n**Telefon:** `+998XXXXXXXXX` ko'rinishida.\n\n**Parol:** kamida 8 belgi, oddiy parollar rad etiladi.\n\nCheklov: soatiga 5 marta (bir IP'dan).",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"full_name\": \"Sardor Yusupov\",\n  \"phone_number\": \"+998901234567\",\n  \"username\": \"sardor_y\",\n  \"password\": \"StrongPass123!\",\n  \"password_confirm\": \"StrongPass123!\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "auth": {
-              "type": "noauth"
-            }
+            "description": "RO'YXATDAN O'TISH VA KIRISH — bitta yo'l.\n\nBu manzil foydalanuvchini Google'ga qayta yo'naltiradi (302). Shuning uchun uni Postman'dan emas, BRAUZERDA ochish kerak.\n\nGoogle hisob tanlangach `/api/auth/google/callback/` ga qaytaradi, server esa tokenlarni URL fragmentida (`/kirish/#access=...&refresh=...`) beradi.\n\n`?next=/bronlarim/` — kirishdan keyin qaytariladigan ichki sahifa (tashqi manzil qabul qilinmaydi)."
           },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"201 Created\", () => pm.response.to.have.status(201));",
-                  "if (pm.response.code === 201) {",
-                  "    pm.collectionVariables.set(\"username\", pm.request.body ? JSON.parse(pm.request.body.raw).username : \"\");",
-                  "    pm.collectionVariables.set(\"phone_number\", JSON.parse(pm.request.body.raw).phone_number);",
-                  "    pm.collectionVariables.set(\"password\", JSON.parse(pm.request.body.raw).password);",
-                  "    console.log(\"Ro'yxatdan o'tdi. Endi 2-qadam: SMS kod so'rang.\");",
-                  "}"
-                ]
-              }
-            }
-          ]
+          "response": []
         },
         {
-          "name": "2. SMS kod so'rash",
+          "name": "Google orqali kirish — mobil ilova uchun (id_token)",
           "request": {
             "method": "POST",
             "header": [
@@ -389,98 +356,24 @@
                 "value": "application/json"
               }
             ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"credential\": \"<Google bergan id_token>\"\n}"
+            },
             "url": {
-              "raw": "{{base_url}}/api/auth/send-code/",
+              "raw": "{{base_url}}/api/auth/google/",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "auth",
-                "send-code"
+                "google"
               ]
             },
-            "description": "Telefon raqamiga 6 xonali tasdiqlash kodi yuboriladi (Eskiz.uz orqali).\n\n**Muhim:** javob raqam bazada bor-yo'qligidan qat'i nazar BIR XIL bo'ladi — bu ataylab, raqam bazasini yig'ib olishning oldini olish uchun.\n\n`DEBUG=True` bo'lsa javobda `debug_code` ham keladi va u avtomatik `{{sms_code}}` o'zgaruvchisiga yoziladi.\n\nCheklov: bitta raqamga soatiga 3 marta.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"phone_number\": \"{{phone_number}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "auth": {
-              "type": "noauth"
-            }
+            "description": "Veb-saytda ISHLATILMAYDI — u yuqoridagi redirect oqimidan foydalanadi.\n\nBu endpoint mobil ilova uchun: u Google SDK'sidan `id_token` ni o'zi oladi va shu yerga yuboradi. Server tokenni Google kalitlari bilan tekshiradi, hisob bo'lmasa yaratadi.\n\nJavob: `{access, refresh, user, created}`."
           },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
-                  "const j = pm.response.json();",
-                  "if (j.debug_code) {",
-                  "    pm.collectionVariables.set(\"sms_code\", j.debug_code);",
-                  "    console.log(\"SMS kod saqlandi: \" + j.debug_code);",
-                  "} else {",
-                  "    console.log(\"DEBUG o'chiq — kodni SMS'dan oling va {{sms_code}} ga qo'lda yozing.\");",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "3. Telefonni tasdiqlash",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{base_url}}/api/auth/verify-phone/",
-              "host": [
-                "{{base_url}}"
-              ],
-              "path": [
-                "api",
-                "auth",
-                "verify-phone"
-              ]
-            },
-            "description": "Kodni tekshiradi va `is_phone_verified=True` qiladi.\n\nTasdiqlanmagan foydalanuvchi **bron qila olmaydi** va **biznes arizasi yubora olmaydi**.\n\nKod 5 daqiqa yashaydi. 5 marta noto'g'ri kiritilsa kod kuydiriladi — yangisini so'rash kerak.",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"phone_number\": \"{{phone_number}}\",\n  \"code\": \"{{sms_code}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "auth": {
-              "type": "noauth"
-            }
-          },
-          "response": [],
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ]
+          "response": []
         },
         {
           "name": "4. Kirish (login)",
@@ -1588,10 +1481,10 @@
                 "reservations"
               ]
             },
-            "description": "**To'yxona broni** — butun kunga, bitta zal.\n\n- `dish_count`: 1, 2 yoki 3 xil taom → narx shunga qarab o'zgaradi\n- `menu_items`: aynan `dish_count` ta taom ID'si bo'lishi kerak (yoki bo'sh)\n- Umumiy summa avtomatik hisoblanadi: kishi boshiga narx × mehmonlar\n- Bir kunda bitta to'y — band kunga urinish **409 Conflict**\n\nSo'rovda `hall` maydoni borligi tizimga \"bu to'yxona broni\" deb aytadi.",
+            "description": "**To'yxona broni** — butun kunga, bitta zal.\n\nMajburiy maydonlar faqat: `hall`, `date`, `guests_count`.\n\n**Narx ikki xil bo'ladi (`pricing_mode`):**\n\n- `per_person` — shahar odati. Egasi 1/2/3 xil taom uchun kishi boshiga narx kiritgan. `dish_count` yuboriladi, umumiy summa = kishi boshiga narx × mehmonlar. `menu_items` yuborilsa, soni aynan `dish_count` ga teng bo'lishi kerak.\n- `fixed` — qishloq odati. Kishi boshiga hech narsa to'lanmaydi: butun zal bir kunga ijaraga olinadi (`Hall.all_price`, masalan 15 000 000 so'm) va oshpazni to'y egasi o'zi olib boradi. `dish_count` yuborilmaydi.\n- `unset` — egasi hali narx kiritmagan. Bron baribir qabul qilinadi, `total_price` bo'sh qaytadi va summa keyin kelishiladi.\n\n`dish_count` ham, `menu_items` ham **ixtiyoriy** — to'y egasi o'z oshpazi bilan kelishi mumkin.\n\nBir kunda bitta to'y — band kunga urinish **409 Conflict**.\n\nSo'rovda `hall` maydoni borligi tizimga \"bu to'yxona broni\" deb aytadi.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"hall\": \"{{hall_id}}\",\n  \"date\": \"2026-09-14\",\n  \"guests_count\": 250,\n  \"dish_count\": 2,\n  \"menu_items\": [],\n  \"special_request\": \"\"\n}",
+              "raw": "{\n  \"hall\": \"{{hall_id}}\",\n  \"date\": \"2026-09-14\",\n  \"guests_count\": 250,\n  \"dish_count\": 2,\n  \"menu_items\": [],\n  \"special_request\": \"\"\n}\n\n// Qishloq to'yxonasi (kunlik ijara) uchun shunchaki:\n// {\n//   \"hall\": \"{{hall_id}}\",\n//   \"date\": \"2026-09-14\",\n//   \"guests_count\": 500\n// }",
               "options": {
                 "raw": {
                   "language": "json"

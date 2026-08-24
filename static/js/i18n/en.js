@@ -4,6 +4,10 @@ export default {
 
   nav: {
     home: "Home", restaurants: "Restaurants", venues: "Wedding venues",
+    // Short labels — for the bottom bar on phones.
+    shortHome: "Home", shortRestaurants: "Dining", shortVenues: "Venues",
+    shortBookings: "Bookings", shortProfile: "Profile",
+    shortLogin: "Sign in", shortAdmin: "Admin",
     news: "News", profile: "Profile", bookings: "My bookings",
     business: "Open a business", login: "Sign in", register: "Sign up",
     logout: "Sign out", panel: "My panel", admin: "Admin",
@@ -118,6 +122,7 @@ export default {
     noReviews: "No reviews yet", beFirst: "Be the first to leave one.",
     priceNote: "Total = price per person × number of guests.",
     perPerson: "UZS / person", dishCount: "dish options",
+    dayRent: "Full-day rental",
   },
 
   booking: {

@@ -41,8 +41,11 @@ class ReservationCreateAPIView(APIView):
 
     Restoran uchun:  {"room": uuid, "date": "2026-09-01", "start_time": "19:00",
                       "end_time": "21:00", "guests_count": 4}
-    To'yxona uchun:  {"hall": uuid, "date": "2026-09-14", "guests_count": 250,
-                      "dish_count": 2}
+    To'yxona uchun:  {"hall": uuid, "date": "2026-09-14", "guests_count": 250}
+                     — `dish_count` va `menu_items` IXTIYORIY. Qishloq
+                     to'yxonasida narx kishi boshiga emas, bir kunlik
+                     ijara (`Hall.all_price`) bo'lgani uchun mijoz taom
+                     tanlamasdan ham bron bera oladi.
 
     Ikki mijoz bir vaqtni bir vaqtda band qilib qo'ymasligi uchun bandlik
     tekshiruvi `select_for_update()` bilan qulflangan tranzaksiya ichida
@@ -171,7 +174,10 @@ class ReservationCreateAPIView(APIView):
             hall=hall,
             availability=availability,
             guests_count=data["guests_count"],
-            dish_count=data.get("dish_count", 1),
+            # Taom soni tanlanmasligi ham mumkin (qishloq to'yxonasi —
+            # ovqatni to'y egasi o'zi tashkil qiladi), shuning uchun bu
+            # yerda 1 ga "to'ldirib" qo'yilmaydi: bo'sh — bo'sh qoladi.
+            dish_count=data.get("dish_count"),
             selected_menu=data.get("menu_snapshot", []),
             special_request=data.get("special_request", ""),
             price_per_person=data.get("price_per_person"),

@@ -1,5 +1,10 @@
 /**
- * Ommaviy sahifalarning CHAP yon menyusi.
+ * Ommaviy sahifalarning CHAP yon menyusi va TELEFONDAGI PASTKI MENYUSI.
+ *
+ * Ikkalasi bitta faylda, chunki ular BIR XIL ma'lumotdan quriladi:
+ * kim kirgan, arizasi tasdiqlanganmi, qaysi sahifada turibmiz. Ikki
+ * joyga bo'linsa, bir menyuga band qo'shib, ikkinchisini unutish oson
+ * bo'lardi.
  *
  * Bu yerda FAQAT yo'nalish bandlari bo'ladi: bosh sahifa, katalog,
  * bronlarim, biznes va (egalari uchun) panel.
@@ -34,11 +39,66 @@ function linkHtml({ href, icon, key }) {
     </a>`;
 }
 
+/**
+ * Telefondagi pastki menyu bandlari.
+ *
+ * Nega yon menyudan alohida ro'yxat: bu yerda joy CHEKLANGAN — beshta
+ * katakdan ortig'i 360 px li ekranda o'qib bo'lmaydigan darajada
+ * siqiladi. Shuning uchun bu yerga faqat eng ko'p bosiladigan bo'limlar
+ * tushadi, qolgani (panel, biznes) yon menyuda qolaveradi.
+ *
+ * Mehmonda "Bronlarim" yo'q — u hali hech narsa bron qilmagan; o'rniga
+ * to'g'ridan-to'g'ri "Kirish" turadi, chunki keyingi qadam aynan shu.
+ */
+function tabbarItems(user) {
+  const base = [
+    { href: ROUTES.home, icon: "◈", key: "nav.shortHome" },
+    { href: ROUTES.restaurants, icon: "🍽", key: "nav.shortRestaurants" },
+    { href: ROUTES.venues, icon: "🎉", key: "nav.shortVenues" },
+  ];
+
+  if (!user) {
+    return [...base, { href: ROUTES.login, icon: "→", key: "nav.shortLogin" }];
+  }
+
+  // Platforma egasi bron QILMAYDI — u bronlarni boshqaradi. Unga
+  // "Bronlarim" o'rniga boshqaruv paneli foydaliroq.
+  if (user.is_staff) {
+    return [
+      ...base,
+      { href: ROUTES.adminHome, icon: "🛡", key: "nav.shortAdmin" },
+      { href: ROUTES.profile, icon: "👤", key: "nav.shortProfile" },
+    ];
+  }
+
+  return [
+    ...base,
+    { href: ROUTES.myBookings, icon: "📅", key: "nav.shortBookings" },
+    { href: ROUTES.profile, icon: "👤", key: "nav.shortProfile" },
+  ];
+}
+
+function renderTabbar(user) {
+  const bar = $("#tabbar");
+  if (!bar) return;
+
+  bar.innerHTML = tabbarItems(user).map(({ href, icon, key }) => `
+    <a class="tabbar-item ${isActive(href) ? "active" : ""}" href="${href}"
+       ${isActive(href) ? 'aria-current="page"' : ""}>
+      <span class="ic" aria-hidden="true">${icon}</span>
+      <span class="lb">${esc(t(key))}</span>
+    </a>`).join("");
+}
+
 export function initPublicNav() {
+  const user = auth.user();
+
+  // Pastki menyu yon menyudan MUSTAQIL chiziladi: sahifada faqat
+  // bittasi bo'lsa ham ishlayversin.
+  renderTabbar(user);
+
   const nav = $("#side-nav");
   if (!nav) return;
-
-  const user = auth.user();
 
   // Menyuda faqat DOIM kerak bo'ladigan bandlar.
   //

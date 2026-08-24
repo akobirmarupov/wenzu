@@ -6,6 +6,19 @@ export default {
     home: "Bosh sahifa",
     restaurants: "Restoranlar",
     venues: "To'yxonalar",
+
+    // Telefondagi pastki menyu uchun QISQA nomlar.
+    //
+    // 360 px li ekranda beshta katak — har biriga ~70 px. To'liq nom
+    // ("Bosh sahifa", "To'yxonalar") u yerga sig'may, uch nuqta bilan
+    // kesilardi va qaysi bo'lim ekani bilinmasdi.
+    shortHome: "Bosh",
+    shortRestaurants: "Restoran",
+    shortVenues: "To'yxona",
+    shortBookings: "Bronlar",
+    shortProfile: "Profil",
+    shortLogin: "Kirish",
+    shortAdmin: "Boshqaruv",
     news: "Yangiliklar",
     profile: "Profilim",
     bookings: "Bronlarim",
@@ -141,6 +154,7 @@ export default {
     priceNote: "Umumiy summa = kishi boshiga narx × mehmonlar soni.",
     perPerson: "so'm / kishi",
     dishCount: "xil taom",
+    dayRent: "Bir kunlik ijara",
   },
 
   booking: {

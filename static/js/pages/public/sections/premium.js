@@ -9,7 +9,7 @@ import { api } from "../../../core/api.js";
 import { t } from "../../../core/i18n.js";
 import { $, esc } from "../../../ui/dom.js";
 import { skeletonRows, errorState } from "../../../ui/state.js";
-import { pricingHtml, bindPricing } from "../../../components/pricing.js";
+import { pricingHtml, bindPricing, pendingApprovalText } from "../../../components/pricing.js";
 
 export function render() {
   return `<div id="premium-root">${skeletonRows(3)}</div>`;
@@ -68,8 +68,8 @@ function awaitingHtml(subscription) {
       <span>
         <b>Arizangiz administrator tekshiruvida</b>
         <span class="small">
-          Tasdiqlangach <b>7 kunlik bepul sinov</b> boshlanadi va joyingiz
-          qidiruvda ko'rinadi. Tezlashtirish uchun ${esc(telegram)} ga yozing.
+          ${pendingApprovalText(subscription)}
+          Tezlashtirish uchun ${esc(telegram)} ga yozing.
         </span>
       </span>
     </div>

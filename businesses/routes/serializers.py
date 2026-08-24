@@ -61,6 +61,16 @@ class HallSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "business", "created_at"]
 
+    def validate_all_price(self, value):
+        # Bo'sh qoldirish MUMKIN (narx keyin kelishiladi), lekin kiritilgan
+        # bo'lsa manfiy yoki nol bo'lmasin — "0 so'm ijara" degan zal yo'q.
+        if value is not None and value <= 0:
+            raise serializers.ValidationError(
+                "Bir kunlik ijara narxi noldan katta bo'lishi kerak. "
+                "Narx belgilamoqchi bo'lmasangiz, maydonni bo'sh qoldiring."
+            )
+        return value
+
 
 # ===================================================================
 # VenuePricing
@@ -119,6 +129,7 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
     halls = serializers.SerializerMethodField()
     menu = serializers.SerializerMethodField()
     dish_pricing = serializers.SerializerMethodField()
+    pricing_mode = serializers.SerializerMethodField()
     owner_username = serializers.CharField(source="owner.username", read_only=True)
 
     # --- aloqa (faqat ro'yxatdan o'tganlarga) ---
@@ -136,7 +147,7 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
             "rating_avg", "reviews_count",
             "telegram_username", "phone_number", "contacts_locked",
             "is_visible", "owner_username",
-            "rooms", "halls", "menu", "dish_pricing", "created_at",
+            "rooms", "halls", "menu", "dish_pricing", "pricing_mode", "created_at",
         ]
 
     # ===================================================================
@@ -194,6 +205,16 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
         if obj.business_type != Business.TYPE_VENUE:
             return []
         return VenuePricingSerializer(obj.pricings.all(), many=True).data
+
+    def get_pricing_mode(self, obj) -> str:
+        """
+        To'yxona narxi qaysi rejimda: `per_person` / `fixed` / `unset`.
+
+        Frontend shu bitta qiymatga qarab ekranni yig'adi. Qishloq
+        to'yxonasida (`fixed` yoki `unset`) "kishi boshiga" bloki umuman
+        chizilmaydi — mijoz o'ziga tegishli bo'lmagan narxni ko'rmaydi.
+        """
+        return obj.venue_pricing_mode()
 
 
 class BusinessUpdateSerializer(serializers.ModelSerializer):

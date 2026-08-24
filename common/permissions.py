@@ -210,13 +210,32 @@ class HasActiveSubscription(BasePermission):
             # va tasdiqlangan egasi nima qilishini bilmay qolardi.
             application = getattr(business, "application", None)
             approved = application is not None and application.status == "approved"
-            self.message = (
-                "Obunangiz hali ochilmagan. Davom ettirish uchun tarif tanlab, "
-                "administrator bilan Telegram orqali bog'laning."
-                if approved else
-                "Arizangiz hali tasdiqlanmagan. Administrator tekshirgach, "
-                "7 kunlik bepul sinov boshlanadi va barcha bo'limlar ochiladi."
-            )
+
+            if approved:
+                self.message = (
+                    "Obunangiz hali ochilmagan. Davom ettirish uchun tarif tanlab, "
+                    "administrator bilan Telegram orqali bog'laning."
+                )
+            else:
+                # Kutish matni ARIZADAGI TARIFGA bog'liq. Bepul sinov faqat
+                # tarifsiz arizada beriladi — 1 yoki 3 oylik tarif tanlagan
+                # odamga "7 kunlik bepul sinov boshlanadi" deyish yolg'on
+                # va'da bo'lardi: uning obunasi to'lov tasdiqlangan kundan
+                # boshlab o'sha muddatga ochiladi, sinovsiz.
+                applied_plan = application.plan if application else None
+                if applied_plan is None:
+                    from common.models import PlatformSettings
+                    days = PlatformSettings.get_solo().trial_days
+                    self.message = (
+                        "Arizangiz hali tasdiqlanmagan. Administrator tekshirgach, "
+                        f"{days} kunlik bepul sinov boshlanadi va barcha bo'limlar ochiladi."
+                    )
+                else:
+                    self.message = (
+                        "Arizangiz hali tasdiqlanmagan. Administrator to'lovingizni "
+                        f"tasdiqlagach obunangiz {applied_plan.duration_label}ga faollashadi "
+                        "va barcha bo'limlar ochiladi."
+                    )
             return False
         return subscription.status in ("trial", "active")
 

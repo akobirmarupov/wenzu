@@ -45,6 +45,12 @@ class OwnerVenuePricingAPIView(APIView):
     PUT bilan uchala paket (1, 2, 3 xil taom) bir vaqtda saqlanadi —
     ekranda ham ular bitta forma bo'lib turadi, alohida-alohida yuborish
     yarim to'ldirilgan holatni keltirib chiqarardi.
+
+    BO'SH RO'YXAT ([]) — to'g'ri so'rov, xato emas. Har bir to'yxona
+    kishi boshiga narx olavermaydi: qishloqda to'yxona butunlay, bir
+    kunga ijaraga beriladi (`Hall.all_price`) va kishi boshiga hech narsa
+    to'lanmaydi. Bo'sh ro'yxat yuborilsa paketlar o'chadi va mijoz
+    ekranida "kishi boshiga" bloki umuman chizilmaydi.
     """
 
     permission_classes = [IsOwnerOfBusinessType, HasActiveSubscription]

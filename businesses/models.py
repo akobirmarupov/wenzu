@@ -142,6 +142,44 @@ class Business(BaseModel):
     def __str__(self):
         return self.name
 
+    # ===================================================================
+    # To'yxonada narx qanday hisoblanadi
+    #
+    # Shahar va qishloq to'yxonasi bir xil ishlamaydi:
+    #
+    #   PER_PERSON — shahar odati. Egasi 1/2/3 xil taom uchun kishi
+    #                boshiga narx kiritgan (`VenuePricing`), mijoz taom
+    #                sonini tanlaydi va summa kishi soniga ko'payadi.
+    #
+    #   FIXED      — qishloq odati. Kishi boshiga hech narsa to'lanmaydi:
+    #                bir kunlik ijara (masalan 15 000 000 so'm) to'lanadi,
+    #                oshpaz va mahsulotni to'y egasi o'zi olib boradi.
+    #                Bu yerda `Hall.all_price` to'ldirilgan bo'ladi.
+    #
+    #   UNSET      — egasi hali hech qanday narx kiritmagan. Bron baribir
+    #                qabul qilinadi, narx keyin kelishiladi — mijozga
+    #                YO'Q narxni "0 so'm" qilib ko'rsatgandan ko'ra
+    #                hech narsa ko'rsatmagan yaxshi.
+    #
+    # Rejim ALOHIDA maydonda saqlanmaydi — u egasi kiritgan ma'lumotdan
+    # kelib chiqadi. Aks holda egasi narxni o'chirib, rejimni almashtirishni
+    # unutsa, mijoz mavjud bo'lmagan narxni ko'rib turardi.
+    # ===================================================================
+    PRICING_PER_PERSON = "per_person"
+    PRICING_FIXED = "fixed"
+    PRICING_UNSET = "unset"
+
+    def venue_pricing_mode(self) -> str:
+        """To'yxona narxi qaysi rejimda. Restoran uchun har doim UNSET."""
+        if self.business_type != self.TYPE_VENUE:
+            return self.PRICING_UNSET
+        # `.all()` — prefetch qilingan bo'lsa qo'shimcha so'rov ketmaydi.
+        if any(self.pricings.all()):
+            return self.PRICING_PER_PERSON
+        if any(hall.all_price is not None for hall in self.halls.all()):
+            return self.PRICING_FIXED
+        return self.PRICING_UNSET
+
 
 class BusinessPhoto(BaseModel):
     """
@@ -245,7 +283,10 @@ class Hall(BaseModel):
     package = models.CharField(max_length=255, null=True, blank=True)
     all_price = models.DecimalField(
         max_digits=14, decimal_places=2, null=True, blank=True,
-        help_text="Qat'iy umumiy summa (ixtiyoriy — odatda narx kishi boshiga hisoblanadi).",
+        verbose_name="Bir kunlik ijara narxi",
+        help_text="Butun zal uchun bir kunlik qat'iy summa (masalan 15 000 000). "
+                  "Qishloq to'yxonalarida narx odatda shunday: kishi boshiga emas, "
+                  "kunlik ijara. Bo'sh qoldirilsa mijozga narx ko'rsatilmaydi.",
     )
     deposit_price = models.DecimalField(
         max_digits=12, decimal_places=2, null=True, blank=True,

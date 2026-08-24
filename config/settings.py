@@ -295,7 +295,21 @@ CACHES = {
 DJANGO_REDIS_IGNORE_EXCEPTIONS = True
 
 # Sessiya ham Redis'da — bir nechta server orasida bo'lishish uchun.
-SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+# SESSIYA: kesh + baza (`cached_db`), faqat kesh emas.
+#
+# O'qish Redis'dan boradi (tez), lekin yozuv bazaga ham tushadi.
+# Nega kerak bo'lib qoldi: Google orqali kirishda CSRF himoyasi
+# uchun `state` sessiyaga yoziladi va foydalanuvchi Google'ga o'tib
+# qaytguncha o'sha yerda turishi shart. Sof Redis sessiyada u
+# yo'qolishi mumkin edi —
+#   · Redis qayta ishga tushsa (deploy, xotira, avariya)
+#   · `maxmemory-policy allkeys-lru` kalitni evict qilsa
+# va odam "Xavfsizlik tekshiruvi o'tmadi" xatosini olib, kira
+# olmasdi. Sababi esa hech qayerda ko'rinmasdi.
+#
+# Qo'shimcha yuk kichik: sessiya faqat kirish oqimida yoziladi,
+# qolgan hamma joyda autentifikatsiya JWT bilan boradi.
+SESSION_ENGINE = "django.contrib.sessions.backends.cached_db"
 SESSION_CACHE_ALIAS = "default"
 
 # Ommaviy ro'yxat/detal javoblarining kesh muddati (sekund).
@@ -356,9 +370,28 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 5 * 1024 * 1024    # 5 MB
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 
+# PROKSI ORQASIDAGI HTTPS.
+#
+# nginx, Cloudflare va shunga o'xshash proksilar so'rovni ichkariga
+# oddiy HTTP bilan uzatadi va haqiqiy sxemani `X-Forwarded-Proto`
+# sarlavhasida aytadi. Django buni O'ZI ishonmaydi — va to'g'ri
+# qiladi: proksi bo'lmasa, sarlavhani istalgan mijoz o'zi yozib
+# yuborishi mumkin.
+#
+# Nega sozlanadigan qilindi: Google orqali kirishda `redirect_uri`
+# so'rovning sxemasidan quriladi. Proksi orqasida u `http://...`
+# bo'lib chiqardi va Google uni rad etardi ("redirect_uri_mismatch"),
+# chunki `localhost` dan boshqa manzillarda faqat `https` qabul
+# qilinadi. Lokal sinovda (tunnel orqali telefondan ochish) aynan
+# shunday bo'ldi.
+#
+# Productionda O'ZI yoqiladi. DEBUG'da esa faqat ataylab —
+# `USE_PROXY_SSL_HEADER=True` deb yozilganda.
+if config("USE_PROXY_SSL_HEADER", default=not DEBUG, cast=bool):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = config("SECURE_SSL_REDIRECT", default=True, cast=bool)
-    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_HSTS_SECONDS = 31536000  # 1 yil
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True

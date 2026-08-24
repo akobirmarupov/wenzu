@@ -32,6 +32,38 @@ const BASE_FEATURES = [
   "Mijoz sharhlari va reyting",
 ];
 
+/**
+ * "Ariza tekshiruvda" ekranidagi matn.
+ *
+ * Matn ARIZADAGI TARIFGA bog'liq va bu tafsilot emas. Bepul sinov faqat
+ * tarifsiz arizada beriladi; 1 oylik yoki 3 oylik tarif tanlagan odam
+ * sinov olmaydi — uning obunasi to'lov tasdiqlangan kundan boshlab
+ * o'sha muddatga faollashadi va muddat tugab, to'lov bo'lmasa o'chadi.
+ *
+ * Ilgari bu yerda ikkala holatda ham "Tasdiqlangach 7 kunlik bepul sinov
+ * boshlanadi" yozilardi — pul to'lagan odam ham bepul kun kutib turardi
+ * va tasdiqdan keyin uni ko'rmay, "nega bermadingiz" deb yozardi.
+ *
+ * Backend `is_trial_application` va `applied_plan` ni beradi; ular
+ * bo'lmasa (eski javob) sinov haqida hech narsa VA'DA QILMAYMIZ —
+ * noto'g'ri va'dadan ko'ra umumiy matn yaxshi.
+ */
+export function pendingApprovalText(subscription) {
+  const plan = subscription?.applied_plan;
+  if (plan) {
+    const duration = esc(plan.duration_label || `${plan.duration_months} oy`);
+    return `Administrator to'lovingizni tasdiqlagach obunangiz o'sha kundan
+            boshlab <b>${duration}</b>ga faollashadi va barcha bo'limlar ochiladi.
+            Muddat tugagach to'lov qilinmasa, obuna to'xtaydi.`;
+  }
+  if (subscription?.is_trial_application) {
+    const days = subscription.trial_days ?? 7;
+    return `Tasdiqlangach <b>${days} kunlik bepul sinov</b> boshlanadi va
+            barcha bo'limlar ochiladi.`;
+  }
+  return "Tasdiqlangach barcha bo'limlar ochiladi va joyingiz qidiruvda ko'rinadi.";
+}
+
 const EXTRA_FEATURES = [
   { icon: "⚡", title: "Tezkor qo'llab-quvvatlash", text: "Telegram orqali to'g'ridan-to'g'ri aloqa" },
   { icon: "📊", title: "Statistika", text: "Bronlar, daromad va reyting bir joyda" },

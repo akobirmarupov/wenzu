@@ -10,7 +10,10 @@ def get_owner_business(user):
     ma'lumotini so'ray olmasligi uchun business_id URL'dan emas, aynan
     tokendagi foydalanuvchidan olinadi.
     """
-    business = user.businesses.select_related("application").first()
+    # `application__plan` ham olinadi: obuna ekrani "ariza qaysi tarif
+    # bilan berilgan?" degan savolga javob berishi kerak va busiz har bir
+    # so'rovda qo'shimcha SELECT ketardi.
+    business = user.businesses.select_related("application", "application__plan").first()
     if business is None:
         raise NotFound("Sizda hali biznes profili yo'q. Avval ariza yuboring.")
     return business

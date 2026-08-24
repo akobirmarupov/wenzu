@@ -593,3 +593,108 @@ class TrialOncePerUserTest(TestCase):
         approve_application(application=business.application, approved_by=self.admin)
 
         self.assertTrue(self.client.get("/api/auth/me/").data["has_used_trial"])
+
+
+class PendingApprovalMessageTest(TestCase):
+    """
+    Kutish ekranidagi matn ARIZADAGI TARIFGA mos bo'lishi kerak.
+
+    Bepul sinov faqat tarifsiz arizada beriladi. 1 yoki 3 oylik tarif
+    tanlagan odam sinov olmaydi: uning obunasi to'lov tasdiqlangan kundan
+    boshlab o'sha muddatga faollashadi va muddat tugab, keyingi to'lov
+    bo'lmasa o'chadi.
+
+    Ilgari ikkala holatda ham "Tasdiqlangach 7 kunlik bepul sinov
+    boshlanadi" yozilardi — pul to'lagan odam bepul kun kutib turardi va
+    tasdiqdan keyin uni ko'rmay, "nega bermadingiz" deb yozardi.
+    """
+
+    def setUp(self):
+        ensure_plans()
+        self.admin = make_user("msg_admin", "+998900002000", is_staff=True)
+
+    def _subscription_screen(self, user):
+        client = APIClient()
+        client.force_authenticate(user)
+        response = client.get("/api/owner/subscription/")
+        self.assertEqual(response.status_code, 200, response.data)
+        return response.data
+
+    def test_trial_application_promises_the_trial(self):
+        owner = make_user("msg_trial_owner", "+998900002001")
+        submit_application(
+            applicant=owner, business_type="restaurant", business_name="Sinov Joyi",
+        )
+
+        data = self._subscription_screen(owner)
+
+        self.assertFalse(data["has_subscription"])
+        self.assertTrue(data["is_trial_application"])
+        self.assertIsNone(data["applied_plan"])
+        self.assertEqual(data["trial_days"], 7)
+        self.assertIn("bepul sinov", data["detail"])
+
+    def test_paid_application_does_not_promise_a_trial(self):
+        owner = make_user("msg_paid_owner", "+998900002002")
+        plan = SubscriptionPlan.objects.get(business_type="restaurant", duration_months=1)
+        submit_application(
+            applicant=owner, business_type="restaurant",
+            business_name="Pullik Joy", plan=plan,
+        )
+
+        data = self._subscription_screen(owner)
+
+        self.assertFalse(data["has_subscription"])
+        self.assertFalse(data["is_trial_application"])
+        self.assertIsNone(data["trial_days"])
+        self.assertEqual(data["applied_plan"]["duration_months"], 1)
+        self.assertNotIn("sinov", data["detail"].lower(),
+                         "Pullik arizada sinov haqida hech narsa va'da qilinmasligi kerak")
+        self.assertIn("1 oy", data["detail"])
+
+    def test_paid_application_write_block_message_has_no_trial(self):
+        """Panelga yozishga urinishdagi 403 matni ham bir xil bo'lishi kerak."""
+        owner = make_user("msg_paid_owner2", "+998900002003")
+        plan = SubscriptionPlan.objects.get(business_type="restaurant", duration_months=3)
+        submit_application(
+            applicant=owner, business_type="restaurant",
+            business_name="Uch Oylik Joy", plan=plan,
+        )
+
+        client = APIClient()
+        client.force_authenticate(owner)
+        response = client.post("/api/owner/rooms/", {"name": "Xona", "capacity": 4}, format="json")
+
+        self.assertEqual(response.status_code, 403)
+        message = response.data["error"]["message"]
+        self.assertNotIn("sinov", message.lower())
+        self.assertIn("3 oy", message)
+
+    def test_paid_application_activates_without_trial_on_approval(self):
+        """Tasdiqdan keyin: darhol 'active', sinovsiz, tanlangan muddatga."""
+        owner = make_user("msg_paid_owner3", "+998900002004")
+        plan = SubscriptionPlan.objects.get(business_type="venue", duration_months=1)
+        application, business, _ = submit_application(
+            applicant=owner, business_type="venue",
+            business_name="To'yxona Pullik", plan=plan,
+        )
+
+        approve_application(application=application, approved_by=self.admin)
+
+        business.refresh_from_db()
+        subscription = business.subscription
+        self.assertEqual(subscription.status, "active",
+                         "Pullik ariza tasdiqlangach darhol 'active' bo'lishi kerak")
+        self.assertIsNotNone(subscription.subscription_ends_at)
+
+        # Sinov BERILMAGAN: `trial_ends_at` o'tmishda turadi.
+        self.assertLessEqual(subscription.trial_ends_at, timezone.now())
+
+        # Muddat aynan tanlangan tarifga teng (1 oy = 30 kun).
+        days = (subscription.subscription_ends_at - timezone.now()).days
+        self.assertGreaterEqual(days, 29)
+        self.assertLessEqual(days, 30)
+
+        # Foydalanuvchi bepul sinovni ISHLATMAGAN — keyin ham olishi mumkin.
+        owner.refresh_from_db()
+        self.assertFalse(owner.has_used_trial)

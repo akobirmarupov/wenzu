@@ -100,6 +100,53 @@
 }
 
 /* -------------------------------------------------------------------
+   5b. RASMLAR TELEFONGA MOSLANADI.
+
+   Muammo: kartochka to'ri kompyuterda 3-4 ustun bo'ladi va har bir
+   rasm ~270 px keladi. Telefonda esa to'r bitta ustunga tushadi va
+   AYNAN O'SHA nisbat (16/10) ekran kengligiga cho'ziladi — 360 px li
+   telefonda rasm 225 px balandlikka chiqadi. Natijada bitta ekranga
+   bittayarim kartochka sig'adi va ro'yxatni ko'rish uchun uzoq
+   aylantirish kerak bo'ladi.
+
+   Yechim: nisbat KENGROQ (16/9) qilinadi va balandlikka yuqori chegara
+   qo'yiladi. Kartochkaning o'zi, ranglari, tartibi — hammasi o'sha-o'sha
+   qoladi, faqat rasm past bo'ladi va ekranga ikki-uch kartochka sig'adi.
+
+   `object-fit: cover` allaqachon o'z komponentida turibdi, ya'ni rasm
+   cho'zilib buzilmaydi — faqat yuqori va pastidan qirqiladi.
+   ------------------------------------------------------------------- */
+@media (max-width: 560px) {
+  .card-media    { aspect-ratio: 16 / 9; max-height: 175px; }
+  .card-media-sm { aspect-ratio: 16 / 9; max-height: 155px; }
+
+  /* Detal sahifasidagi galereya — sahifaning eng katta rasmi.
+     Telefonda u ekranning yarmini egallab, sarlavha va tugmalar
+     pastda ko'rinmay qolardi. */
+  .detail-gallery .stage { aspect-ratio: 3 / 2; max-height: 240px; }
+  .detail-gallery .thumb { width: 56px; }
+
+  /* Menyu to'ri: bitta ustun o'rniga ikkita — taom rasmlari shunda
+     ikki barobar kichrayadi va bir ekranda to'rttasi ko'rinadi. */
+  .menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
+  .menu-item img { aspect-ratio: 1 / 1; }
+
+  /* Aylanma surat lentasi — kadrlar barmoq eniga yaqin bo'lsin. */
+  .marquee-item { width: 132px; }
+
+  /* Bron oynasidagi taom qatori va joy profilidagi kichik surat. */
+  .pick-row .thumb { width: 48px; height: 48px; }
+  .biz-profile-head img { width: 46px; height: 46px; }
+}
+
+/* Juda tor ekran (≤ 380 px): rasmlar yana bir pog'ona pasayadi. */
+@media (max-width: 380px) {
+  .card-media    { max-height: 150px; }
+  .card-media-sm { max-height: 132px; }
+  .detail-gallery .stage { max-height: 205px; }
+}
+
+/* -------------------------------------------------------------------
    6. O'RNATILGAN ILOVA REJIMI.
 
    Ilova bosh ekrandan ochilganda brauzerning "orqaga" tugmasi yo'q.

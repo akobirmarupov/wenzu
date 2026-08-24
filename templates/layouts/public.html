@@ -1,7 +1,13 @@
 {% extends "base.html" %}
 
+{% comment %}
+  `has-tabbar` — telefondagi pastki menyu mazmunni bosib qolmasligi uchun
+  joy ajratadi. Klass SHU YERDA turadi, JS'da emas: sahifa chizilishi
+  bilan joy ajralsin, aks holda menyu paydo bo'lganda mazmun "sakrab"
+  ketardi.
+{% endcomment %}
 {% block body %}
-<div class="shell">
+<div class="shell has-tabbar">
   {% include "partials/public_sidebar.html" %}
 
   <div class="shell-main">
@@ -14,4 +20,10 @@
     {% include "partials/footer.html" %}
   </div>
 </div>
+
+{% comment %}
+  Pastki menyu — mazmuni JS tomonidan sessiyaga va tilga qarab quriladi
+  (`ui/public-nav.js`). Faqat telefonda ko'rinadi (`_tabbar.css`).
+{% endcomment %}
+<nav class="tabbar" id="tabbar" aria-label="Asosiy bo'limlar"></nav>
 {% endblock %}

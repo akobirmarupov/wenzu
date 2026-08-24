@@ -73,6 +73,9 @@ class GoogleStartAPIView(APIView):
     """
 
     permission_classes = [AllowAny]
+    # Cheklov: bu endpoint har chaqirilganda sessiya yozadi. Cheksiz
+    # so'rov sessiya jadvalini shishirib yuborardi.
+    throttle_classes = [LoginThrottle]
 
     def get(self, request):
         state = secrets.token_urlsafe(24)

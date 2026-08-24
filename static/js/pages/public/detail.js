@@ -127,10 +127,24 @@ function bindGallery() {
   start();
 }
 
+/**
+ * Bo'limlar.
+ *
+ * To'yxonada "Narxlar" va "Taomlar" bo'limlari SHARTLI: qishloq
+ * to'yxonasida kishi boshiga narx ham, to'yxonaning o'z menyusi ham
+ * bo'lmasligi mumkin (oshpazni to'y egasi olib keladi). Bo'sh bo'limni
+ * ko'rsatib, ichiga "ma'lumot yo'q" deb yozgandan ko'ra, uni umuman
+ * chizmagan tozaroq.
+ */
 function tabsHtml() {
   const isVenue = business.business_type === "venue";
   const tabs = isVenue
-    ? [["halls", t("detail.halls")], ["menu", t("detail.dishes")], ["pricing", t("detail.pricing")], ["reviews", `${t("detail.reviews")} (${reviews.length})`]]
+    ? [
+        ["halls", t("detail.halls")],
+        business.menu?.length ? ["menu", t("detail.dishes")] : null,
+        hasPerPersonPricing() ? ["pricing", t("detail.pricing")] : null,
+        ["reviews", `${t("detail.reviews")} (${reviews.length})`],
+      ].filter(Boolean)
     : [["menu", t("detail.menu")], ["rooms", t("detail.rooms")], ["reviews", `${t("detail.reviews")} (${reviews.length})`]];
 
   return `<div class="tabs" role="tablist">
@@ -138,6 +152,11 @@ function tabsHtml() {
       `<button class="tab ${activeTab === key ? "active" : ""}" data-tab="${key}" role="tab">${esc(label)}</button>`
     ).join("")}
   </div>`;
+}
+
+/** Egasi kishi boshiga narx kiritganmi (shahar oqimi). */
+function hasPerPersonPricing() {
+  return business.pricing_mode === "per_person" || Boolean(business.dish_pricing?.length);
 }
 
 function roomsHtml() {
@@ -159,6 +178,14 @@ function roomsHtml() {
   </div>`;
 }
 
+/**
+ * Zal kartochkasi.
+ *
+ * Qishloq to'yxonasida asosiy raqam — zalning BIR KUNLIK IJARASI
+ * (masalan 15 000 000 so'm): to'y egasi shu summani to'laydi va
+ * qolganini o'zi tashkil qiladi. Shaharda esa bu maydon bo'sh bo'ladi
+ * va narx "Narxlar" bo'limida kishi boshiga ko'rsatiladi.
+ */
 function hallsHtml() {
   if (!business.halls?.length) return emptyState(t("common.empty"), "", "🏛️");
   return `<div class="grid grid-auto">
@@ -168,6 +195,8 @@ function hallsHtml() {
         <div class="card-body">
           <b>${esc(hall.name)}</b>
           <span class="small muted">${esc(t("detail.upTo", { count: hall.people }))}</span>
+          ${!hasPerPersonPricing() && hall.all_price
+            ? `<span class="small strong">${esc(t("detail.dayRent"))}: ${money(hall.all_price)}</span>` : ""}
           <span class="seal seal-gold" style="align-self:flex-start">${esc(t("detail.deposit"))}: ${money(hall.deposit_amount)}</span>
           <button class="btn btn-primary btn-sm btn-block" data-book-hall="${esc(hall.id)}"
                   style="margin-top:var(--sp-2)">${esc(t("detail.book"))}</button>

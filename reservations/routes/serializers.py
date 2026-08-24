@@ -200,16 +200,37 @@ class VenueReservationCreateSerializer(serializers.Serializer):
     """
     To'yxona broni: butun kunga, bitta zal.
 
-    Narx kishi boshiga hisoblanadi va tanlangan TAOM SONIGA bog'liq
-    (VenuePricing): umumiy summa = price_per_person × mehmonlar soni.
-    Mijoz nechta xil taom tanlagan bo'lsa, shuncha taom nomini ham
-    yuborishi kerak.
+    ===================================================================
+    Shahar va qishloq to'yxonasi bir xil ishlamaydi
+    ===================================================================
+    Shaharda narx KISHI BOSHIGA hisoblanadi va tanlangan taom soniga
+    bog'liq (`VenuePricing`): umumiy summa = kishi boshiga narx ×
+    mehmonlar soni. Mijoz menyudan taom tanlaydi va summani darhol
+    ko'radi.
+
+    Qishloqda esa unday emas. U yerda to'yxona BUTUNLAY ijaraga olinadi:
+    bir kunlik to'y uchun, masalan, 15 000 000 so'm to'lanadi va oshpazni
+    ham, mahsulotni ham to'y egasining o'zi olib boradi. Kishi boshiga
+    hech narsa to'lanmaydi, menyu ham to'yxonaniki emas.
+
+    Shuning uchun bu yerda `dish_count` ham, `menu_items` ham MAJBURIY
+    EMAS:
+
+      * taom tanlanmasa — bron baribir qabul qilinadi;
+      * egasi kishi boshiga narx kiritmagan bo'lsa — zalning bir kunlik
+        ijarasi (`Hall.all_price`) olinadi;
+      * u ham kiritilmagan bo'lsa — bron narxsiz yaratiladi va narx egasi
+        bilan keyin kelishiladi. Bu "0 so'm" deb yozib qo'yishdan yaxshi:
+        nol summa mijozga ham, egasiga ham noto'g'ri va'da beradi.
     """
 
     hall = serializers.UUIDField()
     date = serializers.DateField()
     guests_count = serializers.IntegerField(min_value=1, max_value=5000)
-    dish_count = serializers.IntegerField(min_value=1, max_value=3, required=False, default=1)
+    dish_count = serializers.IntegerField(
+        min_value=1, max_value=3, required=False, allow_null=True, default=None,
+        help_text="Ixtiyoriy. Faqat kishi boshiga narx belgilangan to'yxonalarda.",
+    )
     menu_items = serializers.ListField(
         child=serializers.UUIDField(), required=False, default=list, max_length=MAX_MENU_ITEMS
     )
@@ -243,28 +264,53 @@ class VenueReservationCreateSerializer(serializers.Serializer):
             )
 
         # --- narx ---
-        dish_count = attrs.get("dish_count", 1)
-        pricing = VenuePricing.objects.filter(
-            business=hall.business, dish_count=dish_count
-        ).first()
+        # `dict.fromkeys` — takrorlarni olib tashlaydi, lekin tartibni
+        # saqlaydi: mijoz taomlarni qaysi ketma-ketlikda tanlagan bo'lsa,
+        # bronda ham shunday ko'rinsin.
+        menu_ids = list(dict.fromkeys(attrs.get("menu_items") or []))
+        dish_count = attrs.get("dish_count")
+
+        # Taom soni ko'rsatilmagan bo'lsa, tanlangan taomlarning o'zi uni
+        # aytib turadi — mijozdan bir xil narsani ikki marta so'ramaymiz.
+        if dish_count is None and menu_ids:
+            dish_count = len(menu_ids)
+
+        packages = {
+            p.dish_count: p
+            for p in VenuePricing.objects.filter(business=hall.business)
+        }
+        pricing = packages.get(dish_count) if dish_count else None
+
+        if dish_count and pricing is None and packages:
+            available = ", ".join(str(n) for n in sorted(packages))
+            raise serializers.ValidationError(
+                {"dish_count": f"Bu to'yxonada {dish_count} xil taom uchun narx "
+                               f"belgilanmagan. Mavjud paketlar: {available}."}
+            )
+
         if pricing is not None:
             attrs["price_per_person"] = pricing.price_per_person
             attrs["total_price"] = pricing.price_per_person * attrs["guests_count"]
         elif hall.all_price is not None:
-            # Narx paketi sozlanmagan bo'lsa, zalning qat'iy summasiga qaytamiz.
+            # Qishloq oqimi: kishi boshiga emas, butun zal uchun bir kunlik ijara.
             attrs["price_per_person"] = None
             attrs["total_price"] = hall.all_price
         else:
-            raise serializers.ValidationError(
-                {"dish_count": "Bu to'yxonada narx hali sozlanmagan. Admin bilan bog'laning."}
-            )
+            # Egasi hali narx kiritmagan. Bron o'tadi, summa keyin kelishiladi.
+            attrs["price_per_person"] = None
+            attrs["total_price"] = None
+
+        attrs["dish_count"] = dish_count
 
         # --- menyu ---
-        menu_ids = attrs.get("menu_items") or []
+        # Taom tanlash MAJBURIY emas: to'y egasi o'z oshpazi bilan kelishi
+        # mumkin. Tanlangan bo'lsa — soni e'lon qilingan taom soniga mos
+        # kelishi kerak, aks holda hisob-kitob mijoz ko'rgan narxdan
+        # boshqacha chiqib qolardi.
         if menu_ids:
             from catalog.models import VenueMenuItem
 
-            if len(set(menu_ids)) != dish_count:
+            if pricing is not None and len(menu_ids) != dish_count:
                 raise serializers.ValidationError(
                     {"menu_items": f"{dish_count} xil taom tanlanishi kerak."}
                 )
@@ -273,7 +319,7 @@ class VenueReservationCreateSerializer(serializers.Serializer):
                     id__in=menu_ids, business=hall.business
                 ).values("id", "name")
             )
-            if len(items) != len(set(menu_ids)):
+            if len(items) != len(menu_ids):
                 raise serializers.ValidationError({"menu_items": "Ba'zi taomlar topilmadi."})
             attrs["menu_snapshot"] = [
                 {"id": str(i["id"]), "name": i["name"]} for i in items

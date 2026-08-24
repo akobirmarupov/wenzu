@@ -130,16 +130,22 @@ def submit_application(*, applicant, business_type, business_name, plan=None):
 @transaction.atomic
 def approve_application(*, application, approved_by):
     """
-    Admin arizani tasdiqlaydi — ANA SHU YERDA 7 kunlik BEPUL SINOV
-    boshlanadi va biznes ommaviy qidiruvga chiqadi.
+    Admin arizani tasdiqlaydi — ANA SHU YERDA obuna ochiladi va biznes
+    ommaviy qidiruvga chiqadi.
 
-    Ilgari bu funksiya `activate_subscription` ni chaqirib, darhol 30
-    kunlik PULLIK muddat berardi. Bu ikki jihatdan noto'g'ri edi:
-      · tasdiq — to'lov emas, faqat "bu haqiqiy joy" degan tekshiruv
-      · sinov muddati ariza berilishi bilanoq boshlanib ketardi
+    Obuna qanday ochilishi ARIZADAGI TARIFGA bog'liq:
+      · `plan is None` — bepul sinov arizasi: shu kundan boshlab
+        `trial_days` kunlik sinov ochiladi (har bir foydalanuvchiga
+        bir marta).
+      · `plan` tanlangan — 1 yoki 3 oylik tarif: SINOV BERILMAYDI.
+        Obuna tasdiq kunidan boshlab darhol 'active' bo'ladi va aynan
+        o'sha muddatga ochiladi; muddat tugab, keyingi to'lov bo'lmasa
+        'expired' ga o'tadi. Pul to'lagan odamga ustiga yana bepul kun
+        qo'shishning ma'nosi yo'q.
 
-    Pullik muddat endi alohida oqimda: egasi obuna arizasini yuboradi
-    (`SubscriptionRequest`), to'laydi, admin o'sha arizani tasdiqlaydi.
+    Ilgari bu funksiya `activate_subscription` ni chaqirib, tarifdan
+    qat'i nazar darhol 30 kunlik muddat berardi. Bu noto'g'ri edi:
+    tasdiq — to'lov emas, faqat "bu haqiqiy joy" degan tekshiruv.
     """
     from subscriptions.services import TrialAlreadyUsed, start_paid, start_trial
 

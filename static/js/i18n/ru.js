@@ -4,6 +4,10 @@ export default {
 
   nav: {
     home: "Главная", restaurants: "Рестораны", venues: "Свадебные залы",
+    // Короткие названия — для нижнего меню на телефоне.
+    shortHome: "Главная", shortRestaurants: "Рестораны", shortVenues: "Залы",
+    shortBookings: "Брони", shortProfile: "Профиль",
+    shortLogin: "Войти", shortAdmin: "Админ",
     news: "Новости", profile: "Профиль", bookings: "Мои брони",
     business: "Открыть бизнес", login: "Войти", register: "Регистрация",
     logout: "Выйти", panel: "Моя панель", admin: "Управление",
@@ -118,6 +122,7 @@ export default {
     noReviews: "Пока нет отзывов", beFirst: "Оставьте отзыв первым.",
     priceNote: "Итоговая сумма = цена за человека × количество гостей.",
     perPerson: "сум / чел.", dishCount: "вида блюд",
+    dayRent: "Аренда на день",
   },
 
   booking: {

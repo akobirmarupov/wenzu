@@ -15,7 +15,7 @@ import { initOwnerPage } from "./shell.js";
 import { $, render, esc } from "../../ui/dom.js";
 import { skeletonRows, emptyState, errorState } from "../../ui/state.js";
 import { money, dateLabel, dateTimeLabel, statusSeal } from "../../ui/format.js";
-import { pricingHtml, bindPricing } from "../../components/pricing.js";
+import { pricingHtml, bindPricing, pendingApprovalText } from "../../components/pricing.js";
 
 const session = await initOwnerPage();
 if (session) load();
@@ -40,9 +40,8 @@ function statusCardsHtml(subscription) {
         <span>
           <b>Arizangiz administrator tekshiruvida</b>
           <span class="small">
-            Tasdiqlangach <b>7 kunlik bepul sinov</b> boshlanadi va barcha
-            bo'limlar ochiladi. Tezlashtirish uchun
-            ${esc(subscription.admin_telegram || "@uvente")} ga yozing.
+            ${pendingApprovalText(subscription)}
+            Tezlashtirish uchun ${esc(subscription.admin_telegram || "@uvente")} ga yozing.
           </span>
         </span>
       </div>`;

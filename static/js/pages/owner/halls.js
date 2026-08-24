@@ -25,6 +25,9 @@ function card(hall) {
       <div class="card-body">
         <b>${esc(hall.name)}</b>
         <span class="small muted">${hall.people} kishigacha</span>
+        <span class="small">${hall.all_price
+          ? `Bir kunlik ijara: <b>${money(hall.all_price)}</b>`
+          : `<span class="muted">Bir kunlik ijara kiritilmagan</span>`}</span>
         <span class="seal seal-gold" style="align-self:flex-start">Depozit: ${money(hall.deposit_amount)}</span>
         <div class="row row-2" style="margin-top:var(--sp-2)">
           <button class="btn btn-sm btn-outline" style="flex:1" data-edit="${esc(hall.id)}">Tahrirlash</button>
@@ -51,6 +54,18 @@ function formHtml(hall) {
           <input class="input" id="people" name="people" type="number" min="1" required
                  value="${hall?.people || ""}" placeholder="500">
         </div>
+      </div>
+
+      <div class="field">
+        <label for="all_price">Bir kunlik ijara narxi (ixtiyoriy)</label>
+        <input class="input" id="all_price" name="all_price" type="number" min="0"
+               value="${hall?.all_price ? Math.round(hall.all_price) : ""}" placeholder="Masalan: 15000000">
+        <span class="hint small muted">
+          Butun zal bir kunga shu summaga beriladi va mehmonlar soniga bog'liq bo'lmaydi —
+          oshpaz va mahsulotni to'y egasi o'zi olib keladi. Bu qishloq to'yxonalaridagi odatiy tartib.
+          Agar siz kishi boshiga narx olsangiz, bu maydonni bo'sh qoldiring va pastdagi
+          "Taom paketi narxlari"ni to'ldiring.
+        </span>
       </div>
 
       <div class="field-row">
@@ -91,8 +106,13 @@ function openForm(hall) {
       const file = form.photo.files[0];
       const values = formValues(form);
       delete values.photo;
-      if (!values.deposit_price) delete values.deposit_price;
       if (!values.package) delete values.package;
+
+      // Bo'sh son maydoni "narx yo'q" degani va uni O'CHIRA olish kerak.
+      // Ilgari bo'sh maydon so'rovdan butunlay olib tashlanardi — natijada
+      // bir marta kiritilgan narxni qaytarib o'chirib bo'lmasdi.
+      values.all_price = values.all_price === "" ? null : values.all_price;
+      values.deposit_price = values.deposit_price === "" ? null : values.deposit_price;
 
       const saved = hall
         ? await api.owner.updateHall(hall.id, values)
@@ -166,12 +186,15 @@ function init() {
         .map((n) => ({ dish_count: n, price_per_person: $(`#price-${n}`).value }))
         .filter((row) => row.price_per_person !== "" && Number(row.price_per_person) > 0);
 
-      if (!rows.length) {
-        toast.error("Kamida bitta paket narxini kiriting.");
-        return;
-      }
+      // Hammasi bo'sh — bu ham TO'G'RI holat, xato emas: kishi boshiga
+      // narx olmaydigan to'yxona ham bor. Bo'sh ro'yxat yuborilsa
+      // paketlar o'chadi va mijoz ekranida "kishi boshiga" bloki umuman
+      // ko'rinmay qoladi.
       await api.owner.savePricing(rows);
-      toast.ok("Narxlar saqlandi.");
+      toast.ok(rows.length
+        ? "Narxlar saqlandi."
+        : "Kishi boshiga narx olib tashlandi — mijozlarga ko'rsatilmaydi.");
+      load();
     } catch (error) {
       toast.fromError(error);
     } finally {

@@ -228,7 +228,7 @@ RESTAURANTS = [
 ]
 
 # ===================================================================
-# To'yxonalar (10 ta)
+# To'yxonalar (12 ta — oxirgi ikkitasi qishloq oqimi uchun)
 # ===================================================================
 VENUES = [
     {
@@ -386,6 +386,34 @@ VENUES = [
             ("Ichimliklar", "drink", "soft-drinks"),
         ],
     },
+    # ---------------------------------------------------------------
+    # Qishloq to'yxonalari.
+    #
+    # Bu ikkisi ataylab yuqoridagilardan boshqacha: `pricing` yo'q,
+    # `menu` ham yo'q, zallarda esa BIR KUNLIK IJARA narxi turadi.
+    # Qishloqda tartib shunday — to'yxona butunlay ijaraga olinadi,
+    # oshpaz va mahsulotni to'y egasi o'zi olib boradi.
+    #
+    # Demo ma'lumotda ular bo'lishi shart: shu ikki yozuvsiz oqimni
+    # ochib ko'rib bo'lmaydi va u faqat testda tekshirilgan bo'lib
+    # qolardi.
+    # ---------------------------------------------------------------
+    {
+        "name": "Urgut Saroy To'yxonasi", "district": "Urgut",
+        "lat": 39.4022, "lng": 67.2419, "photos": "wedding-reception",
+        "description": "Urgut markazidagi keng to'yxona. Zal bir kunga to'liq "
+                       "ijaraga beriladi — oshpaz, mahsulot va bezakni to'y egasi "
+                       "o'zi tashkil qiladi.",
+        "halls": [("Katta zal", 500, 15_000_000), ("Kichik zal", 200, 8_000_000)],
+    },
+    {
+        "name": "Zarafshon Bog'i", "district": "Payariq",
+        "lat": 39.9317, "lng": 66.8531, "photos": "village-garden",
+        "description": "Qishloq chekkasidagi bog' to'yxona. Yozda ochiq maydonda "
+                       "500 kishilik to'y o'tkazish mumkin. Narx egasi bilan "
+                       "kelishiladi.",
+        "halls": [("Bog' maydoni", 500)],
+    },
 ]
 
 # ===================================================================
@@ -421,6 +449,7 @@ PHOTO_TERMS = {
     "sushi-restaurant": "sushi restaurant interior",
     "wedding-reception": "wedding reception hall",
     "wedding-decor": "wedding hall decoration",
+    "village-garden": "garden party venue",
     "ballroom": "ballroom interior",
     # --- taomlar ---
     "plov": "uzbek pilaf",
@@ -505,6 +534,9 @@ OWNERS = {
     "Malika To'yxonasi":       ("demo_nigora_abdullayeva", "Nigora Abdullayeva", "+998901010208"),
     "Anhor Bog'i":             ("demo_shavkat_normatov", "Shavkat Normatov", "+998901010209"),
     "Sitora Palace":           ("demo_zafar_karimov", "Zafar Karimov", "+998901010210"),
+    # --- qishloq to'yxonalari (kishi boshiga emas, kunlik ijara) ---
+    "Urgut Saroy To'yxonasi":  ("demo_baxtiyor_sattorov", "Baxtiyor Sattorov", "+998901010211"),
+    "Zarafshon Bog'i":         ("demo_alisher_rajabov", "Alisher Rajabov", "+998901010212"),
 }
 
 # ===================================================================
@@ -661,7 +693,7 @@ class Command(BaseCommand):
 
         place_keys = {data["photos"] for data in RESTAURANTS + VENUES}
         food_keys = {item[3] for data in RESTAURANTS for item in data["menu"]}
-        food_keys |= {item[2] for data in VENUES for item in data["menu"]}
+        food_keys |= {item[2] for data in VENUES for item in data.get("menu", [])}
 
         self.stdout.write("Suratlar yuklanmoqda (Wikimedia Commons)...")
         for key in sorted(place_keys):
@@ -823,18 +855,26 @@ class Command(BaseCommand):
             photo = BusinessPhoto(business=business, order=order)
             photo.image.save(f"{business.id}-{order}.jpg", picture, save=True)
 
-        for position, (name, people) in enumerate(data["halls"]):
-            hall = Hall.objects.create(business=business, name=name, people=people)
+        for position, hall_data in enumerate(data["halls"]):
+            # Uchinchi element — bir kunlik ijara narxi. U faqat qishloq
+            # to'yxonalarida bo'ladi, shaharda narx kishi boshiga.
+            name, people, *rent = hall_data
+            hall = Hall.objects.create(
+                business=business, name=name, people=people,
+                all_price=Decimal(rent[0]) if rent else None,
+            )
             self._attach(hall.photo, photos, slot + position + 1,
                          name=f"{hall.id}.jpg", width=1200)
 
-        for dish_count, price in data["pricing"].items():
+        # `pricing` va `menu` — IXTIYORIY. Qishloq to'yxonasida kishi
+        # boshiga narx ham, to'yxonaning o'z menyusi ham bo'lmaydi.
+        for dish_count, price in data.get("pricing", {}).items():
             VenuePricing.objects.create(
                 business=business, dish_count=dish_count,
                 price_per_person=Decimal(price),
             )
 
-        for name, category, photo_key in data["menu"]:
+        for name, category, photo_key in data.get("menu", []):
             item = VenueMenuItem.objects.create(
                 business=business, name=name, category=category,
                 description=f"{name} — {business.name} to'y dasturxonidan.",
@@ -905,17 +945,24 @@ class Command(BaseCommand):
                     )
                 else:
                     hall = business.halls.order_by("?").first()
-                    pricing = business.pricings.order_by("?").first()
-                    if hall is None or pricing is None:
+                    if hall is None:
                         continue
                     guests = random.randint(80, min(hall.people, 400))
+
+                    # Kishi boshiga narx bo'lmasa (qishloq to'yxonasi) —
+                    # zalning bir kunlik ijarasi olinadi, u ham bo'lmasa
+                    # bron narxsiz qoladi. Bu xato holat emas: narx keyin
+                    # egasi bilan kelishiladi.
+                    pricing = business.pricings.order_by("?").first()
                     reservation = Reservation.objects.create(
                         user=customer, business=business, hall=hall,
                         availability=availability,
                         guests_count=guests, status=status,
-                        dish_count=pricing.dish_count,
-                        price_per_person=pricing.price_per_person,
-                        total_price=pricing.price_per_person * guests,
+                        dish_count=pricing.dish_count if pricing else None,
+                        price_per_person=pricing.price_per_person if pricing else None,
+                        total_price=(
+                            pricing.price_per_person * guests if pricing else hall.all_price
+                        ),
                         deposit_amount=hall.deposit_amount,
                     )
 

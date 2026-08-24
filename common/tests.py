@@ -7,6 +7,7 @@ ketma-ket bog'liq (ariza bo'lmasa biznes yo'q, biznes bo'lmasa bron yo'q).
 """
 
 import datetime
+from decimal import Decimal
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -376,3 +377,168 @@ class VenueFlowTest(TestCase):
         response = APIClient().get(f"/api/halls/{hall_id}/busy-dates/")
         self.assertEqual(response.status_code, 200, response.data)
         self.assertIn(str(today), response.data["busy_dates"])
+
+
+class RuralVenueFlowTest(TestCase):
+    """
+    Qishloq to'yxonasi oqimi.
+
+    Qishloqda to'yxona kishi boshiga emas, BUTUNLAY ijaraga olinadi:
+    bir kunlik to'y uchun qat'iy summa to'lanadi (masalan 15 000 000
+    so'm) va oshpazni ham, mahsulotni ham to'y egasining o'zi olib
+    boradi. Ya'ni:
+
+      * egasi kishi boshiga narx kiritmasligi mumkin;
+      * mijoz taom tanlamasdan ham bron bera olishi kerak;
+      * "kishi boshiga" narx mijozga UMUMAN ko'rinmasligi kerak, toki
+        egasi uni o'zi kiritmagunicha.
+    """
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="qishloq_ega", password="StrongPass123!",
+            full_name="Baxtiyor Sattorov", phone_number="+998901112233",
+            is_phone_verified=True,
+        )
+        self.admin = User.objects.create_user(
+            username="rural_admin", password="StrongPass123!",
+            full_name="Admin", phone_number="+998900000777", is_staff=True,
+        )
+        self.customer = User.objects.create_user(
+            username="tuy_egasi", password="StrongPass123!",
+            full_name="Jasur Qodirov", phone_number="+998933334455",
+            is_phone_verified=True,
+        )
+
+        self.owner_client = APIClient()
+        self.owner_client.force_authenticate(user=self.owner)
+        self.customer_client = APIClient()
+        self.customer_client.force_authenticate(user=self.customer)
+
+        response = self.owner_client.post("/api/business-applications/", {
+            "business_type": "venue", "business_name": "Urgut Saroy To'yxonasi",
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        self.business = Business.objects.get(owner=self.owner)
+        approve_application(application=self.business.application, approved_by=self.admin)
+
+        self.today = datetime.date.today()
+        response = self.owner_client.post("/api/owner/availability/generate/", {
+            "start_time": "08:00", "end_time": "00:00",
+            "year": self.today.year, "months": [self.today.month],
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+    def _create_hall(self, **overrides):
+        payload = {"name": "Katta zal", "people": 500, "all_price": "15000000"}
+        payload.update(overrides)
+        response = self.owner_client.post("/api/owner/halls/", payload, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        return response.data["id"]
+
+    def test_books_without_menu_or_per_person_price(self):
+        """500 kishilik zal, 15 000 000 so'm — taom tanlamasdan bron."""
+        hall_id = self._create_hall()
+
+        # Mijoz ko'radigan sahifa: narx rejimi "fixed", kishi boshiga
+        # narxlar ro'yxati BO'SH — ko'rsatadigan narsa yo'q.
+        detail = APIClient().get(f"/api/businesses/{self.business.id}/")
+        self.assertEqual(detail.status_code, 200, detail.data)
+        self.assertEqual(detail.data["pricing_mode"], "fixed")
+        self.assertEqual(detail.data["dish_pricing"], [])
+        self.assertEqual(detail.data["halls"][0]["all_price"], "15000000.00")
+
+        # Bron: faqat sana va odamlar soni. Taom ham, taom soni ham yo'q.
+        response = self.customer_client.post("/api/reservations/", {
+            "hall": hall_id, "date": str(self.today), "guests_count": 500,
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        reservation = Reservation.objects.get(pk=response.data["id"])
+        self.assertIsNone(reservation.dish_count)
+        self.assertIsNone(reservation.price_per_person,
+                          "Qishloq bronida kishi boshiga narx bo'lmasligi kerak")
+        self.assertEqual(reservation.total_price, Decimal("15000000.00"),
+                         "Summa mehmonlar soniga ko'paymasligi kerak")
+        self.assertEqual(reservation.selected_menu, [])
+
+    def test_books_when_no_price_configured_at_all(self):
+        """Egasi hech qanday narx kiritmagan — bron baribir o'tadi."""
+        hall_id = self._create_hall(all_price=None)
+
+        detail = APIClient().get(f"/api/businesses/{self.business.id}/")
+        self.assertEqual(detail.data["pricing_mode"], "unset")
+
+        response = self.customer_client.post("/api/reservations/", {
+            "hall": hall_id, "date": str(self.today), "guests_count": 300,
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        reservation = Reservation.objects.get(pk=response.data["id"])
+        self.assertIsNone(reservation.total_price,
+                          "Narx noma'lum bo'lsa 0 emas, bo'sh qolishi kerak")
+        self.assertIsNone(reservation.price_per_person)
+
+    def test_owner_adds_per_person_price_later(self):
+        """
+        Egasi keyinroq kishi boshiga narx kiritsa, mijoz uni ko'radi va
+        summa kishi soniga ko'payadi. Har bir to'yxona o'z narxini qo'yadi.
+        """
+        hall_id = self._create_hall(all_price=None)
+
+        response = self.owner_client.put("/api/owner/pricing/", [
+            {"dish_count": 1, "price_per_person": "150000"},
+            {"dish_count": 2, "price_per_person": "300000"},
+        ], format="json")
+        self.assertEqual(response.status_code, 200, response.data)
+
+        detail = APIClient().get(f"/api/businesses/{self.business.id}/")
+        self.assertEqual(detail.data["pricing_mode"], "per_person")
+        self.assertEqual(len(detail.data["dish_pricing"]), 2)
+
+        response = self.customer_client.post("/api/reservations/", {
+            "hall": hall_id, "date": str(self.today),
+            "guests_count": 200, "dish_count": 2,
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        reservation = Reservation.objects.get(pk=response.data["id"])
+        self.assertEqual(reservation.price_per_person, Decimal("300000.00"))
+        self.assertEqual(reservation.total_price, Decimal("60000000.00"))
+
+    def test_owner_can_clear_per_person_price(self):
+        """
+        Narxni kiritgan egasi uni QAYTARIB OLA olishi kerak — aks holda
+        bir marta bosilgan tugma joyni abadiy "shahar rejimida" qoldirardi.
+        """
+        self._create_hall()
+        self.owner_client.put("/api/owner/pricing/", [
+            {"dish_count": 1, "price_per_person": "150000"},
+        ], format="json")
+
+        response = self.owner_client.put("/api/owner/pricing/", [], format="json")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data, [])
+
+        detail = APIClient().get(f"/api/businesses/{self.business.id}/")
+        self.assertEqual(detail.data["pricing_mode"], "fixed")
+        self.assertEqual(detail.data["dish_pricing"], [])
+
+    def test_rejects_dish_count_without_matching_package(self):
+        """
+        Kishi boshiga narx bor, lekin so'ralgan paket yo'q — bu jim
+        o'tkazib yuboriladigan holat emas: mijoz ko'rgan narx bilan
+        yozilgan narx boshqacha bo'lib qolardi.
+        """
+        hall_id = self._create_hall(all_price=None)
+        self.owner_client.put("/api/owner/pricing/", [
+            {"dish_count": 1, "price_per_person": "150000"},
+        ], format="json")
+
+        response = self.customer_client.post("/api/reservations/", {
+            "hall": hall_id, "date": str(self.today),
+            "guests_count": 100, "dish_count": 3,
+        }, format="json")
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertIn("dish_count", response.data["error"]["details"])

@@ -72,12 +72,38 @@ class OwnerSubscriptionAPIView(APIView):
             # Obuna yo'q = ariza hali tasdiqlanmagan. Bu XATO EMAS, oddiy
             # holat — shuning uchun 200 qaytadi va ekran nima kutilayotganini
             # tushuntiradi.
+            #
+            # Kutish ekranidagi matn ARIZADAGI TARIFGA bog'liq. Ilgari u
+            # har doim "7 kunlik bepul sinov boshlanadi" derdi — pullik
+            # tarif tanlab, pulini to'lagan odam ham bepul kun kutib
+            # o'tirardi va tasdiqdan keyin uni ko'rmay, "nega bermadingiz"
+            # deb yozardi. Sinov faqat tarifsiz (`plan is None`) arizada
+            # beriladi.
+            applied_plan = business.application.plan
+            trial_days = PlatformSettings.get_solo().trial_days
+
+            if applied_plan is None:
+                detail = (
+                    "Arizangiz administrator tekshiruvida. Tasdiqlangach "
+                    f"{trial_days} kunlik bepul sinov boshlanadi."
+                )
+            else:
+                detail = (
+                    "Arizangiz administrator tekshiruvida. To'lov tasdiqlangach "
+                    f"obunangiz o'sha kundan boshlab {applied_plan.duration_label}ga "
+                    "faollashadi."
+                )
+
             return Response({
                 "has_subscription": False,
                 "status": "awaiting_approval",
-                "detail": "Arizangiz administrator tekshiruvida. "
-                          "Tasdiqlangach 7 kunlik bepul sinov boshlanadi.",
+                "detail": detail,
                 "business_type": business.business_type,
+                # Ariza qaysi tarif bilan berilgani — kutish ekrani matnini
+                # shu maydonga qarab yig'adi.
+                "is_trial_application": applied_plan is None,
+                "trial_days": trial_days if applied_plan is None else None,
+                "applied_plan": SubscriptionPlanSerializer(applied_plan).data if applied_plan else None,
                 "admin_telegram": telegram,
                 "plans": plans,
                 "pending_request": pending_data,

@@ -49,6 +49,7 @@ STYLESHEETS = [
     "css/components/_state.css",
     "css/components/_shell.css",
     "css/components/_topbar.css",
+    "css/components/_tabbar.css",
     "css/components/_footer.css",
     "css/components/_sidebar.css",
     "css/components/_banner.css",

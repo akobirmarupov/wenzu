@@ -252,14 +252,12 @@ pre code { background:none; padding:0; }
 
     <section class="panel">
       <h2>So'rov cheklovlari</h2>
-      <p class="sub">Chegaradan oshsa <b>429</b> qaytadi. SMS cheklovi IP emas, telefon raqami bo'yicha hisoblanadi.</p>
+      <p class="sub">Chegaradan oshsa <b>429</b> qaytadi. Kirish cheklovi IP + username juftligi bo'yicha hisoblanadi.</p>
       <div class="scroll"><table>
         <thead><tr><th>Amal</th><th>Cheklov</th><th>Nima bo'yicha</th></tr></thead>
         <tbody>
           <tr><td>Ro'yxatdan o'tish</td><td class="num">5 / soat</td><td>IP</td></tr>
           <tr><td>Login</td><td class="num">10 / daqiqa</td><td>IP + username</td></tr>
-          <tr><td>SMS kod so'rash</td><td class="num">3 / soat</td><td>telefon raqami</td></tr>
-          <tr><td>SMS tasdiqlash</td><td class="num">10 / soat</td><td>telefon raqami</td></tr>
           <tr><td>Bron yaratish</td><td class="num">10 / soat</td><td>foydalanuvchi</td></tr>
           <tr><td>Biznes arizasi</td><td class="num">3 / kun</td><td>foydalanuvchi</td></tr>
           <tr><td>Sharh</td><td class="num">20 / kun</td><td>foydalanuvchi</td></tr>
@@ -332,42 +330,41 @@ pre code { background:none; padding:0; }
         <span class="gcount">9</span>
       </header>
       
-      <article class="ep" data-method="POST" data-search="1. ro&#x27;yxatdan o&#x27;tish /api/auth/register/ yangi foydalanuvchi. rol avtomatik user bo&#x27;ladi, telefon hali tasdiqlanmagan.">
+      <article class="ep" data-method="GET" data-search="1. google orqali kirish /api/auth/google/start/ ro&#x27;yxatdan o&#x27;tish va kirish — bitta yo&#x27;l. brauzerda ochiladi.">
         <div class="ep-head">
-          <span class="m m-POST">POST</span>
-          <code class="path">/api/auth/register/</code>
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/auth/google/start/</code>
           <span class="auth auth-public">ochiq</span>
         </div>
-        <h4>1. Ro&#x27;yxatdan o&#x27;tish</h4>
-        <p class="note">Yangi foydalanuvchi. Rol avtomatik user bo&#x27;ladi, telefon hali tasdiqlanmagan.</p><details class="payload"><summary>Request body</summary><pre><code>{
-  &quot;full_name&quot;: &quot;Sardor Yusupov&quot;,
-  &quot;phone_number&quot;: &quot;+998901234567&quot;,
-  &quot;username&quot;: &quot;sardor_y&quot;,
-  &quot;password&quot;: &quot;StrongPass123!&quot;,
-  &quot;password_confirm&quot;: &quot;StrongPass123!&quot;
-}</code></pre></details>
+        <h4>1. Google orqali kirish — 1-qadam</h4>
+        <p class="note">Ro&#x27;yxatdan o&#x27;tish VA kirish — bitta yo&#x27;l: hisob bo&#x27;lmasa server uni o&#x27;zi yaratadi.
+        Bu manzil foydalanuvchini Google&#x27;ga qayta yo&#x27;naltiradi (302), shuning uchun uni Postman&#x27;dan emas,
+        <b>brauzerda</b> ochish kerak. <code>?next=/bronlarim/</code> — kirishdan keyin qaytariladigan ichki sahifa.</p>
       </article>
-      <article class="ep" data-method="POST" data-search="2. sms kod so&#x27;rash /api/auth/send-code/ telefon raqamiga 6 xonali tasdiqlash kodi yuboriladi (eskiz.uz orqali).">
+      <article class="ep" data-method="GET" data-search="2. google callback /api/auth/google/callback/ google shu yerga qaytaradi, tokenlar url fragmentida beriladi.">
         <div class="ep-head">
-          <span class="m m-POST">POST</span>
-          <code class="path">/api/auth/send-code/</code>
+          <span class="m m-GET">GET</span>
+          <code class="path">/api/auth/google/callback/</code>
           <span class="auth auth-public">ochiq</span>
         </div>
-        <h4>2. SMS kod so&#x27;rash</h4>
-        <p class="note">Telefon raqamiga 6 xonali tasdiqlash kodi yuboriladi (Eskiz.uz orqali).</p><details class="payload"><summary>Request body</summary><pre><code>{
-  &quot;phone_number&quot;: &quot;{{phone_number}}&quot;
-}</code></pre></details>
+        <h4>2. Google qaytish manzili</h4>
+        <p class="note">Google shu yerga <code>?code=...&amp;state=...</code> bilan qaytadi. Server <code>code</code> ni
+        <code>id_token</code> ga almashtiradi, hisobni topadi yoki yaratadi va tokenlarni
+        <b>URL fragmentida</b> beradi: <code>/kirish/#access=...&amp;refresh=...&amp;created=1</code>.
+        Fragment ataylab — u serverga yuborilmaydi, ya&#x27;ni kirish jurnallarida qolmaydi.
+        Google Console&#x27;dagi <b>Authorized redirect URIs</b> ga aynan shu manzil qo&#x27;shilishi shart.</p>
       </article>
-      <article class="ep" data-method="POST" data-search="3. telefonni tasdiqlash /api/auth/verify-phone/ kodni tekshiradi va is_phone_verified=true qiladi.">
+      <article class="ep" data-method="POST" data-search="3. google id_token (mobil ilova) /api/auth/google/ veb-saytda ishlatilmaydi.">
         <div class="ep-head">
           <span class="m m-POST">POST</span>
-          <code class="path">/api/auth/verify-phone/</code>
+          <code class="path">/api/auth/google/</code>
           <span class="auth auth-public">ochiq</span>
         </div>
-        <h4>3. Telefonni tasdiqlash</h4>
-        <p class="note">Kodni tekshiradi va is_phone_verified=True qiladi.</p><details class="payload"><summary>Request body</summary><pre><code>{
-  &quot;phone_number&quot;: &quot;{{phone_number}}&quot;,
-  &quot;code&quot;: &quot;{{sms_code}}&quot;
+        <h4>3. Google id_token — mobil ilova uchun</h4>
+        <p class="note">Veb-saytda <b>ishlatilmaydi</b> (u redirect oqimidan foydalanadi). Bu endpoint mobil ilova uchun:
+        u Google SDK&#x27;sidan <code>id_token</code> ni o&#x27;zi oladi. Server tokenni Google kalitlari bilan tekshiradi.
+        Javob: <code>{access, refresh, user, created}</code>.</p><details class="payload"><summary>Request body</summary><pre><code>{
+  &quot;credential&quot;: &quot;&lt;Google bergan id_token&gt;&quot;
 }</code></pre></details>
       </article>
       <article class="ep" data-method="POST" data-search="4. kirish (login) /api/auth/login/ jwt token beradi va foydalanuvchi ma&#x27;lumotini qaytaradi.">
@@ -581,13 +578,33 @@ pre code { background:none; padding:0; }
           <span class="auth auth-token">token</span>
         </div>
         <h4>To&#x27;yxona broni</h4>
-        <p class="note">To&#x27;yxona broni — butun kunga, bitta zal.</p><details class="payload"><summary>Request body</summary><pre><code>{
+        <p class="note">To&#x27;yxona broni — butun kunga, bitta zal. Majburiy maydonlar faqat
+          <code>hall</code>, <code>date</code>, <code>guests_count</code>;
+          <code>dish_count</code> va <code>menu_items</code> ixtiyoriy.</p>
+        <p class="note">Narx <code>pricing_mode</code> ga qarab uch xil bo&#x27;ladi
+          (biznes detalida qaytadi):</p>
+        <ul class="note">
+          <li><b>per_person</b> — shahar odati: egasi 1/2/3 xil taom uchun kishi boshiga narx
+            kiritgan. <code>dish_count</code> yuboriladi, umumiy summa = kishi boshiga narx ×
+            mehmonlar soni. <code>menu_items</code> yuborilsa, soni aynan <code>dish_count</code>
+            ga teng bo&#x27;lishi kerak.</li>
+          <li><b>fixed</b> — qishloq odati: kishi boshiga hech narsa to&#x27;lanmaydi, butun zal
+            bir kunga ijaraga olinadi (<code>Hall.all_price</code>, masalan 15 000 000 so&#x27;m)
+            va oshpazni to&#x27;y egasi o&#x27;zi olib boradi. <code>dish_count</code>
+            yuborilmaydi.</li>
+          <li><b>unset</b> — egasi hali narx kiritmagan. Bron baribir qabul qilinadi,
+            <code>total_price</code> bo&#x27;sh qaytadi va summa keyin kelishiladi.</li>
+        </ul><details class="payload"><summary>Request body — shahar (kishi boshiga)</summary><pre><code>{
   &quot;hall&quot;: &quot;{{hall_id}}&quot;,
   &quot;date&quot;: &quot;2026-09-14&quot;,
   &quot;guests_count&quot;: 250,
   &quot;dish_count&quot;: 2,
   &quot;menu_items&quot;: [],
   &quot;special_request&quot;: &quot;&quot;
+}</code></pre></details><details class="payload"><summary>Request body — qishloq (kunlik ijara)</summary><pre><code>{
+  &quot;hall&quot;: &quot;{{hall_id}}&quot;,
+  &quot;date&quot;: &quot;2026-09-14&quot;,
+  &quot;guests_count&quot;: 500
 }</code></pre></details>
       </article>
       <article class="ep" data-method="GET" data-search="mening bronlarim /api/reservations/my/ foydalanuvchining bron tarixi.">
@@ -823,11 +840,15 @@ pre code { background:none; padding:0; }
           <span class="auth auth-token">token</span>
         </div>
         <h4>Zal qo&#x27;shish</h4>
-        <p class="note">🎉 Faqat to&#x27;yxona egasiga.</p><details class="payload"><summary>Request body</summary><pre><code>{
+        <p class="note">🎉 Faqat to&#x27;yxona egasiga. <code>all_price</code> — zalning
+          <b>bir kunlik ijarasi</b>: butun zal shu summaga beriladi va mehmonlar soniga
+          bog&#x27;liq bo&#x27;lmaydi. Kishi boshiga narx olsangiz, uni bo&#x27;sh
+          (<code>null</code>) qoldiring va <code>/api/owner/pricing/</code> ni
+          to&#x27;ldiring.</p><details class="payload"><summary>Request body</summary><pre><code>{
   &quot;name&quot;: &quot;Katta zal&quot;,
   &quot;people&quot;: 500,
   &quot;package&quot;: &quot;Standart bezak&quot;,
-  &quot;all_price&quot;: &quot;9000000&quot;
+  &quot;all_price&quot;: &quot;15000000&quot;
 }</code></pre></details>
       </article>
       <article class="ep" data-method="GET" data-search="bitta zal /api/owner/halls/{{hall_id}}/ 🎉 faqat to&#x27;yxona egasiga.">
@@ -866,7 +887,8 @@ pre code { background:none; padding:0; }
           <span class="auth auth-token">token</span>
         </div>
         <h4>Taom paketi narxlari (ko&#x27;rish)</h4>
-        <p class="note">🎉 Faqat to&#x27;yxona egasiga. 1/2/3 xil taom uchun kishi boshiga narx.</p>
+        <p class="note">🎉 Faqat to&#x27;yxona egasiga. 1/2/3 xil taom uchun kishi boshiga narx.
+          Bo&#x27;sh ro&#x27;yxat — joy kishi boshiga narx olmasligini bildiradi.</p>
       </article>
       <article class="ep" data-method="PUT" data-search="taom paketi narxlarini saqlash /api/owner/pricing/ 🎉 faqat to&#x27;yxona egasiga.">
         <div class="ep-head">
@@ -875,7 +897,10 @@ pre code { background:none; padding:0; }
           <span class="auth auth-token">token</span>
         </div>
         <h4>Taom paketi narxlarini saqlash</h4>
-        <p class="note">🎉 Faqat to&#x27;yxona egasiga.</p><details class="payload"><summary>Request body</summary><pre><code>[
+        <p class="note">🎉 Faqat to&#x27;yxona egasiga. Yuborilmagan paketlar o&#x27;chiriladi;
+          bo&#x27;sh ro&#x27;yxat (<code>[]</code>) — to&#x27;g&#x27;ri so&#x27;rov: kishi boshiga
+          narx butunlay olib tashlanadi va mijozga ko&#x27;rsatilmaydi (qishloq to&#x27;yxonasi
+          o&#x27;rniga <code>Hall.all_price</code> — bir kunlik ijarani to&#x27;ldiradi).</p><details class="payload"><summary>Request body</summary><pre><code>[
   {
     &quot;dish_count&quot;: 1,
     &quot;price_per_person&quot;: &quot;100000&quot;
