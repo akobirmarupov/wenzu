@@ -58,6 +58,51 @@ function panelRedirectHtml(subscription) {
     </div>`;
 }
 
+/**
+ * Arizasi RAD ETILGAN egaga — qayta yuborish ekrani.
+ *
+ * Rad etish joyni o'chirmaydi, faqat yashiradi. Ilgari bu holat kutish
+ * holati bilan bir xil ko'rinardi ("arizangiz tekshiruvida") va tarif
+ * tugmalari ham bloklangan bo'lardi — ya'ni odam hech qachon kelmaydigan
+ * javobni kutib, ekranda hech narsa qila olmasdi. Endi u tarifni tanlab,
+ * arizani QAYTA yuboradi: eski joyi o'sha yangi arizaga ulanadi.
+ */
+function rejectedHtml(subscription) {
+  const telegram = subscription.admin_telegram || "@uvente";
+  return `
+    ${adminContactHtml(telegram)}
+
+    <div class="price-pending" style="border-color:var(--danger);background:var(--danger-dim)">
+      <span class="ic" aria-hidden="true">⛔</span>
+      <span>
+        <b>Arizangiz rad etildi</b>
+        <span class="small">
+          Sababini ${esc(telegram)} bilan aniqlashtiring va arizani
+          <b>qayta yuboring</b> — quyidan tarifni tanlang. Joyingizdagi
+          ma'lumotlar saqlanib qoladi.
+        </span>
+      </span>
+    </div>
+
+    <div class="panel" style="margin-top:var(--sp-5)">
+      <div class="panel-head">
+        <div class="stack stack-1">
+          <h2 class="display h3">Arizani qayta yuborish</h2>
+          <span class="small muted">
+            Tarifni tanlang — ariza administratorga qaytadan ketadi.
+          </span>
+        </div>
+      </div>
+      <div id="premium-pricing">
+        ${pricingHtml({
+          plans: subscription.plans,
+          status: "rejected",
+          trialUsed: Boolean(subscription.trial_used),
+        })}
+      </div>
+    </div>`;
+}
+
 function awaitingHtml(subscription) {
   const telegram = subscription.admin_telegram || "@uvente";
   return `
@@ -221,7 +266,11 @@ export async function load(user) {
       return;
     }
 
-    if (user.role === "business" && user.business) {
+    // Shart ROLGA emas, JOYGA qaraydi. Rol endi faqat tasdiqlangan
+    // egada bo'ladi, arizasi kutayotgan yoki rad etilgan odamda esa
+    // 'user' — lekin uning arizasi bor va u shu yerda o'z holatini
+    // ko'rishi kerak.
+    if (user.business) {
       const subscription = await api.owner.subscription();
 
       // TASDIQLANGAN egaga bu bo'lim KO'RSATILMAYDI.
@@ -240,10 +289,16 @@ export async function load(user) {
       // `has_subscription === false` — bu XATO EMAS: ariza hali
       // tasdiqlanmagan, ya'ni panelga kira olmaydi va obuna holatini
       // faqat SHU YERDA ko'radi.
-      root.innerHTML = awaitingHtml(subscription);
+      //
+      // Ariza RAD ETILGAN bo'lsa ekran boshqacha: kutish o'rniga qayta
+      // yuborish. Tanlangan tarif obuna arizasini emas, YANGI BIZNES
+      // arizasini boshlaydi — shuning uchun `mode: "open"`.
+      const reapply = Boolean(subscription.can_reapply);
+      root.innerHTML = reapply ? rejectedHtml(subscription) : awaitingHtml(subscription);
       bindPricing("#premium-pricing", {
         plans: subscription.plans || [],
         telegram: subscription.admin_telegram || "@uvente",
+        mode: reapply ? "open" : "renew",
         onSent: () => load(user),
       });
     } else {

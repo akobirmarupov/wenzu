@@ -1,12 +1,25 @@
 /** Profil — "Bronlarim" bo'limi. */
 import { api } from "../../../core/api.js";
+import { auth } from "../../../core/auth.js";
 import { t } from "../../../core/i18n.js";
 import { $, delegate, esc, busy } from "../../../ui/dom.js";
 import { skeletonRows, emptyState, errorState } from "../../../ui/state.js";
 import { confirmDialog } from "../../../ui/modal.js";
 import { toast } from "../../../ui/toast.js";
-import { dateLabel, timeLabel, money, statusSeal } from "../../../ui/format.js";
+import { dateLabel, timeLabel, dateTimeLabel, money, statusSeal, timeLeftLabel } from "../../../ui/format.js";
+import { mapLinksHtml } from "../../../components/map-links.js";
 import { openReviewModal } from "../../../components/review-modal.js";
+
+/**
+ * Bitta bekor qilishning narxi — `account/trust.py` dagi
+ * `TRUST_CANCEL_PENALTY` bilan bir xil.
+ *
+ * Bu yerda faqat OGOHLANTIRISH matni uchun kerak; haqiqiy hisob-kitob
+ * serverda va javobda yangi bal qaytadi. Ya'ni bu son bir kun serverda
+ * o'zgarib, bu yerda unutilsa ham, foydalanuvchi noto'g'ri bal
+ * ko'rmaydi — faqat ogohlantirish matni eskirgan bo'ladi.
+ */
+const TRUST_PENALTY = 5;
 
 const FILTERS = [
   { value: "", key: "common.all" },
@@ -52,13 +65,21 @@ function row(reservation) {
         <b>${esc(reservation.business_name)}${target ? ` — ${esc(target)}` : ""}</b>
         <span class="small muted">${when} · ${reservation.guests_count} ${esc(t("common.people"))}
           ${reservation.total_price ? ` · ${money(reservation.total_price)}` : ""}</span>
-        <span class="xs faint">${esc(t("detail.deposit"))}: ${money(reservation.deposit_amount)}</span>
+        <span class="xs faint">${esc(t("detail.deposit"))}: ${money(reservation.deposit_amount)}${
+          reservation.day_rent_price ? ` · ${esc(t("detail.dayRent"))}: ${money(reservation.day_rent_price)}` : ""}</span>
+        ${mapLinksHtml(
+          { map_links: reservation.business_map_links,
+            district: reservation.business_district,
+            address: reservation.business_address },
+          { compact: true },
+        )}
         ${cancelHintHtml(reservation, blocked)}
       </div>
       <div class="list-row-actions">
         ${statusSeal(reservation.status)}
         ${canReview ? `<button class="btn btn-sm btn-gold" data-review="${esc(reservation.id)}">${esc(t("profile.leaveReview"))}</button>` : ""}
-        ${canCancel ? `<button class="btn btn-sm btn-danger" data-cancel="${esc(reservation.id)}">${esc(t("profile.cancel"))}</button>` : ""}
+        ${canCancel ? `<button class="btn btn-sm btn-danger" data-cancel="${esc(reservation.id)}"
+                  data-deadline="${esc(reservation.cancel_deadline || "")}">${esc(t("profile.cancel"))}</button>` : ""}
       </div>
     </div>`;
 }
@@ -66,9 +87,14 @@ function row(reservation) {
 /**
  * Bekor qilish muddati haqidagi izoh.
  *
- * Ikki holatda ko'rinadi: muddat hali ketayotganda (qancha qolganini
- * aytadi) va tugaganda (nega tugma yo'qligini aytadi). Aks holda mijoz
- * tugma qayoqqa g'oyib bo'lganini tushunmasdi.
+ * ANIQ SANA ham, qolgan vaqt ham ko'rsatiladi.
+ *
+ * Sababi qoidada. Bekor qilish oynasi endi bron qilingan payt bilan
+ * tadbir orasidagi vaqtning teng yarmi — ya'ni u bir necha kun bo'lishi
+ * mumkin. "3 kun 4 soat qoldi" degan yozuv shoshilinchlikni bildiradi,
+ * lekin odam kalendariga belgilab qo'ya olmaydi; aniq sana esa
+ * belgilanadi, lekin qanchalik yaqin ekani sezilmaydi. Ikkalasi birga
+ * kerak.
  */
 function cancelHintHtml(reservation, blocked) {
   if (blocked) {
@@ -76,13 +102,14 @@ function cancelHintHtml(reservation, blocked) {
   }
   if (!reservation.cancel_deadline) return "";
 
-  const left = new Date(reservation.cancel_deadline) - Date.now();
-  if (left <= 0) return "";
+  const left = timeLeftLabel(reservation.cancel_deadline);
+  if (!left) return "";
 
-  const minutes = Math.ceil(left / 60000);
-  return `<span class="xs" style="color:var(--warn)">⏱ ${esc(
-    t("profile.cancelWindow", { minutes })
-  )}</span>`;
+  return `
+    <span class="xs cancel-hint">
+      ⏱ ${esc(t("profile.cancelUntil", { deadline: dateTimeLabel(reservation.cancel_deadline) }))}
+      <span class="muted">· ${esc(t("profile.cancelWindow", { left }))}</span>
+    </span>`;
 }
 
 export async function load() {
@@ -109,9 +136,19 @@ export function bind() {
   });
 
   delegate("#bookings-list", "[data-cancel]", async (button) => {
+    // Tugmani bosgan odam IKKI narsani bilishi kerak: muddat qachon
+    // tugaydi va bekor qilish unga nimaga tushadi. Ikkalasi ham
+    // kechikkan xabar bo'lmasligi uchun aynan shu oynada aytiladi.
+    const deadline = button.dataset.deadline;
+    const message = [
+      t("profile.cancelText"),
+      deadline ? t("profile.cancelUntil", { deadline: dateTimeLabel(deadline) }) : "",
+      t("profile.cancelCost", { points: TRUST_PENALTY }),
+    ].filter(Boolean).join(" ");
+
     const ok = await confirmDialog({
       title: t("profile.cancelTitle"),
-      message: t("profile.cancelText"),
+      message,
       confirmText: t("profile.cancel"),
       danger: true,
     });
@@ -119,8 +156,14 @@ export function bind() {
 
     const done = busy(button);
     try {
-      await api.reservations.cancel(button.dataset.cancel);
-      toast.ok(t("profile.cancelled"));
+      const result = await api.reservations.cancel(button.dataset.cancel);
+      // Server yangi balni qaytaradi — saqlangan nusxaga ko'chiramiz,
+      // aks holda profil ekrani eski qiymatni ko'rsatib turardi.
+      if (result?.trust) {
+        const current = auth.user();
+        if (current) auth.setUser({ ...current, trust: result.trust });
+      }
+      toast.ok(result?.message || t("profile.cancelled"));
       load();
     } catch (error) {
       toast.fromError(error);

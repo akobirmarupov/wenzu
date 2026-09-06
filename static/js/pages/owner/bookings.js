@@ -6,7 +6,7 @@ import { skeletonRows, emptyState, errorState } from "../../ui/state.js";
 import { paginationHtml } from "../../ui/pagination.js";
 import { toast } from "../../ui/toast.js";
 import { confirmDialog } from "../../ui/modal.js";
-import { dateLabel, timeLabel, statusSeal, money } from "../../ui/format.js";
+import { dateLabel, timeLabel, statusSeal, money, trustSeal, initials } from "../../ui/format.js";
 
 const STATUSES = [
   { value: "", label: "Barchasi" },
@@ -64,6 +64,53 @@ function init() {
   load();
 }
 
+/**
+ * Bron yuborgan MIJOZNING kartochkasi.
+ *
+ * Joy egasi bron so'rovini ko'rganda bitta savolga javob izlaydi:
+ * "bu odam kelmaydimi?". Band qilingan, lekin kelinmagan kun uning
+ * uchun to'g'ridan-to'g'ri zarar — u o'sha kunga boshqa mijozlarni
+ * rad etgan bo'ladi.
+ *
+ * Shuning uchun bu yerda faqat ism va raqam emas, ISHONCHLILIK BALI
+ * ham bor: 100 Bitdan boshlanadi va har bir bekor qilingan bronda
+ * 5 Bitga kamayadi. Bal ostida esa "necha marta bekor qilgan" —
+ * bitta raqam ba'zan darajadan ko'ra ko'proq narsa aytadi.
+ */
+function customerHtml(customer, fallbackName, fallbackPhone) {
+  // Eski javob `customer` bermasligi mumkin (keshlangan sahifa, mobil
+  // ilovaning eski versiyasi) — u holda kamida ism va raqam ko'rinsin.
+  if (!customer) {
+    return `<b>${esc(fallbackName || "—")}
+      <span class="small muted mono">${esc(fallbackPhone || "")}</span></b>`;
+  }
+
+  const avatar = customer.avatar
+    ? `<img class="cust-photo" src="${esc(customer.avatar)}" alt="" loading="lazy">`
+    : `<span class="cust-photo initials">${esc(customer.initials || initials(customer.full_name))}</span>`;
+
+  const cancelled = customer.cancelled_reservations_count || 0;
+
+  return `
+    <div class="customer-card">
+      ${avatar}
+      <div class="stack stack-1" style="min-width:0">
+        <b>${esc(customer.full_name || "—")}</b>
+        <a class="small mono" href="tel:${esc(customer.phone_number || "")}">${esc(customer.phone_number || "—")}</a>
+        <span class="row row-2 row-wrap" style="gap:6px">
+          ${trustSeal({
+            bits: customer.trust_bits,
+            level_display: customer.trust_level_display,
+            tone: customer.trust_tone,
+          })}
+          ${cancelled
+            ? `<span class="xs faint">${cancelled} marta bekor qilgan</span>`
+            : `<span class="xs faint">Bekor qilmagan</span>`}
+        </span>
+      </div>
+    </div>`;
+}
+
 function row(reservation) {
   const isVenue = reservation.business_type === "venue";
   const when = isVenue
@@ -83,10 +130,11 @@ function row(reservation) {
 
   return `
     <div class="list-row">
-      <div class="stack stack-1" style="min-width:260px">
-        <b>${esc(reservation.user_name)} <span class="small muted mono">${esc(reservation.user_phone)}</span></b>
+      <div class="stack stack-2" style="min-width:260px">
+        ${customerHtml(reservation.customer, reservation.user_name, reservation.user_phone)}
         <span class="small muted">${when} · ${reservation.guests_count} kishi${target ? ` · ${esc(target)}` : ""}</span>
         <span class="xs faint">Depozit: ${money(reservation.deposit_amount)}${
+          reservation.day_rent_price ? ` · Ijara: ${money(reservation.day_rent_price)}` : ""}${
           reservation.total_price ? ` · Umumiy: ${money(reservation.total_price)}` : ""}</span>
         ${menu ? `<span class="xs faint">🍽️ ${esc(menu)}</span>` : ""}
         ${reservation.special_request ? `<span class="xs faint">💬 ${esc(reservation.special_request)}</span>` : ""}

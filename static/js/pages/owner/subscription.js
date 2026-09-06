@@ -32,6 +32,28 @@ function planLabel(subscription) {
 }
 
 function statusCardsHtml(subscription) {
+  // RAD ETILGAN ariza — kutish emas, qayta yuborish holati.
+  //
+  // Ilgari bu ham "administrator tekshiruvida" bo'lib ko'rinardi va
+  // egasi hech qachon kelmaydigan javobni kutib o'tirardi. Endi ekran
+  // to'g'risini aytadi va pastdagi tarif kartochkalari ochiq turadi —
+  // birortasini tanlash yangi arizani boshlaydi.
+  if (subscription.can_reapply) {
+    const telegram = subscription.admin_telegram || "@uvente";
+    return `
+      <div class="price-pending" style="border-color:var(--danger);background:var(--danger-dim)">
+        <span class="ic" aria-hidden="true">⛔</span>
+        <span>
+          <b>Arizangiz rad etildi</b>
+          <span class="small">
+            Sababini ${esc(telegram)} bilan aniqlashtiring va arizani
+            <b>qayta yuboring</b> — quyidan tarifni tanlang, joyingizdagi
+            ma'lumotlar saqlanib qoladi.
+          </span>
+        </span>
+      </div>`;
+  }
+
   // Tasdiq kutilayotgan holat — obuna hali umuman yo'q.
   if (subscription.has_subscription === false) {
     return `
@@ -99,16 +121,26 @@ async function load() {
   const businessType =
     subscription.business_type || session.businessType || "restaurant";
 
+  // Qayta ariza rejimi: tanlangan tarif obunani uzaytirmaydi, YANGI
+  // biznes arizasini boshlaydi (`mode: "open"`). Shuning uchun tur ham
+  // qulflanmaydi — odam arizani noto'g'ri tur bilan yuborgani uchun rad
+  // etilgan bo'lishi mumkin.
+  const reapply = Boolean(subscription.can_reapply);
+
   render("#subscription-root", `
     ${statusCardsHtml(subscription)}
 
     <div class="panel" style="margin-top:var(--sp-5)">
       <div class="panel-head">
         <div class="stack stack-1">
-          <h2 class="display h3">Obunani uzaytirish</h2>
+          <h2 class="display h3">${reapply ? "Arizani qayta yuborish" : "Obunani uzaytirish"}</h2>
           <span class="small muted">
-            Tarifni tanlang — ariza administratorga ketadi. To'lovni Telegram
-            orqali amalga oshirasiz, u tasdiqlagach muddat uzayadi.
+            ${reapply
+              ? `Tarifni tanlang — ariza administratorga qaytadan ketadi.
+                 To'lovni Telegram orqali amalga oshirasiz, u tasdiqlagach
+                 joyingiz ochiladi.`
+              : `Tarifni tanlang — ariza administratorga ketadi. To'lovni Telegram
+                 orqali amalga oshirasiz, u tasdiqlagach muddat uzayadi.`}
           </span>
         </div>
       </div>
@@ -116,11 +148,14 @@ async function load() {
       <div id="pricing">
         ${pricingHtml({
           plans,
-          status: subscription.has_subscription === false
-            ? "awaiting_approval"
-            : subscription.status,
+          status: reapply
+            ? "rejected"
+            : subscription.has_subscription === false
+              ? "awaiting_approval"
+              : subscription.status,
           pending: subscription.pending_request,
-          ownedType: businessType,
+          ownedType: reapply ? null : businessType,
+          trialUsed: Boolean(subscription.trial_used),
         })}
       </div>
 
@@ -130,7 +165,12 @@ async function load() {
       </div>
     </div>`);
 
-  bindPricing("#pricing", { plans, telegram, onSent: load });
+  bindPricing("#pricing", {
+    plans,
+    telegram,
+    onSent: load,
+    mode: reapply ? "open" : "renew",
+  });
   renderPayments(subscription.payments || []);
   renderRequests();
 }

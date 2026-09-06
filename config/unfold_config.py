@@ -1,9 +1,9 @@
 """Django Unfold admin panelining ko'rinish sozlamalari — settings.py ni yengil qoldirish uchun alohida."""
 
 UNFOLD = {
-    "SITE_TITLE": "WENZU Admin",
-    "SITE_HEADER": "WENZU",
-    "SITE_SUBHEADER": "WENZU boshqaruv paneli",
+    "SITE_TITLE": "Feasto Admin",
+    "SITE_HEADER": "Feasto",
+    "SITE_SUBHEADER": "Feasto boshqaruv paneli",
     "SITE_URL": "/",
     "SITE_SYMBOL": "school",
     "BORDER_RADIUS": "16px",

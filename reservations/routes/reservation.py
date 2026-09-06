@@ -11,6 +11,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from account.trust import TRUST_CANCEL_PENALTY
 from common.models import PlatformSettings
 from common.pagination import StandardResultsPagination
 from common.permissions import HasContactPhone, IsBusinessRole, IsCustomer, IsSuperAdmin
@@ -42,10 +43,12 @@ class ReservationCreateAPIView(APIView):
     Restoran uchun:  {"room": uuid, "date": "2026-09-01", "start_time": "19:00",
                       "end_time": "21:00", "guests_count": 4}
     To'yxona uchun:  {"hall": uuid, "date": "2026-09-14", "guests_count": 250}
-                     — `dish_count` va `menu_items` IXTIYORIY. Qishloq
-                     to'yxonasida narx kishi boshiga emas, bir kunlik
-                     ijara (`Hall.all_price`) bo'lgani uchun mijoz taom
-                     tanlamasdan ham bron bera oladi.
+                     — `dish_count` va `menu_items` IXTIYORIY. Zal bir
+                     kunga ijaraga olinadi (`Hall.all_price`), ovqatni
+                     esa to'y egasi xohlasa to'yxonadan buyurtma qiladi,
+                     xohlasa o'zi tashkil qiladi. Taom soni tanlangan
+                     bo'lsa, menyudan aynan shuncha xil taom
+                     ko'rsatilishi shart.
 
     Ikki mijoz bir vaqtni bir vaqtda band qilib qo'ymasligi uchun bandlik
     tekshiruvi `select_for_update()` bilan qulflangan tranzaksiya ichida
@@ -92,7 +95,7 @@ class ReservationCreateAPIView(APIView):
         admin_telegram = reservation.business.telegram_username or (
             PlatformSettings.get_solo().admin_telegram_username
         )
-        payload = ReservationSerializer(reservation).data
+        payload = ReservationSerializer(reservation, context={"request": request}).data
         payload["message"] = (
             f"So'rovingiz qabul qilindi va hozircha \"kutilmoqda\" holatida. "
             f"Bronni yakuniy tasdiqlash uchun @{admin_telegram} administratoriga "
@@ -181,6 +184,7 @@ class ReservationCreateAPIView(APIView):
             selected_menu=data.get("menu_snapshot", []),
             special_request=data.get("special_request", ""),
             price_per_person=data.get("price_per_person"),
+            day_rent_price=data.get("day_rent_price"),
             total_price=data.get("total_price"),
             status="pending",
         )
@@ -214,7 +218,9 @@ class MyReservationListAPIView(APIView):
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request, view=self)
-        return paginator.get_paginated_response(ReservationSerializer(page, many=True).data)
+        return paginator.get_paginated_response(
+            ReservationSerializer(page, many=True, context={"request": request}).data
+        )
 
 
 class ReservationDetailAPIView(APIView):
@@ -239,7 +245,10 @@ class ReservationDetailAPIView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        return Response(ReservationSerializer(reservation).data, status=status.HTTP_200_OK)
+        return Response(
+            ReservationSerializer(reservation, context={"request": request}).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 class ReservationCancelAPIView(APIView):
@@ -288,10 +297,28 @@ class ReservationCancelAPIView(APIView):
             reservation.status = "cancelled"
             reservation.save(update_fields=["status"])
 
+            # ISHONCHLILIK BALI — faqat mijoz O'ZI bekor qilganda kamayadi.
+            #
+            # Administrator nizoni hal qilib bekor qilsa, ayb mijozda
+            # ekani noma'lum — uni jazolash noto'g'ri bo'lardi. Joy
+            # egasining rad etishi esa umuman boshqa endpoint
+            # (`OwnerReservationStatusAPIView`) va u ham balga tegmaydi.
+            if reservation.user_id == request.user.id:
+                request.user.penalize_trust(reason=f"reservation:{reservation.id}")
+
         logger.info(
             f"Reservation cancelled by customer: id={reservation.id}, user_id={request.user.id}"
         )
-        return Response(ReservationSerializer(reservation).data, status=status.HTTP_200_OK)
+        payload = ReservationSerializer(reservation, context={"request": request}).data
+        if reservation.user_id == request.user.id:
+            trust = request.user.trust
+            payload["trust"] = trust
+            payload["message"] = (
+                f"Bron bekor qilindi. Ishonchlilik balingizdan "
+                f"{TRUST_CANCEL_PENALTY} Bit ayirildi — hozir {trust['bits']} Bit "
+                f"({trust['level_display']})."
+            )
+        return Response(payload, status=status.HTTP_200_OK)
 
 
 class OwnerReservationListAPIView(APIView):
@@ -315,7 +342,9 @@ class OwnerReservationListAPIView(APIView):
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request, view=self)
-        return paginator.get_paginated_response(ReservationSerializer(page, many=True).data)
+        return paginator.get_paginated_response(
+            ReservationSerializer(page, many=True, context={"request": request}).data
+        )
 
 
 class OwnerReservationStatusAPIView(APIView):
@@ -350,7 +379,10 @@ class OwnerReservationStatusAPIView(APIView):
             f"Reservation status changed: id={reservation.id}, status={new_status}, "
             f"by={request.user.id}"
         )
-        return Response(ReservationSerializer(reservation).data, status=status.HTTP_200_OK)
+        return Response(
+            ReservationSerializer(reservation, context={"request": request}).data,
+            status=status.HTTP_200_OK,
+        )
 
 
 class AdminReservationListAPIView(APIView):
@@ -372,4 +404,6 @@ class AdminReservationListAPIView(APIView):
 
         paginator = self.pagination_class()
         page = paginator.paginate_queryset(queryset, request, view=self)
-        return paginator.get_paginated_response(ReservationSerializer(page, many=True).data)
+        return paginator.get_paginated_response(
+            ReservationSerializer(page, many=True, context={"request": request}).data
+        )

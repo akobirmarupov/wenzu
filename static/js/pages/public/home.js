@@ -3,8 +3,8 @@
  *
  * Bo'limlar ataylab har xil turdagi ma'lumot beradi va HECH BIRI
  * takrorlanmaydi:
- *   qidiruv → rasm lentasi (yozuvsiz) → banner → restoran taomlari
- *   → to'yxona menyusi + yangiliklar → qanday ishlaydi → biznes ochish
+ *   qidiruv → banner → restoran taomlari → to'yxona menyusi + yangiliklar
+ *   → qanday ishlaydi → biznes ochish
  *
  * Joy kartochkalari ("mashhur restoranlar", "to'yxonalar") ataylab
  * OLIB TASHLANGAN: ular chap menyudagi katalog sahifalari bilan
@@ -18,7 +18,6 @@ import { $, render } from "../../ui/dom.js";
 import { initPublicNav } from "../../ui/public-nav.js";
 import { initTopbar } from "../../ui/topbar.js";
 import { renderBanner } from "../../components/banner.js";
-import { renderPhotoMarquee } from "../../components/photo-marquee.js";
 import { renderDishWall, renderFeastList } from "../../components/menu-showcase.js";
 import { renderNews } from "../../components/news.js";
 import { toast } from "../../ui/toast.js";
@@ -84,26 +83,6 @@ function renderStats({ restaurants, venues, reviews }) {
   );
 }
 
-/**
- * Lenta uchun suratlar.
- *
- * Alohida yengil endpoint (`/showcase/photos/`) ishlatiladi: u muqova
- * rasmini ham, galereyani ham beradi — shunda bitta joyning tashqarisi,
- * yo'lagi, zallari ham lentada aylanib o'tadi, faqat kirish eshigi emas.
- */
-async function loadMarquee() {
-  try {
-    const photos = await api.showcase.photos({ limit: 60 });
-    renderPhotoMarquee(
-      "#photo-marquee",
-      photos.map((row) => ({ id: row.business, name: row.business_name, photo: row.image })),
-      { rows: 2 }
-    );
-  } catch {
-    $("#photo-marquee").innerHTML = "";
-  }
-}
-
 (async function init() {
   // Banner, taomlar va yangiliklar bir-birini kutmaydi — har biri
   // tayyor bo'lishi bilan ekranga chiqadi.
@@ -115,7 +94,6 @@ async function loadMarquee() {
   });
   renderDishWall("#dish-wall", "#dish-dots");
   renderFeastList("#feast-list", { limit: 8 });
-  loadMarquee();
 
   try {
     const [restaurants, venues] = await Promise.all([

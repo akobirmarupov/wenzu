@@ -49,8 +49,14 @@ def submit_application(*, applicant, business_type, business_name, plan=None):
       · reja    → pullik. Tasdiqlangach darhol o'sha muddat boshlanadi,
                   sinov berilmaydi.
 
-    Rol darhol 'business'ga o'tadi — egasi o'z paneliga kirib, arizasi
-    qanday holatda ekanini ko'rishi kerak.
+    ROL BU YERDA O'ZGARMAYDI — odam oddiy foydalanuvchiligicha qoladi.
+
+    Ilgari ariza yuborilishi bilan `role='business'` qo'yilardi. Ya'ni
+    hech kim tekshirmagan, hatto keyinchalik RAD ETILADIGAN ariza ham
+    odamni "restoran egasi" qilib qo'yardi: profilida shu yozuv turardi,
+    rad etilgandan keyin ham o'chmasdi. Rol — tasdiqning natijasi, ariza
+    yuborishning emas: u `approve_application` da beriladi va
+    `reject_application` da qaytariladi.
     """
     # BITTA FOYDALANUVCHI — BITTA BIZNES.
     #
@@ -65,13 +71,30 @@ def submit_application(*, applicant, business_type, business_name, plan=None):
     #
     # Admin panelidagi qo'lda ochish oqimida ham xuddi shu qoida bor
     # (`BusinessAdminCreateSerializer.validate_owner`).
-    existing = applicant.businesses.first()
+    #
+    # ISTISNO — ARIZASI RAD ETILGAN JOY.
+    #
+    # Rad etish joyni O'CHIRMAYDI, faqat yashiradi. Ilgari o'sha yashirin
+    # joy egasiga MANGU to'siq bo'lardi: yangi ariza yuborsa "sizda
+    # allaqachon biznes bor" deb rad etilardi, eski arizasi esa rad
+    # etilgan holatda muzlab qolardi. Ya'ni bir marta rad etilgan odam
+    # hech qachon qayta urina olmasdi — bu boshi berk ko'cha edi.
+    #
+    # Endi u qayta ariza yuboradi: joy o'chirilmaydi, YANGI arizaga
+    # ulanadi (nomi va turi arizadagisiga yangilanadi). Shunda kiritilgan
+    # ma'lumot — suratlar, xonalar, menyu — yo'qolmaydi.
+    existing = applicant.businesses.select_related("application").first()
+    reapply_to = None
     if existing is not None:
-        raise BusinessLimitReached(
-            f"Sizda allaqachon biznes bor — «{existing.name}». "
-            "Bitta hisobda faqat bitta joy ochish mumkin. Ikkinchi joy uchun "
-            "alohida hisob oching."
-        )
+        prior = getattr(existing, "application", None)
+        if prior is not None and prior.status == BusinessApplication.STATUS_REJECTED:
+            reapply_to = existing
+        else:
+            raise BusinessLimitReached(
+                f"Sizda allaqachon biznes bor — «{existing.name}». "
+                "Bitta hisobda faqat bitta joy ochish mumkin. Ikkinchi joy uchun "
+                "alohida hisob oching."
+            )
 
     # Bepul sinov ikkinchi marta so'ralsa — ARIZA BOSQICHIDAYOQ to'xtatamiz.
     # Aks holda odam ariza yuborib, admin tasdiqlaganda kutilmaganda
@@ -91,25 +114,40 @@ def submit_application(*, applicant, business_type, business_name, plan=None):
         status="pending_payment",
     )
 
-    business = Business.objects.create(
-        owner=applicant,
-        application=application,
-        name=business_name,
-        business_type=business_type,
-        address="",
-        latitude=0,
-        longitude=0,
-        telegram_username="",
-        # Tasdiqlanmaguncha yashirin — tekshirilmagan joy qidiruvga
-        # chiqmasligi kerak.
-        is_visible=False,
-    )
+    if reapply_to is not None:
+        # Qayta ariza — mavjud joy yangi arizaga ulanadi.
+        #
+        # Eski (rad etilgan) ariza tarixda qoladi, lekin endi hech qanday
+        # joyga bog'lanmaydi. Turini almashtirishga ruxsat beramiz: odam
+        # arizani "restoran" deb yuborib, aslida to'yxona bo'lgani uchun
+        # rad etilgan bo'lishi mumkin. Eski turdagi xona/zal yozuvlari
+        # O'CHIRILMAYDI — ular shunchaki ko'rinmay turadi va tur qaytsa
+        # joyida bo'ladi (o'chirish bronlar tarixini ham olib ketardi).
+        business = reapply_to
+        business.application = application
+        business.name = business_name
+        business.business_type = business_type
+        business.is_visible = False
+        business.save(
+            update_fields=["application", "name", "business_type", "is_visible"]
+        )
+    else:
+        business = Business.objects.create(
+            owner=applicant,
+            application=application,
+            name=business_name,
+            business_type=business_type,
+            address="",
+            latitude=0,
+            longitude=0,
+            telegram_username="",
+            # Tasdiqlanmaguncha yashirin — tekshirilmagan joy qidiruvga
+            # chiqmasligi kerak.
+            is_visible=False,
+        )
 
-    if applicant.role != "business":
-        applicant.role = "business"
-        applicant.save(update_fields=["role"])
-
-    # Obuna ATAYLAB ochilmaydi. U `approve_application` da boshlanadi.
+    # Rol ham, obuna ham ATAYLAB tegilmaydi — ikkalasi ham
+    # `approve_application` da beriladi.
     subscription = None
 
     logger.info(
@@ -146,6 +184,10 @@ def approve_application(*, application, approved_by):
     Ilgari bu funksiya `activate_subscription` ni chaqirib, tarifdan
     qat'i nazar darhol 30 kunlik muddat berardi. Bu noto'g'ri edi:
     tasdiq — to'lov emas, faqat "bu haqiqiy joy" degan tekshiruv.
+
+    ROL HAM SHU YERDA beriladi: odam ANA ENDI "restoran/to'yxona egasi".
+    Ilgari u ariza yuborgan zahoti shunday atalardi — tekshirilmagan,
+    hatto keyin rad etiladigan ariza bilan.
     """
     from subscriptions.services import TrialAlreadyUsed, start_paid, start_trial
 
@@ -153,6 +195,14 @@ def approve_application(*, application, approved_by):
     application.approved_at = timezone.now()
     application.approved_by = approved_by
     application.save(update_fields=["status", "approved_at", "approved_by"])
+
+    # PLATFORMA EGASIGA tegilmaydi: `is_staff` uchun rol boshqa vazifani
+    # bildiradi va uni 'business' ga o'tkazish uni o'z panelidan
+    # ayirardi (`IsBusinessRole` staff'ni kiritmaydi).
+    applicant = application.applicant
+    if not applicant.is_staff and applicant.role != "business":
+        applicant.role = "business"
+        applicant.save(update_fields=["role"])
 
     business = getattr(application, "business", None)
     if business is not None:
@@ -186,11 +236,23 @@ def approve_application(*, application, approved_by):
 def reject_application(*, application, rejected_by):
     """
     Ariza rad etiladi — biznes profili ommaviy qidiruvdan yashiriladi,
-    lekin o'chirilmaydi (egasi keyin to'lov qilib qayta ochishi mumkin).
+    lekin O'CHIRILMAYDI.
+
+    Rad etish — nuqta emas, ORQAGA QAYTARISH. Egasi kamchilikni to'g'rilab
+    (nomi, turi, admin bilan kelishilgan to'lov) YANGI ariza yuboradi va
+    o'sha joy yangi arizaga ulanadi — `submit_application` ga qarang.
+    Shuning uchun bu yerda joy ham, uning suratlari ham o'chirilmaydi.
+
+    ROL esa ODDIY FOYDALANUVCHIGA qaytadi: rad etilgan odam "restoran
+    egasi" emas. Ilgari rol ariza yuborilishida qo'yilib, rad etilgandan
+    keyin ham qolib ketardi — profilida "Restoran egasi" yozuvi turardi,
+    lekin hech qanday joyi ishlamasdi.
     """
     application.status = "rejected"
     application.approved_by = rejected_by
     application.save(update_fields=["status", "approved_by"])
+
+    _demote_if_no_approved_business(application.applicant)
 
     business = getattr(application, "business", None)
     if business is not None:
@@ -201,6 +263,30 @@ def reject_application(*, application, rejected_by):
         f"Application rejected: application_id={application.id}, by={rejected_by.id}"
     )
     return application
+
+
+def _demote_if_no_approved_business(user):
+    """
+    Rolni oddiy foydalanuvchiga qaytaradi — TASDIQLANGAN joyi qolmasa.
+
+    Tekshiruv shart: bir hisobda bir nechta ariza bo'lishi mumkin
+    (qayta yuborilganlari). Ulardan bittasi tasdiqlangan bo'lsa, odam
+    haqiqiy biznes egasi bo'lib qoladi va rolini olib qo'yish uni o'z
+    panelidan ayirardi.
+
+    Platforma egasiga (`is_staff`) tegilmaydi — uning roli boshqa
+    vazifani bildiradi.
+    """
+    if user.is_staff or user.role != "business":
+        return
+    if BusinessApplication.objects.filter(
+        applicant=user, status=BusinessApplication.STATUS_APPROVED
+    ).exists():
+        return
+
+    user.role = "user"
+    user.save(update_fields=["role"])
+    logger.info(f"Owner role reset to 'user': user_id={user.pk} (ariza rad etildi)")
 
 
 def trial_end_date():

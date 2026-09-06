@@ -27,18 +27,12 @@
                data-i18n-label="home.search">
       </label>
       <button class="btn btn-primary" type="submit" data-i18n="home.search">Qidirish</button>
-      <button class="btn btn-outline" type="button" id="near-me" data-i18n="home.nearMe">Yaqinimda</button>
+      <button class="btn btn-outline" type="button" id="near-me"
+              data-i18n-label="home.nearMe">📍 <span data-i18n="home.nearMe">Yaqinimda</span></button>
     </form>
 
     <div class="home-stats" id="home-stats"></div>
   </section>
-
-  {% comment %}
-    Rasm lentasi — yozuvsiz. Platformadagi barcha joylarning suratlari
-    uzluksiz siljib turadi. Ilgari bu yerda "Yangi qo'shilganlar" sarlavhali
-    karusel edi; endi sarlavha ham, matn ham yo'q — faqat suratlar.
-  {% endcomment %}
-  <section class="section-sm" id="photo-marquee"></section>
 
   {# --- reklama / e'lon banneri (admin panelda boshqariladi) --- #}
   <section class="section-sm" id="banner-slot"></section>

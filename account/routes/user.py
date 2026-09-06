@@ -50,7 +50,7 @@ def google_redirect_uri(request):
 
     So'rovning O'ZIDAN quriladi, sozlamaga yozilmaydi: lokal ishlab
     chiqishda `http://127.0.0.1:8000/...`, productionda
-    `https://wenzu.uz/...` bo'ladi va ikkalasini qo'lda boshqarish
+    `https://feasto.uz/...` bo'ladi va ikkalasini qo'lda boshqarish
     bitta joyni unutish demakdir. Google Console'ga esa ikkalasi ham
     "Authorized redirect URIs" ga qo'shiladi.
     """

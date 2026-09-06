@@ -38,6 +38,7 @@ STYLESHEETS = [
     "css/base/_typography.css",
     "css/base/_layout.css",
     # 2. Komponentlar
+    "css/components/_brand.css",
     "css/components/_button.css",
     "css/components/_badge.css",
     "css/components/_avatar.css",
@@ -53,10 +54,10 @@ STYLESHEETS = [
     "css/components/_footer.css",
     "css/components/_sidebar.css",
     "css/components/_banner.css",
-    "css/components/_marquee.css",
     "css/components/_showcase.css",
     "css/components/_pricing.css",
     "css/components/_news.css",
+    "css/components/_trust-map.css",
     # 3. Sahifalar
     "css/pages/_home.css",
     "css/pages/_catalog.css",

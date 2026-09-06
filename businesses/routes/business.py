@@ -91,7 +91,10 @@ def annotated_business_queryset():
         )
         .only(
             "id", "name", "business_type", "address", "district",
-            "latitude", "longitude", "description", "cover_photo",
+            # `map_link` shu yerda bo'lishi SHART: `map_links` uni o'qiydi
+            # va ro'yxatdan tushib qolsa, har bir kartochka uchun alohida
+            # so'rov ketardi (deferred field).
+            "latitude", "longitude", "map_link", "description", "cover_photo",
             "cuisine", "open_time", "close_time", "rating_avg", "reviews_count",
         )
     )

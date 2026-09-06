@@ -15,6 +15,7 @@ import { initTopbar } from "../../ui/topbar.js";
 import { emptyState, errorState } from "../../ui/state.js";
 import { money, stars, imageUrl, timeLabel, dateLabel, initials, businessTypeLabel } from "../../ui/format.js";
 import { openRoomBooking, openHallBooking, setBookingMenu } from "../../components/booking-modal.js";
+import { mapLinksHtml } from "../../components/map-links.js";
 
 theme.init();
 await initI18n();
@@ -154,9 +155,15 @@ function tabsHtml() {
   </div>`;
 }
 
-/** Egasi kishi boshiga narx kiritganmi (shahar oqimi). */
+/**
+ * Egasi taom paketlarini kiritganmi.
+ *
+ * `dish_pricing` ro'yxatining o'zi yetarli dalil: `pricing_mode` endi
+ * `combined` ham bo'lishi mumkin (ijara + paketlar), shuning uchun
+ * faqat `per_person` ga qarash "Narxlar" bo'limini yashirib qo'yardi.
+ */
 function hasPerPersonPricing() {
-  return business.pricing_mode === "per_person" || Boolean(business.dish_pricing?.length);
+  return Boolean(business.dish_pricing?.length);
 }
 
 function roomsHtml() {
@@ -171,8 +178,8 @@ function roomsHtml() {
           <span class="seal ${room.deposit_tier === "premium" ? "seal-gold" : "seal-ok"}" style="align-self:flex-start">
             ${esc(t("detail.deposit"))}: ${money(room.deposit_amount)}
           </span>
-          <button class="btn btn-primary btn-sm btn-block" data-book-room="${esc(room.id)}"
-                  style="margin-top:var(--sp-2)">${esc(t("detail.book"))}</button>
+          <button class="btn btn-primary btn-sm btn-block book-btn"
+                  data-book-room="${esc(room.id)}">${esc(t("detail.book"))}</button>
         </div>
       </div>`).join("")}
   </div>`;
@@ -181,10 +188,14 @@ function roomsHtml() {
 /**
  * Zal kartochkasi.
  *
- * Qishloq to'yxonasida asosiy raqam — zalning BIR KUNLIK IJARASI
- * (masalan 15 000 000 so'm): to'y egasi shu summani to'laydi va
- * qolganini o'zi tashkil qiladi. Shaharda esa bu maydon bo'sh bo'ladi
- * va narx "Narxlar" bo'limida kishi boshiga ko'rsatiladi.
+ * Asosiy raqam — zalning BIR KUNLIK IJARASI (masalan 15 000 000 so'm).
+ * To'y egasi shu summani to'lab zalni bir kunga oladi.
+ *
+ * Ovqat esa ALOHIDA va ixtiyoriy: egasi taom paketlari kiritgan bo'lsa,
+ * ular "Narxlar" bo'limida kishi boshiga ko'rsatiladi va bron oynasida
+ * tanlanadi. Ilgari bu ikkisi bir-birini INKOR qilardi — paketlar
+ * bo'lsa ijara narxi umuman ko'rinmasdi, holbuki to'y egasi ikkalasini
+ * ham to'laydi.
  */
 function hallsHtml() {
   if (!business.halls?.length) return emptyState(t("common.empty"), "", "🏛️");
@@ -195,11 +206,11 @@ function hallsHtml() {
         <div class="card-body">
           <b>${esc(hall.name)}</b>
           <span class="small muted">${esc(t("detail.upTo", { count: hall.people }))}</span>
-          ${!hasPerPersonPricing() && hall.all_price
+          ${hall.all_price
             ? `<span class="small strong">${esc(t("detail.dayRent"))}: ${money(hall.all_price)}</span>` : ""}
           <span class="seal seal-gold" style="align-self:flex-start">${esc(t("detail.deposit"))}: ${money(hall.deposit_amount)}</span>
-          <button class="btn btn-primary btn-sm btn-block" data-book-hall="${esc(hall.id)}"
-                  style="margin-top:var(--sp-2)">${esc(t("detail.book"))}</button>
+          <button class="btn btn-primary btn-sm btn-block book-btn"
+                  data-book-hall="${esc(hall.id)}">${esc(t("detail.book"))}</button>
         </div>
       </div>`).join("")}
   </div>`;
@@ -235,7 +246,19 @@ function pricingHtml() {
   if (!business.dish_pricing?.length) {
     return emptyState(t("common.empty"), t("detail.priceNote"), "💰");
   }
+  // Ijara ham bo'lsa, uni ALOHIDA aytamiz: aks holda "kishi boshiga
+  // 120 000" degan raqamni ko'rgan odam butun summani shundan hisoblab,
+  // bron oynasida kutilmagan qo'shimchani ko'rardi.
+  const rents = (business.halls || []).filter((hall) => hall.all_price != null);
+  const rentNote = rents.length
+    ? `<p class="small strong" style="margin-bottom:var(--sp-2)">
+         ${esc(t("detail.dayRent"))} alohida to'lanadi —
+         ${money(Math.min(...rents.map((hall) => Number(hall.all_price))))} dan boshlab.
+         Taom tanlash ixtiyoriy.
+       </p>` : "";
+
   return `
+    ${rentNote}
     <p class="muted small" style="margin-bottom:var(--sp-4)">
       ${esc(t("detail.priceNote"))}
     </p>
@@ -324,6 +347,11 @@ function miniProfileHtml() {
            ? `<p class="small muted">${esc(t("detail.noContacts"))}</p>` : ""}
        </div>`;
 
+  // Joylashuv bloki aloqadan OLDIN: odam avval "qayerda?" deb so'raydi,
+  // "qanday bog'lanaman?" degan savol undan keyin keladi. Va u kirmagan
+  // bo'lsa ham xaritani ko'ra oladi — manzil baribir ochiq turibdi.
+  const location = mapLinksHtml(business);
+
   return `
     <aside class="biz-profile">
       <div class="biz-profile-head">
@@ -345,6 +373,10 @@ function miniProfileHtml() {
               <dd>${esc(value)}</dd>
             </div>`).join("")}
         </dl>` : ""}
+
+      ${location ? `
+        <span class="biz-profile-label">${esc(t("detail.howToGet"))}</span>
+        ${location}` : ""}
 
       <span class="biz-profile-label">${esc(t("detail.contacts"))}</span>
       ${contacts}
@@ -368,6 +400,9 @@ function renderPage() {
           ${business.district ? `<span>📍 ${esc(business.district)}</span>` : ""}
           ${!isVenue && business.open_time
             ? `<span>🕗 ${timeLabel(business.open_time)}–${timeLabel(business.close_time)}</span>` : ""}
+          ${business.map_links?.google_directions
+            ? `<a class="meta-link" href="${esc(business.map_links.google_directions)}"
+                  target="_blank" rel="noopener noreferrer">🚗 ${esc(t("detail.directions"))}</a>` : ""}
         </div>
       </div>
     </div>

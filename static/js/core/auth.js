@@ -71,7 +71,10 @@ export const auth = {
     if (!user) return ROUTES.home;
     if (user.is_staff) return ROUTES.adminHome;
 
-    if (user.role === "business" && user.business) {
+    // Shart ROLGA emas, JOYGA qaraydi: rol faqat tasdiqdan keyin
+    // beriladi, arizasi ko'rib chiqilayotgan odamni esa aynan o'z
+    // arizasi turgan ekranga yuborish kerak.
+    if (user.business) {
       // Arizasi hali tasdiqlanmagan bo'lsa panelga emas, "Biznes ochish"
       // sahifasiga — u yerda arizasi qanday holatda ekani yozilgan.
       // To'g'ridan-to'g'ri shu yerda hal qilamiz, aks holda odam avval

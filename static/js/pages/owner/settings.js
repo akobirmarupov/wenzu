@@ -94,6 +94,24 @@ function formHtml(business) {
       ro'yxatiga tushib qolmasligi uchun.
     </p>
 
+    <div class="field">
+      <label for="map_link">Xaritadagi havola</label>
+      <input class="input" id="map_link" name="map_link" type="url"
+             value="${esc(business.map_link || "")}"
+             placeholder="https://maps.google.com/... yoki https://yandex.uz/maps/...">
+      <span class="field-hint">
+        Telefoningizda Google Maps yoki Yandex Xaritani oching, joyingizni toping,
+        <b>«Ulashish»</b> tugmasini bosing va havolani shu yerga qo'ying.
+        Koordinatalar undan avtomatik olinadi — pastdagi maydonlarni qo'lda
+        to'ldirish shart emas.
+      </span>
+      ${business.map_links?.google ? `
+        <a class="map-btn" style="align-self:flex-start;margin-top:var(--sp-2)"
+           href="${esc(business.map_links.google)}" target="_blank" rel="noopener noreferrer">
+          🗺 Mijoz ko'radigan joyni tekshirish
+        </a>` : ""}
+    </div>
+
     <div class="field-row">
       <div class="field">
         <label for="latitude">Kenglik (latitude)</label>
@@ -104,7 +122,7 @@ function formHtml(business) {
         <label for="longitude">Uzunlik (longitude)</label>
         <input class="input" id="longitude" name="longitude" type="number" step="0.000001"
                value="${business.longitude || ""}" placeholder="69.240562">
-        <span class="field-hint">Koordinatalarsiz "yaqinimda" qidiruvida chiqmaysiz</span>
+        <span class="field-hint">Havola qo'ysangiz bular o'zi to'ladi</span>
       </div>
       <div class="field" style="justify-content:flex-end">
         <button class="btn btn-outline" type="button" id="detect-location">📍 Joriy joylashuvni olish</button>

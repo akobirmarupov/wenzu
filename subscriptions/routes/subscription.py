@@ -11,7 +11,7 @@ from rest_framework.views import APIView
 
 from common.models import PlatformSettings
 from common.pagination import StandardResultsPagination
-from common.permissions import IsBusinessRole, IsSuperAdmin
+from common.permissions import IsBusinessOwnerOrApplicant, IsSuperAdmin
 from common.services import get_owner_business
 from subscriptions.filters import SubscriptionFilter
 from subscriptions.models import Subscription
@@ -28,9 +28,13 @@ class OwnerSubscriptionAPIView(APIView):
     """
     GET /api/owner/subscription/ — biznes egasining "Obuna" ekrani:
     holat, oylik narx, qolgan kun va admin Telegram'i.
+
+    ARIZASI TASDIQLANMAGAN odam ham kiradi (`IsBusinessOwnerOrApplicant`):
+    uning roli hali 'business' emas, lekin arizasi bor va aynan shu ekran
+    "tekshiruvda" yoki "rad etildi — qayta yuboring" deb javob beradi.
     """
 
-    permission_classes = [IsBusinessRole]
+    permission_classes = [IsBusinessOwnerOrApplicant]
 
     @extend_schema(responses=SubscriptionSerializer)
     def get(self, request):
@@ -79,10 +83,28 @@ class OwnerSubscriptionAPIView(APIView):
             # o'tirardi va tasdiqdan keyin uni ko'rmay, "nega bermadingiz"
             # deb yozardi. Sinov faqat tarifsiz (`plan is None`) arizada
             # beriladi.
-            applied_plan = business.application.plan
+            from businesses.models import BusinessApplication
+
+            application = business.application
+            applied_plan = application.plan
             trial_days = PlatformSettings.get_solo().trial_days
 
-            if applied_plan is None:
+            # RAD ETILGAN ariza — kutish emas, QAYTA YUBORISH holati.
+            #
+            # Ilgari bu ikkalasi bir xil ko'rinardi: rad etilgan odam ham
+            # "arizangiz administrator tekshiruvida" degan yozuvni ko'rib,
+            # hech qachon kelmaydigan javobni kutib o'tirardi. Endi ekran
+            # to'g'risini aytadi va qayta ariza yuborish yo'lini ochadi
+            # (`can_reapply`).
+            rejected = application.status == BusinessApplication.STATUS_REJECTED
+
+            if rejected:
+                detail = (
+                    "Arizangiz rad etilgan. Sababini administrator bilan "
+                    "aniqlashtiring va arizani qayta yuboring — tarifni "
+                    "quyidan tanlaysiz."
+                )
+            elif applied_plan is None:
                 detail = (
                     "Arizangiz administrator tekshiruvida. Tasdiqlangach "
                     f"{trial_days} kunlik bepul sinov boshlanadi."
@@ -96,9 +118,15 @@ class OwnerSubscriptionAPIView(APIView):
 
             return Response({
                 "has_subscription": False,
-                "status": "awaiting_approval",
+                "status": "rejected" if rejected else "awaiting_approval",
                 "detail": detail,
                 "business_type": business.business_type,
+                # Qayta ariza yuborish mumkinmi — frontend tugmalarni shu
+                # maydonga qarab ochadi.
+                "can_reapply": rejected,
+                # Sinov allaqachon ishlatilgan bo'lsa, qayta arizada
+                # "bepul sinov" kartochkasi tanlanmaydi.
+                "trial_used": request.user.has_used_trial,
                 # Ariza qaysi tarif bilan berilgani — kutish ekrani matnini
                 # shu maydonga qarab yig'adi.
                 "is_trial_application": applied_plan is None,

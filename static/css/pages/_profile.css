@@ -160,6 +160,46 @@
 }
 .shortcut-card:hover .go { transform: translateX(3px); color: var(--theme-accent); }
 
+/* ===================================================================
+   EGASINING PANELIGA KIRISH KARTOCHKASI
+   ===================================================================
+   Kompyuterda u oddiy kartochkalar qatorida turadi — chap menyuda
+   allaqachon "Restoran panelim" bandi bor va bu yerda ikkinchi marta
+   qichqirishning hojati yo'q.
+
+   TELEFONDA esa chap menyu umuman yo'q (`_mobile.css`, 5a-bo'lim) va
+   bu kartochka panelga olib boradigan YAGONA yo'l. Shuning uchun u
+   o'sha yerda ajralib turadi: rangli hoshiya, kattaroq nishon va
+   "PANEL" yozuvi. Joy egasi profilga kirganda uni izlab yurmaydi.
+   =================================================================== */
+.shortcut-panel { border-color: color-mix(in srgb, var(--theme-accent) 45%, var(--line)); }
+.shortcut-panel .ic { color: var(--theme-accent); }
+
+@media (max-width: 940px) {
+  .shortcut-panel {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--theme-accent) 12%, var(--surface)),
+      var(--surface) 60%
+    );
+    border-color: var(--theme-accent);
+  }
+  /* Yozuv "→" nishonchasining CHAP yonida turadi.
+     Nishoncha `right: var(--sp-4)` da, shuning uchun bu yerda undan
+     kattaroq qadam kerak — bo'lmasa ikkalasi ustma-ust tushardi.
+     Shkalada `--sp-9` YO'Q (4, 8, 12, 16, 20, 24, 32, 40...), va uni
+     ishlatgan qoida brauzer tomonidan jimgina tashlab yuborilardi:
+     `right` `auto` bo'lib qolib, yozuv kartochkaning chap chetiga,
+     nishon ustiga tushardi. */
+  .shortcut-panel::after {
+    content: "PANEL";
+    position: absolute; top: var(--sp-4); right: var(--sp-10);
+    font-size: 9.5px; font-weight: 800; letter-spacing: .1em;
+    color: var(--theme-accent);
+  }
+  .shortcut-panel .go { color: var(--theme-accent); }
+}
+
 /* Chiqish bloki — profil sahifasining eng pastida */
 .sign-out {
   display: flex; align-items: center; justify-content: space-between;

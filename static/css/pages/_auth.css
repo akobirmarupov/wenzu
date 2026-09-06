@@ -129,6 +129,20 @@
 
 @media (max-width: 860px) { .auth-wrap { grid-template-columns: 1fr; } .auth-visual { display: none; } }
 
+/* Telefondagi brend — kartaning tepasida.
+   Kompyuterda logotip chap ustunda turadi, shuning uchun bu yerda
+   ikkinchi nusxa ortiqcha bo'lardi. */
+.auth-brand { display: none; }
+@media (max-width: 860px) {
+  .auth-form-side { grid-auto-rows: min-content; align-content: center; gap: var(--sp-6); }
+  .auth-brand {
+    display: inline-flex; align-items: center; gap: var(--sp-2);
+    justify-self: center;
+    font-family: var(--font-display); font-weight: 700; font-size: 26px;
+    color: var(--ink); text-decoration: none;
+  }
+}
+
 /* Til va tema boshqaruvi — kirish sahifasining o'ng yuqori burchagida */
 .auth-controls {
   position: absolute; top: var(--sp-5); right: var(--sp-6); z-index: 3;

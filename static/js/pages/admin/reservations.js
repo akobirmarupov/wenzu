@@ -11,7 +11,7 @@ import { initAdminPage } from "./shell.js";
 import { $, render, delegate, esc } from "../../ui/dom.js";
 import { skeletonRows, errorState } from "../../ui/state.js";
 import { paginationHtml } from "../../ui/pagination.js";
-import { dateLabel, timeLabel, statusSeal, money } from "../../ui/format.js";
+import { dateLabel, timeLabel, statusSeal, money, trustSeal } from "../../ui/format.js";
 
 const STATUSES = [
   { value: "", label: "Barchasi" },
@@ -79,8 +79,13 @@ function row(item) {
         <div class="xs faint">${esc(place)}</div>
       </td>
       <td>
-        ${esc(item.user_name || "—")}
-        <div class="xs faint mono">${esc(item.user_phone || "")}</div>
+        ${esc(item.customer?.full_name || item.user_name || "—")}
+        <div class="xs faint mono">${esc(item.customer?.phone_number || item.user_phone || "")}</div>
+        ${item.customer ? `<div>${trustSeal({
+          bits: item.customer.trust_bits,
+          level_display: item.customer.trust_level_display,
+          tone: item.customer.trust_tone,
+        }, { compact: true })}</div>` : ""}
       </td>
       <td class="small">${when}</td>
       <td class="small right">${item.guests_count}</td>

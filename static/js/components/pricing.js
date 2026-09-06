@@ -223,6 +223,7 @@ function planCardHtml(businessType, plans, { disabled, foreign, reason }) {
  *   businessType — qaysi turdagi rejalar ko'rsatilsin
  *   plans        — `/api/owner/subscription/` yoki `/api/settings/` dan kelgan ro'yxat
  *   status       — obuna holati: trial | active | expired | awaiting_approval
+ *                  | rejected (ariza rad etilgan — qayta yuborish ochiq)
  *   pending      — ochiq ariza (bo'lsa tugmalar bloklanadi)
  */
 export function pricingHtml({ plans, status, pending, ownedType = null, trialUsed = false }) {
@@ -237,8 +238,15 @@ export function pricingHtml({ plans, status, pending, ownedType = null, trialUse
     groups.get(plan.business_type).push(plan);
   });
 
+  // RAD ETILGAN ariza "mehmon" bilan bir xil holat: tanlash OCHIQ.
+  //
+  // Ilgari u `awaiting_approval` bilan bir qatorda turardi va tugmalar
+  // bloklanardi — ya'ni rad etilgan odam ekranda hech narsa qila
+  // olmasdi. Aslida aynan u yangi tarif tanlab, arizani QAYTA yuborishi
+  // kerak.
+  const reapply = status === "rejected";
   const trialState =
-    status === "guest" ? "guest"
+    status === "guest" || reapply ? "guest"
       : status === "awaiting_approval" ? "awaiting"
         : status === "trial" ? "active" : "used";
   const locked = Boolean(pending) || status === "awaiting_approval";

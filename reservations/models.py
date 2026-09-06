@@ -144,18 +144,36 @@ class Availability(BaseModel):
 
 
 # ===================================================================
-# Bekor qilish oynasi.
+# Bekor qilish oynasi — "TENG YARIM VAQT" qoidasi.
 #
-# Bron TASDIQLANGANDAN keyin mijoz bir soat ichida fikridan qaytishi
-# mumkin. Undan keyin yo'q: joy egasi o'sha vaqtni band deb belgilab,
-# boshqa mijozlarni rad etgan bo'ladi. Oxirgi daqiqadagi bekor qilish
-# uning uchun to'g'ridan-to'g'ri zarar.
+# Ilgari bu yerda qat'iy bir soat turardi va u ikki tomonga ham
+# adolatsiz edi. Bugun bron qilib, to'yni bir oydan keyinga belgilagan
+# odam bir soatdan keyin fikridan qayta olmasdi — holbuki joy egasiga
+# hali hech qanday zarar yo'q, oldinda o'ttiz kun bor. Aksincha, ikki
+# soatdan keyingi kechki ovqatni bron qilgan odam esa oxirgi daqiqagacha
+# bekor qilib, stolni bo'sh qoldirib ketishi mumkin edi.
 #
-# Hali tasdiqlanmagan (`pending`) so'rovga bu chegara TEGISHLI EMAS —
-# u hali hech kimni bog'lamagan.
+# Endi muddat BRON QILINGAN vaqt bilan TADBIR vaqti orasidagi masofaning
+# yarmi. Ya'ni chegara har doim o'rtada turadi:
+#
+#   bron qilindi          yarim yo'l (oxirgi muddat)        tadbir
+#   |---------------------------|---------------------------|
+#   5-sentabr                 7-sentabr                  9-sentabr
+#   soat 18:00                soat 20:00                 soat 22:00
+#
+# Mantiq oddiy: qancha erta bron qilsangiz, fikringizni o'zgartirishga
+# shuncha ko'p vaqtingiz bor. Tadbirga yaqinlashgan sari esa joy egasi
+# o'sha kunni boshqa mijozga sotish imkonini yo'qota boradi — shuning
+# uchun bekor qilish huquqi ham qisqaradi.
+#
+# Muddat mijozga OLDINDAN aytiladi (`cancel_deadline`) — u tugmani
+# bosgunicha emas, bronlar ro'yxatida turibdi.
 # ===================================================================
-CANCEL_WINDOW_HOURS = 1
-CANCEL_WINDOW = datetime.timedelta(hours=CANCEL_WINDOW_HOURS)
+
+# Tadbir vaqti noma'lum bo'lganda (jadval yozuvi o'chirilgan eski bron)
+# ishlatiladigan zaxira oyna. Qoidasiz qolgan bronni butunlay ochiq
+# qoldirish ham, butunlay yopish ham noto'g'ri bo'lardi.
+CANCEL_FALLBACK_WINDOW = datetime.timedelta(hours=1)
 
 
 class Reservation(BaseModel):
@@ -193,6 +211,18 @@ class Reservation(BaseModel):
     # To'yxona uchun: nechta xil taom tanlangani va shundan kelib chiqqan summa.
     dish_count = models.PositiveSmallIntegerField(null=True, blank=True)
     price_per_person = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+
+    # Zalning bir kunlik ijarasi — bron paytidagi narx bilan MUZLATILADI.
+    #
+    # `total_price` ning ichida turgani yetmaydi: to'yxonada summa ikki
+    # qismdan yig'iladi (ijara + kishi boshiga taom) va mijoz ham, joy
+    # egasi ham qaysi qism qancha ekanini ko'rishi kerak. Aks holda
+    # "18 000 000" degan yagona raqamdan nima uchun to'lanayotgani
+    # bilinmasdi.
+    day_rent_price = models.DecimalField(
+        max_digits=14, decimal_places=2, null=True, blank=True,
+        verbose_name="Bir kunlik ijara",
+    )
     total_price = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
 
     # Mijoz bron paytida tanlagan taomlar — nom va narx bilan MUZLATIB
@@ -205,8 +235,9 @@ class Reservation(BaseModel):
 
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default="pending", db_index=True)
 
-    # Bron QACHON tasdiqlangani. Bekor qilish oynasi shu vaqtdan
-    # boshlab hisoblanadi (`CANCEL_WINDOW`ga qarang).
+    # Bron QACHON tasdiqlangani — joy egasi javob bergan payt.
+    # Bekor qilish oynasi bunga bog'liq EMAS: u bron yaratilgan payt
+    # bilan tadbir orasidagi vaqtdan hisoblanadi (`cancel_deadline`).
     confirmed_at = models.DateTimeField(null=True, blank=True, verbose_name="Tasdiqlangan vaqti")
 
     class Meta:
@@ -244,17 +275,55 @@ class Reservation(BaseModel):
         super().save(*args, **kwargs)
 
     # ---------------- bekor qilish qoidasi ----------------
+    def event_starts_at(self):
+        """
+        Tadbirning boshlanish payti — to'liq sana va vaqt.
+
+        Restoranda bu mijoz tanlagan soat (masalan 19:00). To'yxonada
+        soat tanlanmaydi, shuning uchun jadvaldagi kun boshlanishi
+        olinadi (odatda 08:00) — to'y ertalabdan boshlanadi.
+
+        Jadval yozuvi bo'lmasa `None`. Bunday bron eskirgan yoki qo'lda
+        yaratilgan bo'ladi; muddatni `CANCEL_FALLBACK_WINDOW` hisoblaydi.
+        """
+        availability = self.availability
+        if availability is None:
+            return None
+
+        start = self.start_time or availability.start_time or datetime.time(0, 0)
+        naive = datetime.datetime.combine(availability.date, start)
+        if timezone.is_naive(naive):
+            return timezone.make_aware(naive, timezone.get_current_timezone())
+        return naive
+
     def cancel_deadline(self):
         """
-        Mijoz uchun bekor qilishning oxirgi muddati.
+        Bekor qilishning oxirgi muddati — bron qilingan payt bilan tadbir
+        orasidagi masofaning TENG YARMI.
 
-        Hali tasdiqlanmagan bronda muddat YO'Q: joy egasi hali javob
-        bermagan, depozit ham to'lanmagan — bunday so'rovni istalgan
-        paytda qaytarib olish mumkin.
+        Misol: 5-sentabr 18:00 da bron qilinib, tadbir 9-sentabr 22:00 ga
+        belgilangan bo'lsa, oraliq 4 kun-u 4 soat, yarmi esa 2 kun-u
+        2 soat — ya'ni muddat 7-sentabr soat 20:00.
+
+        Nima uchun `created_at`, `confirmed_at` emas: hisob mijoz uchun
+        oldindan bilinadigan bo'lishi kerak. Tasdiq vaqti esa joy egasiga
+        bog'liq — u kechqurun javob bersa, mijozning oynasi o'zi sezmagan
+        holda siljib ketardi.
         """
-        if self.status != "confirmed" or self.confirmed_at is None:
-            return None
-        return self.confirmed_at + CANCEL_WINDOW
+        event_at = self.event_starts_at()
+        if event_at is None:
+            # Tadbir vaqti noma'lum — zaxira oyna bron yaratilgan
+            # paytdan boshlanadi.
+            return self.created_at + CANCEL_FALLBACK_WINDOW if self.created_at else None
+
+        if self.created_at is None:
+            # Hali bazaga yozilmagan obyekt (masalan formadagi tekshiruv).
+            return event_at
+
+        # Tadbir bron qilingan paytdan oldin bo'lsa (eskirgan yozuv) —
+        # o'rtacha nuqta orqada qoladi va shart baribir "muddat o'tgan"
+        # deb ishlaydi. Alohida hol qilib ajratish shart emas.
+        return self.created_at + (event_at - self.created_at) / 2
 
     def cancel_check(self):
         """
@@ -272,9 +341,11 @@ class Reservation(BaseModel):
 
         if timezone.now() > deadline:
             return False, (
-                "Bekor qilish muddati tugagan. Tasdiqlangan bronni faqat "
-                f"{CANCEL_WINDOW_HOURS} soat ichida bekor qilish mumkin — "
-                "endi joy egasi bilan bevosita bog'laning."
+                "Bekor qilish muddati tugagan — u "
+                f"{timezone.localtime(deadline).strftime('%d.%m.%Y %H:%M')} da yopilgan. "
+                "Bekor qilish uchun bron qilingan payt bilan tadbir orasidagi "
+                "vaqtning teng yarmi beriladi. Endi joy egasi bilan bevosita "
+                "bog'laning."
             )
         return True, ""
 

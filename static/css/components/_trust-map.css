@@ -1,0 +1,143 @@
+/* ===================================================================
+   Ishonchlilik bali va joylashuv havolalari.
+
+   Ikkalasi bitta faylda, chunki ikkalasi ham bir xil joyda uchraydi:
+   bron kartochkasida. Mijoz "qayerga boraman?" deb xarita tugmasini,
+   joy egasi esa "kim keladi?" deb bal nishonini o'sha qatorda ko'radi.
+   =================================================================== */
+
+/* ---------- Ishonchlilik ---------- */
+
+.trust-seal {
+  display: inline-flex; align-items: center; gap: 4px;
+  white-space: nowrap;
+}
+
+/* Bal chizig'i — nishondagi raqamni KO'Z bilan o'qish uchun.
+   "70 Bit" degan yozuv o'z-o'zicha ko'p narsa aytmaydi; yarmi to'lgan
+   chiziq esa bir qarashda tushunarli. */
+.trust-bar {
+  display: inline-block; position: relative;
+  width: 120px; max-width: 100%; height: 6px;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  overflow: hidden; vertical-align: middle;
+}
+.trust-bar .fill {
+  position: absolute; inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: currentColor;
+}
+/* Rang nishon bilan bir xil manbadan — `seal-*` klasslari. */
+.trust-bar.seal-ok { color: var(--ok, #1f9d55); }
+.trust-bar.seal-info { color: var(--info, #2b6cb0); }
+.trust-bar.seal-warn { color: var(--warn, #b7791f); }
+.trust-bar.seal-bad { color: var(--danger, #c53030); }
+
+.trust-cell {
+  display: flex; flex-direction: column; align-items: flex-end;
+  gap: 6px; text-align: right;
+}
+
+/* Mijoz kartochkasi — joy egasining bronlar ro'yxatida. */
+.customer-card {
+  display: flex; align-items: center; gap: var(--sp-3);
+  min-width: 0;
+}
+.customer-card .cust-photo {
+  flex: 0 0 auto; width: 44px; height: 44px;
+  border-radius: 50%; object-fit: cover;
+  border: 1px solid var(--line);
+}
+.customer-card .cust-photo.initials {
+  display: grid; place-items: center;
+  background: var(--surface-2, rgba(0,0,0,.05));
+  font-weight: 800; font-size: var(--fs-sm);
+}
+.customer-card a[href^="tel:"] { color: inherit; text-decoration: none; }
+.customer-card a[href^="tel:"]:hover { text-decoration: underline; }
+
+/* ---------- Joylashuv ---------- */
+
+.map-block { display: flex; flex-direction: column; gap: var(--sp-2); }
+.map-where {
+  display: flex; align-items: flex-start; gap: 6px;
+  margin: 0; font-size: var(--fs-sm); color: var(--muted);
+}
+/* Nishon matnning birinchi qatoriga tekislansin — manzil ikki qatorga
+   o'tganda u yuqorida qolishi kerak, o'rtada emas. */
+.map-where svg { flex: 0 0 auto; margin-top: 2px; }
+
+.map-links { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+
+.map-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: var(--radius-pill);
+  border: 1px solid var(--line); background: var(--surface);
+  color: var(--text); text-decoration: none;
+  font-size: var(--fs-sm); font-weight: 600;
+  transition: background .15s ease, border-color .15s ease;
+}
+.map-btn svg { flex: 0 0 auto; }
+.map-btn:hover { background: var(--surface-2, rgba(0,0,0,.04)); border-color: var(--text); }
+.map-btn.primary {
+  background: var(--accent, #0b3b2e); border-color: transparent;
+  color: var(--white, #fff);
+}
+.map-btn.primary:hover { filter: brightness(1.1); }
+
+/* Ro'yxatdagi qisqa ko'rinish — tugmalar kichrayadi va bir qatorga
+   sig'adi. Bron kartochkasida ular asosiy ma'lumot emas. */
+.map-links.compact { gap: 6px; }
+.map-links.compact .map-btn {
+  padding: 3px 9px; font-size: var(--fs-xs); font-weight: 700;
+}
+
+/* Kartochkadagi nuqta — rasmning o'ng yuqori burchagida.
+
+   `<button>` bo'lgani uchun brauzerning standart ko'rinishini
+   (ramka, fon, ichki bo'shliq) o'chiramiz — u yerda tugma emas,
+   rasm ustidagi kichik nishon ko'rinishi kerak. */
+.biz-card-media .map-pin {
+  position: absolute; top: var(--sp-3); right: var(--sp-3);
+  display: grid; place-items: center;
+  width: 30px; height: 30px; padding: 0;
+  border: 0; border-radius: 50%;
+  -webkit-appearance: none; appearance: none;
+  background: rgba(255,255,255,.94);
+  /* Nishon SVG va `currentColor` dan rang oladi — oq fonda qora belgi. */
+  color: #1a1a1a;
+  line-height: 0; cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,.18);
+  transition: transform .15s ease, background .15s ease;
+}
+.biz-card-media .map-pin:hover { background: var(--white, #fff); transform: scale(1.06); }
+.biz-card-media .map-pin:focus-visible { outline: 2px solid var(--accent, #0b3b2e); outline-offset: 2px; }
+
+/* Reyting nishoni ham o'ng yuqorida turgan bo'lsa, nuqtani chapga
+   suramiz — ikkalasi ustma-ust tushmasin. */
+.biz-card-media .rating-badge ~ .map-pin { right: auto; left: var(--sp-3); }
+
+/* Bekor qilish muddati — ogohlantiruvchi, lekin xato emas. */
+.cancel-hint { color: var(--warn, #b7791f); }
+
+/* Kartochkadagi manzil qatori.
+   "Yaqinimda" qidiruvidan kelgan odam masofani ko'radi, lekin masofa
+   o'zi joyni topib bermaydi — ko'cha nomi kerak. Bir qatorga sig'masa
+   kesiladi: kartochka balandligi ro'yxat bo'ylab bir xil qolsin.
+
+   `min-width: 0` — SHART, va uni kartochkaning o'ziga ham qo'yamiz.
+   Grid katagi (va flex elementi) sukut bo'yicha o'z ichidagi eng uzun
+   BO'LINMAYDIGAN matndan kichik bo'lolmaydi. `white-space: nowrap`
+   bo'lgan manzil esa aynan shunday matn: "Samarqand v. Urgut t.
+   sahobiy kuchasi m-45 uy" butun ustunni kerakli kenglikdan kengroq
+   qilib, sahifaga gorizontal aylantirgich chiqarib yuborardi.
+   `overflow: hidden` buni o'zi hal qilmaydi — u faqat KO'RINISHNI
+   kesadi, hisob-kitobdagi eng kichik kenglikni emas. */
+.biz-card { min-width: 0; }
+.biz-card .card-body { min-width: 0; }
+.biz-card .card-body .addr {
+  min-width: 0;
+  font-size: var(--fs-xs); color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}

@@ -12,7 +12,7 @@
  *      turadi va uni faqat biz chaqirganda ko'rsatadi.
  */
 
-const DISMISSED_KEY = "wenzu:install-dismissed";
+const DISMISSED_KEY = "feasto:install-dismissed";
 
 /** Ilova allaqachon o'rnatilgan holda ochilganmi. */
 function isStandalone() {
@@ -73,7 +73,7 @@ function setupInstallButton() {
     bar.innerHTML = `
       <img class="install-icon" src="/static/images/pwa/icon-192.png" alt="">
       <div class="install-text">
-        <b>WENZU ilovasini o'rnating</b>
+        <b>Feasto ilovasini o'rnating</b>
         <span>Telefoningizdan bir bosishda oching — brauzersiz, tezroq.</span>
       </div>
       <button class="btn btn-primary btn-sm" type="button" data-install>O'rnatish</button>

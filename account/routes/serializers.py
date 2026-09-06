@@ -45,6 +45,17 @@ class BusinessBriefSerializer(serializers.Serializer):
     type = serializers.CharField(source="business_type", read_only=True)
     is_visible = serializers.BooleanField(read_only=True)
 
+    # Arizaning O'Z holati: pending_payment | approved | rejected.
+    #
+    # `is_approved` faqat "ha/yo'q" deydi, frontend esa KUTISH va RAD
+    # ETILGAN holatlarni bir-biridan ajratishi kerak — birinchisida
+    # kutiladi, ikkinchisida ariza qayta yuboriladi.
+    application_status = serializers.SerializerMethodField()
+
+    def get_application_status(self, obj) -> str | None:
+        application = getattr(obj, "application", None)
+        return application.status if application else None
+
     # Ariza tasdiqlanganmi.
     #
     # MANBA — ARIZANING O'Z HOLATI, obuna emas.
@@ -80,10 +91,19 @@ class BusinessBriefSerializer(serializers.Serializer):
 
 def build_user_payload(user, request=None):
     """Login va /me/ javoblarida bir xil ko'rinishdagi user obyektini quradi."""
-    business = (
-        user.businesses.select_related("application", "subscription").first()
-        if user.role == "business" else None
-    )
+    # Joy ROLDAN QAT'I NAZAR qaytariladi.
+    #
+    # Rol endi faqat TASDIQLANGAN egada bo'ladi. Lekin arizasi hali
+    # ko'rib chiqilayotgan (yoki rad etilgan) odam ham o'z holatini
+    # ko'rishi kerak — "Obuna va Premium" bo'limi aynan shu maydonga
+    # qarab kutish yoki qayta yuborish ekranini chizadi. Ilgari bu
+    # yerda `role == "business"` sharti turardi va rol tasdiqqa
+    # ko'chgach, ariza yuborgan odam ekranda o'z arizasini umuman
+    # ko'rmay qolardi.
+    #
+    # Panelga kirish bundan OCHILMAYDI: uni `is_approved` boshqaradi
+    # (`requireOwner`, `IsBusinessRole`).
+    business = user.businesses.select_related("application", "subscription").first()
 
     avatar = user.avatar.url if user.avatar else None
     if avatar and request is not None:
@@ -104,6 +124,13 @@ def build_user_payload(user, request=None):
         "avatar": avatar,
         "initials": user.initials,
         "preferred_language": user.preferred_language,
+        # ISHONCHLILIK — foydalanuvchi o'z balini ham ko'rib turishi kerak.
+        #
+        # Aks holda u bronni bekor qilgach balining tushganini bilmasdi
+        # va bir kun kelib joy egasidan "sizga ishonchimiz yo'q" degan
+        # javob olib, sababini tushunmasdi. Ko'rinib turgan bal esa
+        # o'zi ogohlantiruvchi vazifasini bajaradi.
+        "trust": user.trust,
         "business": BusinessBriefSerializer(business).data if business else None,
     }
 
@@ -157,6 +184,7 @@ class UserSerializer(serializers.ModelSerializer):
     business = serializers.SerializerMethodField()
     initials = serializers.CharField(read_only=True)
     stats = serializers.SerializerMethodField()
+    trust = serializers.DictField(read_only=True)
 
     class Meta:
         model = User
@@ -164,11 +192,17 @@ class UserSerializer(serializers.ModelSerializer):
             "id", "username", "full_name", "phone_number",
             "avatar", "initials", "bio", "birth_date", "preferred_language",
             "role", "is_staff", "is_phone_verified", "is_confirmed",
-            "has_used_trial", "business", "stats", "date_joined",
+            "has_used_trial", "trust", "trust_bits",
+            "cancelled_reservations_count",
+            "business", "stats", "date_joined",
         ]
         read_only_fields = [
             "id", "username", "role", "is_staff",
             "is_phone_verified", "is_confirmed", "has_used_trial", "business", "stats",
+            # Balni foydalanuvchi O'ZI o'zgartira olmaydi — aks holda
+            # butun tizimning ma'nosi qolmasdi. U faqat bekor qilish
+            # orqali (`penalize_trust`) o'zgaradi.
+            "trust", "trust_bits", "cancelled_reservations_count",
             "initials", "date_joined",
         ]
 
@@ -226,11 +260,14 @@ class UserAdminSerializer(serializers.ModelSerializer):
     # Queryset'da `Exists()` bilan annotate qilinadi; annotatsiyasiz
     # chaqirilsa (masalan bitta obyekt uchun) False bo'lib qoladi.
     has_business = serializers.BooleanField(read_only=True, default=False)
+    trust = serializers.DictField(read_only=True)
 
     class Meta:
         model = User
         fields = [
             "id", "username", "full_name", "phone_number",
             "role", "role_display", "is_phone_verified", "is_confirmed",
-            "is_active", "is_staff", "has_business", "date_joined",
+            "is_active", "is_staff", "has_business",
+            "trust", "trust_bits", "cancelled_reservations_count",
+            "date_joined",
         ]

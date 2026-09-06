@@ -4,18 +4,24 @@
  * Restoran: sana → vaqt oralig'i (XOHLAGANCHA davomiylik) → mehmonlar → taom
  * To'yxona: sana → mehmonlar → (agar bo'lsa) taom paketi va taomlar
  *
- * To'yxona oqimi joyning narx REJIMIGA qarab o'zgaradi (`pricing_mode`):
+ * To'yxonada summa IKKI QISMDAN yig'iladi va ikkinchisi IXTIYORIY:
  *
- *   per_person — shahar odati: egasi 1/2/3 xil taom uchun kishi boshiga
- *                narx kiritgan. Mijoz paketni tanlaydi, summa kishi soniga
- *                ko'payadi.
- *   fixed      — qishloq odati: butun zal bir kunga ijaraga olinadi
- *                (masalan 15 000 000 so'm), oshpazni to'y egasi o'zi
- *                olib boradi. "Kishi boshiga" bloki UMUMAN chizilmaydi.
- *   unset      — egasi hali narx kiritmagan: narx ko'rsatilmaydi, bron
- *                baribir beriladi va summa keyin kelishiladi.
+ *   1. BIR KUNLIK IJARA (`hall.all_price`) — zalning o'zi uchun,
+ *      masalan 15 000 000 so'm. Mehmonlar soniga bog'liq emas.
+ *   2. TAOM (`dish_pricing`) — xohlasa. To'y egasi 1, 2 yoki 3 xil
+ *      taomni to'yxonadan buyurtma qiladi va bu qism kishi boshiga
+ *      hisoblanadi. Xohlamasa — oshpazni o'zi olib keladi.
  *
- * Taom tanlash hech qaysi rejimda MAJBURIY emas.
+ * Ya'ni odam zalni tanlaydi, sanani belgilaydi va boshqa hech narsaga
+ * tegmasdan "Zalni band qilish" tugmasini bosa oladi. Taom kerak bo'lsa
+ * — paketni tanlaydi va menyudan AYNAN shuncha xil taom belgilaydi.
+ *
+ * YAGONA QAT'IY QOIDA: taom soni tanlangan bo'lsa, menyudan aynan
+ * shuncha taom belgilanmaguncha bron ketmaydi — server ham shuni
+ * tekshiradi.
+ *
+ * `pricing_mode` shu ikki qismning qaysi biri mavjudligini aytadi:
+ * `combined` (ikkalasi), `per_person`, `fixed`, `unset`.
  *
  * Menyu bu yerda MATN QATORI ko'rinishida: chapda nomi va narxi, o'ngda
  * kichik rasm. Detal sahifasidagi katta kartochkali to'r tanlash uchun
@@ -50,7 +56,7 @@ const state = {
   isOpen: false,
   guests: 2,
   dishCount: null,
-  pricingMode: "unset",   // "per_person" | "fixed" | "unset"
+  pricingMode: "unset",   // "combined" | "per_person" | "fixed" | "unset"
   pricing: [],
   busyDates: [],
   menuIds: [],
@@ -240,23 +246,33 @@ export async function openHallBooking(business, hall, pricing) {
   if (!(await ensureCanBook())) return;
 
   const packages = (pricing || []).slice().sort((a, b) => a.dish_count - b.dish_count);
+  const hasDayRent = hall.all_price != null;
 
-  // Rejimni backend aytadi (`pricing_mode`). Eski javob (yoki keshdan
-  // kelgan sahifa) uni bermasa, ma'lumotning o'zidan chiqaramiz — ekran
-  // baribir to'g'ri yig'ilsin. Paketlar ro'yxati bo'sh bo'lsa "kishi
-  // boshiga" rejimi mumkin emas: backend nima desa ham, tanlanadigan
-  // narsaning o'zi yo'q.
-  const declared = business.pricing_mode
-    || (packages.length ? "per_person" : hall.all_price != null ? "fixed" : "unset");
-  const mode = declared === "per_person" && !packages.length
-    ? (hall.all_price != null ? "fixed" : "unset")
-    : declared;
+  // Rejimni MA'LUMOTNING O'ZIDAN chiqaramiz, `pricing_mode` ni esa
+  // faqat zaxira sifatida ishlatamiz.
+  //
+  // Sabab: `pricing_mode` butun BIZNES darajasida hisoblanadi, ijara
+  // narxi esa har bir ZALDA alohida. Bitta to'yxonada ijarasi bor zal
+  // ham, bo'lmagani ham bo'lishi mumkin — mijoz esa aynan bittasini
+  // tanlab turibdi. Shu tanlangan zal bo'yicha hukm qilish to'g'riroq.
+  const mode = packages.length && hasDayRent
+    ? "combined"
+    : packages.length ? "per_person"
+    : hasDayRent ? "fixed"
+    : "unset";
 
   Object.assign(state, {
     type: "venue", business, hall, room: null,
     date: todayISO(14), guests: Math.min(100, hall.people),
-    // Paket faqat "kishi boshiga" rejimida mavjud. Qishloq to'yxonasida
-    // taom soni degan tushunchaning o'zi yo'q — shuning uchun `null`.
+    // TAOM SONI BOSHIDA TANLANMAGAN bo'ladi — agar ijara bo'lsa.
+    //
+    // Chunki asosiy oqim shu: odam zalni bir kunga oladi, ovqatni esa
+    // o'zi tashkil qiladi. Paketni oldindan tanlab qo'yish unga
+    // "taom majburiy" degan taassurot berardi va u tanlamagan narsasi
+    // uchun summani ko'rib turardi.
+    //
+    // Ijara yo'q bo'lsa (faqat kishi boshiga narx) — birinchi paket
+    // tanlanadi, aks holda ekranda umuman narx ko'rinmasdi.
     dishCount: mode === "per_person" ? packages[0].dish_count : null,
     pricingMode: mode,
     menuIds: [], note: "", step: "form",
@@ -274,19 +290,25 @@ export async function openHallBooking(business, hall, pricing) {
   renderBody();
 }
 
-/** Kishi boshiga narx — faqat "per_person" rejimida mavjud. */
+/**
+ * Tanlangan paketning kishi boshiga narxi, yoki `null` — paket
+ * tanlanmagan (ovqatni to'y egasi o'zi tashkil qiladi).
+ */
 function pricePerPerson() {
-  if (state.pricingMode !== "per_person") return null;
+  if (!state.dishCount) return null;
   const row = (state.pricing || []).find((p) => p.dish_count === state.dishCount);
   return row ? Number(row.price_per_person) : null;
 }
 
-/** Bir kunlik ijara — faqat "fixed" rejimida. */
+/** Zalning bir kunlik ijarasi, yoki `null` — egasi kiritmagan. */
 function dayRentPrice() {
-  if (state.pricingMode !== "per_person" && state.hall?.all_price != null) {
-    return Number(state.hall.all_price);
-  }
-  return null;
+  return state.hall?.all_price != null ? Number(state.hall.all_price) : null;
+}
+
+/** Taom qismi: kishi boshiga narx × mehmonlar. Paket tanlanmasa `null`. */
+function foodTotal() {
+  const perPerson = pricePerPerson();
+  return perPerson === null ? null : perPerson * (Number(state.guests) || 0);
 }
 
 /**
@@ -296,9 +318,10 @@ function dayRentPrice() {
  * ko'rinadi va bu yolg'on va'da bo'lardi.
  */
 function totalPrice() {
-  const perPerson = pricePerPerson();
-  if (perPerson !== null) return perPerson * (Number(state.guests) || 0);
-  return dayRentPrice();
+  const rent = dayRentPrice();
+  const food = foodTotal();
+  if (rent === null && food === null) return null;
+  return (rent || 0) + (food || 0);
 }
 
 /** Narx bor bo'lsa pul ko'rinishida, bo'lmasa chiziqcha. */
@@ -323,10 +346,14 @@ function depositAmount() {
 function menuPickHtml(items, { max }) {
   if (!items?.length) return "";
 
-  // Taom tanlash hech qaysi oqimda majburiy emas — sarlavha ham shuni
-  // aytib tursin, aks holda odam "tanlamasam bron ketmaydi" deb o'ylaydi.
-  const title = state.type === "venue" && state.pricingMode === "per_person"
-    ? `Taomlarni tanlang — ixtiyoriy (${state.menuIds.length}/${max})`
+  // Sarlavha oqimning HOZIRGI holatini aytadi.
+  //
+  // Paket tanlangan bo'lsa taom tanlash MAJBURIY bo'lib qoladi va buni
+  // yashirish mumkin emas: odam tugmani bosib, xatoni oxirida ko'rardi.
+  // Paket tanlanmagan bo'lsa — menyu shunchaki istak ro'yxati.
+  const required = state.type === "venue" && Boolean(state.dishCount);
+  const title = required
+    ? `${state.dishCount} xil taomni tanlang — majburiy (${state.menuIds.length}/${max})`
     : `Menyudan taom tanlash — ixtiyoriy (${state.menuIds.length} ta)`;
 
   return `
@@ -392,14 +419,28 @@ function restaurantFormHtml() {
 }
 
 /**
- * Taom paketi tanlagichi — FAQAT "kishi boshiga" rejimida chiziladi.
+ * Taom paketi tanlagichi.
  *
- * Qishloq to'yxonasida bu blok umuman ko'rinmasligi kerak: u yerda
- * kishi boshiga hech narsa to'lanmaydi va "sozlanmagan" deb turgan
- * bo'sh kataklar mijozni chalg'itardi.
+ * Egasi kishi boshiga narx kiritgan bo'lsa chiziladi — ijara bor-yo'qligidan
+ * qat'i nazar. Aynan shu joyda to'y egasi hal qiladi: ovqatni to'yxonadan
+ * buyurtma qilamanmi yoki o'zim tashkil qilamanmi.
+ *
+ * "Taom kerak emas" kataki BIRINCHI turadi va ijara mavjud bo'lganda u
+ * boshlang'ich holat. Sababi: tanlangan paketni QAYTARIB OLISH yo'li
+ * bo'lishi kerak. Ilgari bir marta bosilgan katakni bekor qilib
+ * bo'lmasdi — odam faqat oynani yopib, qaytadan ochishi mumkin edi.
  */
 function dishPickerHtml() {
-  if (state.pricingMode !== "per_person") return "";
+  if (!state.pricing?.length) return "";
+
+  const canSkip = dayRentPrice() !== null;
+
+  const skipChip = canSkip ? `
+    <button type="button" class="dish-chip ${state.dishCount === null ? "active" : ""}"
+            data-dish="0">
+      <b class="small">Taom kerak emas</b>
+      <div class="p">O'zim tashkil qilaman</div>
+    </button>` : "";
 
   const chips = state.pricing.map((row) => `
     <button type="button" class="dish-chip ${state.dishCount === row.dish_count ? "active" : ""}"
@@ -409,42 +450,61 @@ function dishPickerHtml() {
     </button>`).join("");
 
   return `
-    <label class="small strong" style="display:block;margin:var(--sp-4) 0 var(--sp-2)">Nechta xil taom bo'lsin?</label>
-    <div class="dish-row">${chips}</div>`;
+    <label class="small strong" style="display:block;margin:var(--sp-4) 0 var(--sp-2)">
+      Ovqat to'yxonadan bo'lsinmi? ${canSkip ? `<span class="muted">(ixtiyoriy)</span>` : ""}
+    </label>
+    <div class="dish-row">${skipChip}${chips}</div>`;
 }
 
 /**
- * Narx qutisi. Uchala rejim uchun uch xil ko'rinish:
- *   per_person — kishi boshiga + umumiy summa
- *   fixed      — bir kunlik ijara (mehmonlar soniga ko'paytirilmaydi)
- *   unset      — narx yo'q, qutining o'zi ham chizilmaydi
+ * Narx qutisi — ikki qism qatorma-qator, ostida yig'indi.
+ *
+ * Nima uchun yig'indini bir qatorda ko'rsatmaymiz: 51 000 000 degan
+ * raqamni ko'rgan odam "nega bunchalik?" deb so'raydi. Ijara va ovqat
+ * alohida turgan qutida esa savol tug'ilmaydi — u qaysi qismdan voz
+ * kechishi mumkinligini ham darhol ko'radi.
  */
 function venueTotalHtml() {
-  if (state.pricingMode === "per_person") {
+  const rent = dayRentPrice();
+  const perPerson = pricePerPerson();
+  const food = foodTotal();
+
+  if (rent === null && food === null) {
     return `
-      <div class="total-box" style="margin-top:var(--sp-5)">
-        <div class="row"><span>Kishi boshiga</span><b>${priceLabel(pricePerPerson())}</b></div>
-        <div class="row grand"><span>Umumiy (${state.guests || 0} kishi)</span><b>${priceLabel(totalPrice())}</b></div>
-      </div>`;
+      <p class="small muted" style="margin-top:var(--sp-5)">
+        Bu to'yxona narxni saytda ko'rsatmagan — summa egasi bilan kelishiladi.
+        Bron so'rovini hozir yuborsangiz bo'ladi.
+      </p>`;
   }
 
-  const rent = dayRentPrice();
-  if (rent !== null) {
-    return `
-      <div class="total-box" style="margin-top:var(--sp-5)">
-        <div class="row grand"><span>Bir kunlik ijara</span><b>${money(rent)}</b></div>
-        <p class="small muted" style="margin-top:var(--sp-2)">
-          Summa butun zal uchun — mehmonlar soniga bog'liq emas.
-          Oshpaz va mahsulotni to'y egasi o'zi tashkil qiladi.
-        </p>
-      </div>`;
-  }
+  const rows = [
+    rent !== null
+      ? `<div class="row"><span>Bir kunlik ijara <span class="muted">(butun zal)</span></span>
+           <b>${money(rent)}</b></div>` : "",
+    food !== null
+      ? `<div class="row"><span>${state.dishCount} xil taom —
+           ${money(perPerson)} × ${state.guests || 0} kishi</span><b>${money(food)}</b></div>` : "",
+  ].join("");
+
+  // Yig'indi qatori faqat IKKALA qism ham bo'lganda ma'noga ega —
+  // bitta qatorni o'ziga o'zini qo'shib ko'rsatish ortiqcha shovqin.
+  const grand = rent !== null && food !== null
+    ? `<div class="row grand"><span>Umumiy summa</span><b>${money(totalPrice())}</b></div>`
+    : `<div class="row grand"><span>Umumiy summa</span><b>${priceLabel(totalPrice())}</b></div>`;
+
+  const hint = food === null && rent !== null
+    ? `<p class="small muted" style="margin-top:var(--sp-2)">
+         Ijara butun zal uchun — mehmonlar soniga bog'liq emas.
+         Oshpaz va mahsulotni siz tashkil qilasiz.
+       </p>`
+    : "";
 
   return `
-    <p class="small muted" style="margin-top:var(--sp-5)">
-      Bu to'yxona narxni saytda ko'rsatmagan — summa egasi bilan kelishiladi.
-      Bron so'rovini hozir yuborsangiz bo'ladi.
-    </p>`;
+    <div class="total-box" style="margin-top:var(--sp-5)">
+      ${rows}
+      ${grand}
+      ${hint}
+    </div>`;
 }
 
 function venueFormHtml() {
@@ -471,6 +531,11 @@ function venueFormHtml() {
 
     ${venueTotalHtml()}
 
+    ${state.dishCount && state.menuIds.length !== state.dishCount ? `
+      <p class="form-alert" style="margin-top:var(--sp-4)">
+        Menyudan ${state.dishCount} xil taom tanlang — hozir ${state.menuIds.length} ta belgilangan.
+      </p>` : ""}
+
     <button class="btn btn-primary btn-block btn-lg" style="margin-top:var(--sp-5)"
             data-next ${dateBusy ? "disabled" : ""}>Zalni band qilish</button>`;
 }
@@ -478,14 +543,14 @@ function venueFormHtml() {
 /**
  * Nechta taom tanlash mumkin.
  *
- * "Kishi boshiga" rejimida tanlangan paket sonini oshib ketolmaydi —
- * aks holda mijoz to'lagan narx bilan tanlagan taomlari mos kelmasdi.
- * Qolgan rejimlarda menyu shunchaki istak ro'yxati, cheklov yo'q
- * (serverdagi 20 ta chegarasidan boshqa).
+ * To'yxonada paket tanlangan bo'lsa — aynan shuncha, ko'p ham, kam ham
+ * emas: mijoz to'lagan narx bilan tanlagan taomlari mos kelishi kerak.
+ * Paket tanlanmagan bo'lsa menyu shunchaki istak ro'yxati va cheklov
+ * yo'q (serverdagi 20 ta chegarasidan boshqa).
  */
 function menuLimit() {
   if (state.type === "restaurant") return MAX_MENU_ITEMS;
-  return state.pricingMode === "per_person" ? state.dishCount : MAX_MENU_ITEMS;
+  return state.dishCount || MAX_MENU_ITEMS;
 }
 
 function confirmHtml() {
@@ -530,8 +595,14 @@ function confirmPriceRowHtml(isRestaurant) {
   if (total === null) {
     return `<div class="row"><span>Umumiy summa</span><b>Egasi bilan kelishiladi</b></div>`;
   }
-  const label = state.pricingMode === "per_person" ? "Umumiy summa" : "Bir kunlik ijara";
-  return `<div class="row grand"><span>${label}</span><b>${money(total)}</b></div>`;
+
+  const rent = dayRentPrice();
+  const food = foodTotal();
+  return [
+    rent !== null ? `<div class="row"><span>Bir kunlik ijara</span><b>${money(rent)}</b></div>` : "",
+    food !== null ? `<div class="row"><span>Taom (${state.guests} kishi)</span><b>${money(food)}</b></div>` : "",
+    `<div class="row grand"><span>Umumiy summa</span><b>${money(total)}</b></div>`,
+  ].join("");
 }
 
 function doneHtml() {
@@ -603,8 +674,16 @@ function bindEvents(container) {
 
   container.querySelectorAll("[data-dish]").forEach((button) => {
     button.addEventListener("click", () => {
-      state.dishCount = Number(button.dataset.dish);
-      if (state.menuIds.length > state.dishCount) state.menuIds = state.menuIds.slice(0, state.dishCount);
+      // "0" — "Taom kerak emas" kataki. Paket bekor qilinganda tanlangan
+      // taomlar ham tozalanadi: aks holda ular bronga yashirincha
+      // qo'shilib ketardi va mijoz ko'rmagan buyurtma paydo bo'lardi.
+      const value = Number(button.dataset.dish);
+      state.dishCount = value || null;
+      if (!state.dishCount) {
+        state.menuIds = [];
+      } else if (state.menuIds.length > state.dishCount) {
+        state.menuIds = state.menuIds.slice(0, state.dishCount);
+      }
       renderBody();
     });
   });
@@ -628,12 +707,15 @@ function bindEvents(container) {
   });
 
   container.querySelector("[data-next]")?.addEventListener("click", () => {
-    // Taom tanlash ixtiyoriy, lekin "kishi boshiga" rejimida tanlangan
-    // taomlar soni to'langan paketga mos kelishi shart — server ham
-    // aynan shuni tekshiradi.
-    const strictCount = state.type === "venue" && state.pricingMode === "per_person";
-    if (strictCount && state.menuIds.length && state.menuIds.length !== state.dishCount) {
-      toast.error(`${state.dishCount} xil taom tanlanishi kerak.`);
+    // Taom paketi tanlangan bo'lsa, menyudan AYNAN shuncha taom
+    // belgilanishi shart — server ham xuddi shuni tekshiradi. Bu yerda
+    // oldindan aytamiz, aks holda odam tasdiqlash ekraniga o'tib,
+    // xatoni oxirgi bosishda ko'rardi.
+    if (state.type === "venue" && state.dishCount && state.menuIds.length !== state.dishCount) {
+      toast.error(
+        `Menyudan ${state.dishCount} xil taom tanlang (hozir ${state.menuIds.length} ta). ` +
+        `Taom kerak bo'lmasa "Taom kerak emas" ni belgilang.`
+      );
       return;
     }
     state.step = "confirm";

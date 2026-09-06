@@ -32,9 +32,9 @@ AUTH_PHOTO = (
 
 BANNERS = [
     {
-        "title_uz": "WENZU — joyni oldindan band qiling",
-        "title_ru": "WENZU — бронируйте заранее",
-        "title_en": "WENZU — book your place ahead",
+        "title_uz": "Feasto — joyni oldindan band qiling",
+        "title_ru": "Feasto — бронируйте заранее",
+        "title_en": "Feasto — book your place ahead",
         "subtitle_uz": "Platforma haqida",
         "subtitle_ru": "О платформе",
         "subtitle_en": "About the platform",
@@ -54,9 +54,9 @@ BANNERS = [
         "order": 0,
     },
     {
-        "title_uz": "Biznesingizni WENZU'ga qo'shing",
-        "title_ru": "Добавьте свой бизнес в WENZU",
-        "title_en": "Add your business to WENZU",
+        "title_uz": "Biznesingizni Feasto'ga qo'shing",
+        "title_ru": "Добавьте свой бизнес в Feasto",
+        "title_en": "Add your business to Feasto",
         "subtitle_uz": "Biznes egalariga",
         "subtitle_ru": "Владельцам бизнеса",
         "subtitle_en": "For business owners",
@@ -100,9 +100,9 @@ NEWS = [
         "is_pinned": True,
         "title_uz": "Platforma uch tilda ishlaydi",
         "link_url": "/profil/",
-        "body_uz": "Endi WENZU o'zbek, rus va ingliz tillarida ishlaydi. Tilni yon menyuning yuqorisidagi tugmadan almashtirasiz — tanlovingiz brauzerda saqlanadi va keyingi safar ham o'sha tilda ochiladi.\n\nTarjima faqat tugma va sarlavhalarga emas, joylar tavsifi, menyu nomlari va yangiliklarga ham tegishli: joy egasi ma'lumotni uch tilda kiritsa, mijoz o'zi tanlagan tilda ko'radi.",
-        "body_ru": 'Теперь WENZU работает на узбекском, русском и английском. Язык переключается кнопкой в верхней части бокового меню — выбор сохраняется в браузере.\n\nПереведены не только кнопки и заголовки, но и описания заведений, названия блюд и новости: если владелец заполнил данные на трёх языках, гость увидит их на своём.',
-        "body_en": 'WENZU now runs in Uzbek, Russian and English. Switch languages from the button at the top of the side menu — your choice is remembered in the browser.\n\nIt is not just buttons and headings: venue descriptions, menu names and news are translated too, so a guest sees them in the language they picked.',
+        "body_uz": "Endi Feasto o'zbek, rus va ingliz tillarida ishlaydi. Tilni yon menyuning yuqorisidagi tugmadan almashtirasiz — tanlovingiz brauzerda saqlanadi va keyingi safar ham o'sha tilda ochiladi.\n\nTarjima faqat tugma va sarlavhalarga emas, joylar tavsifi, menyu nomlari va yangiliklarga ham tegishli: joy egasi ma'lumotni uch tilda kiritsa, mijoz o'zi tanlagan tilda ko'radi.",
+        "body_ru": 'Теперь Feasto работает на узбекском, русском и английском. Язык переключается кнопкой в верхней части бокового меню — выбор сохраняется в браузере.\n\nПереведены не только кнопки и заголовки, но и описания заведений, названия блюд и новости: если владелец заполнил данные на трёх языках, гость увидит их на своём.',
+        "body_en": 'Feasto now runs in Uzbek, Russian and English. Switch languages from the button at the top of the side menu — your choice is remembered in the browser.\n\nIt is not just buttons and headings: venue descriptions, menu names and news are translated too, so a guest sees them in the language they picked.',
         "title_ru": "Платформа работает на трёх языках",
         "title_en": "The platform now speaks three languages",
         "excerpt_uz": "O'zbek, rus va ingliz tillari qo'shildi — tilni yon menyudan almashtiring.",

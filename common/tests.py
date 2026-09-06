@@ -101,8 +101,13 @@ class FullFlowTest(TestCase):
         self.assertEqual(response.status_code, 201, response.data)
         self.assertIn("BEPUL sinov", response.data["message"])
 
+        # ROL HALI O'ZGARMAYDI — ariza tekshirilmagan.
+        #
+        # "Restoran egasi" degan yozuv tasdiqning natijasi. Ilgari u
+        # ariza yuborilishi bilan qo'yilardi va ariza rad etilsa ham
+        # qolib ketardi.
         owner.refresh_from_db()
-        self.assertEqual(owner.role, "business", "Ariza yuborilgach rol business bo'lishi kerak")
+        self.assertEqual(owner.role, "user", "Tasdiqdan oldin rol o'zgarmasin")
 
         business = Business.objects.get(owner=owner)
 
@@ -131,6 +136,10 @@ class FullFlowTest(TestCase):
         business.refresh_from_db()
         self.assertTrue(business.is_visible, "Tasdiqdan keyin biznes qidiruvga chiqadi")
         self.assertEqual(business.subscription.status, "trial")
+
+        # ANA ENDI u restoran egasi.
+        owner.refresh_from_db()
+        self.assertEqual(owner.role, "business", "Tasdiqdan keyin rol business bo'ladi")
 
         # --- 5. Qayta kirish: endi business.type qaytadi ---------------
         with patch("account.routes.user.verify_google_token") as verify:
@@ -335,6 +344,12 @@ class VenueFlowTest(TestCase):
             ),
         )
         business.refresh_from_db()
+        # Rol aynan SHU yerda beriladi (`approve_application`), ariza
+        # yuborilganda emas. `force_authenticate` esa xotiradagi obyektni
+        # ushlab turadi — uni yangilamasak, so'rovlar hali ham "oddiy
+        # foydalanuvchi" nomidan ketardi.
+        owner.refresh_from_db()
+        self.assertEqual(owner.role, "business")
         self.assertEqual(business.subscription.status, "trial")
 
         # Xonalar bo'limi to'yxona egasiga yopiq
@@ -361,6 +376,9 @@ class VenueFlowTest(TestCase):
         customer_client = APIClient()
         customer_client.force_authenticate(user=customer)
 
+        # Bu to'yxonada taom paketlari yo'q — `dish_count` narxga
+        # ta'sir qilmaydi va menyu talab ham qilinmaydi. To'lanadigan
+        # summa faqat zalning bir kunlik ijarasi.
         payload = {"hall": hall_id, "date": str(today), "guests_count": 250, "dish_count": 2}
         response = customer_client.post("/api/reservations/", payload, format="json")
         self.assertEqual(response.status_code, 201, response.data)
@@ -422,6 +440,9 @@ class RuralVenueFlowTest(TestCase):
 
         self.business = Business.objects.get(owner=self.owner)
         approve_application(application=self.business.application, approved_by=self.admin)
+        # Rol tasdiqda beriladi; `force_authenticate` xotiradagi obyektni
+        # ushlab turgani uchun uni qayta o'qiymiz.
+        self.owner.refresh_from_db()
 
         self.today = datetime.date.today()
         response = self.owner_client.post("/api/owner/availability/generate/", {
@@ -485,6 +506,8 @@ class RuralVenueFlowTest(TestCase):
         Egasi keyinroq kishi boshiga narx kiritsa, mijoz uni ko'radi va
         summa kishi soniga ko'payadi. Har bir to'yxona o'z narxini qo'yadi.
         """
+        from catalog.models import VenueMenuItem
+
         hall_id = self._create_hall(all_price=None)
 
         response = self.owner_client.put("/api/owner/pricing/", [
@@ -497,14 +520,30 @@ class RuralVenueFlowTest(TestCase):
         self.assertEqual(detail.data["pricing_mode"], "per_person")
         self.assertEqual(len(detail.data["dish_pricing"]), 2)
 
+        dishes = [
+            VenueMenuItem.objects.create(business=self.business, name=name)
+            for name in ("Palov", "Norin")
+        ]
+
+        # Taom soni tanlanib, menyudan hech narsa belgilanmasa — bron
+        # o'tmaydi: oshxona bunday buyurtmani bajara olmasdi.
         response = self.customer_client.post("/api/reservations/", {
             "hall": hall_id, "date": str(self.today),
             "guests_count": 200, "dish_count": 2,
+        }, format="json")
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertIn("menu_items", response.data["error"]["details"])
+
+        response = self.customer_client.post("/api/reservations/", {
+            "hall": hall_id, "date": str(self.today),
+            "guests_count": 200, "dish_count": 2,
+            "menu_items": [str(dish.id) for dish in dishes],
         }, format="json")
         self.assertEqual(response.status_code, 201, response.data)
 
         reservation = Reservation.objects.get(pk=response.data["id"])
         self.assertEqual(reservation.price_per_person, Decimal("300000.00"))
+        self.assertIsNone(reservation.day_rent_price, "Bu zalda ijara narxi yo'q")
         self.assertEqual(reservation.total_price, Decimal("60000000.00"))
 
     def test_owner_can_clear_per_person_price(self):

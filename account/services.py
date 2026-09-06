@@ -211,7 +211,7 @@ def _download_avatar(url):
     try:
         # Google surat manzilida o'lcham `=s96-c` ko'rinishida yoziladi.
         sized = re.sub(r"=s\d+(-c)?$", f"=s{AVATAR_SIZE}-c", url)
-        request = Request(sized, headers={"User-Agent": "WENZU/1.0"})
+        request = Request(sized, headers={"User-Agent": "Feasto/1.0"})
         with urlopen(request, timeout=AVATAR_TIMEOUT) as response:
             return ContentFile(response.read())
     except Exception as error:  # noqa: BLE001 — tarmoq xatosi kirishni to'xtatmasin

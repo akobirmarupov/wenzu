@@ -43,7 +43,8 @@ async function loadBadges() {
 async function checkSubscription() {
   try {
     const subscription = await api.owner.subscription();
-    if (subscription?.status === "expired") showLock(subscription);
+    if (subscription?.can_reapply) showRejected(subscription);
+    else if (subscription?.status === "expired") showLock(subscription);
     else if (subscription?.status === "trial") showTrialHint(subscription);
     return subscription;
   } catch {
@@ -67,6 +68,31 @@ function showLock(subscription) {
     </div>
     <a class="btn btn-primary" href="https://t.me/${esc(telegram.replace("@", ""))}"
        target="_blank" rel="noopener">✈️ Administrator bilan bog'lanish</a>`;
+  content.prepend(block);
+}
+
+/**
+ * Arizasi rad etilgan egaga — panelning istalgan sahifasida.
+ *
+ * U panelga kira oladi, lekin hech narsa qo'sha olmaydi (obunasi yo'q).
+ * Ilgari sabab ko'rinmasdi va u "nega ishlamayapti?" deb yurardi. Endi
+ * holat ham, keyingi qadam ham bir joyda: arizani qayta yuborish.
+ */
+function showRejected(subscription) {
+  const content = $("#dash-content");
+  if (!content) return;
+  const telegram = subscription.admin_telegram || "@uvente";
+
+  const block = document.createElement("div");
+  block.className = "subscription-lock";
+  block.innerHTML = `
+    <div class="text">
+      <h3>Arizangiz rad etildi</h3>
+      <p class="small">Joyingiz ommaviy qidiruvda ko'rinmayapti. Sababini
+         ${esc(telegram)} bilan aniqlashtiring va arizani qayta yuboring —
+         ma'lumotlaringiz saqlanib qoladi.</p>
+    </div>
+    <a class="btn btn-primary" href="/panel/obuna/">Arizani qayta yuborish</a>`;
   content.prepend(block);
 }
 

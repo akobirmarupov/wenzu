@@ -22,7 +22,8 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 
     list_display = (
         "username", "full_name", "phone_number",
-        "role", "is_phone_verified", "is_confirmed", "is_active", "date_joined",
+        "role", "trust_bits", "cancelled_reservations_count",
+        "is_phone_verified", "is_confirmed", "is_active", "date_joined",
     )
     list_filter = ("role", "is_phone_verified", "is_confirmed", "is_active", "is_staff")
     search_fields = ("username", "full_name", "phone_number")
@@ -33,6 +34,17 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         (None, {"fields": ("username", "password")}),
         (_("Shaxsiy ma'lumotlar"), {"fields": ("full_name", "phone_number", "avatar", "bio", "birth_date", "preferred_language")}),
         (_("Rol va tasdiqlanganlik"), {"fields": ("role", "is_phone_verified", "is_confirmed")}),
+        # Bal ADMIN uchun tahrirlanadigan qoldirilgan — ataylab.
+        #
+        # U bekor qilishlardan avtomatik kamayadi, lekin nizoli holat
+        # bo'ladi: mijoz kasal bo'lib qolgan, joy egasi sanani o'zi
+        # ko'chirgan va hokazo. Bunday paytda administrator balni
+        # qaytara olishi kerak, aks holda odam o'zi aybdor bo'lmagan
+        # narsa uchun jazolangan bo'lib qolardi.
+        (_("Ishonchlilik"), {
+            "fields": ("trust_bits", "cancelled_reservations_count"),
+            "description": "1–100 Bit. Har bir bekor qilingan bronda 5 Bit ayiriladi.",
+        }),
         (_("Ruxsatlar"), {
             "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions"),
         }),

@@ -271,7 +271,7 @@ class Command(BaseCommand):
         self.stdout.write("\n6. POSTMAN")
 
         collection = json.loads(
-            (self.base / "postman/WENZU.postman_collection.json").read_text()
+            (self.base / "postman/Feasto.postman_collection.json").read_text()
         )
         covered = set()
 

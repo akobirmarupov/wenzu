@@ -89,6 +89,24 @@ class Business(BaseModel):
     latitude = models.FloatField(default=0, validators=[validate_latitude])
     longitude = models.FloatField(default=0, validators=[validate_longitude])
 
+    # Joy egasi TASHLAYDIGAN havola.
+    #
+    # Amalda hech kim "kenglik" va "uzunlik" ni qo'lda kiritmaydi: odam
+    # telefonida Google Maps yoki Yandex'ni ochadi, "ulashish" tugmasini
+    # bosadi va havolani tashlaydi. Shuning uchun havolani ham qabul
+    # qilamiz — koordinatani `common.maps.coordinates_from_link` o'zi
+    # chiqarib oladi va "yaqinimda" qidiruvi ishlab ketadi.
+    #
+    # Havolaning o'zi ham saqlanadi: qisqartirilgan manzillarda
+    # (maps.app.goo.gl/...) koordinata bo'lmaydi, lekin mijoz uni bosib
+    # baribir joyga boradi.
+    map_link = models.URLField(
+        max_length=500, blank=True,
+        verbose_name="Xaritadagi havola",
+        help_text="Google Maps yoki Yandex Xaritadan \"ulashish\" havolasini "
+                  "shu yerga qo'ying. Koordinatalar undan avtomatik olinadi.",
+    )
+
     # --- profil ---
     description = models.TextField(blank=True)
     cover_photo = models.ImageField(
@@ -142,6 +160,29 @@ class Business(BaseModel):
     def __str__(self):
         return self.name
 
+    @property
+    def map_links(self) -> dict:
+        """
+        Mijoz bosadigan xarita havolalari: Google va Yandex, har biri
+        "ko'rish" va "yo'nalish" ko'rinishida.
+
+        Koordinata bo'lsa aniq nuqtaga, bo'lmasa nom + manzil bo'yicha
+        qidiruvga olib boradi. Ikkalasi ham bo'lmasa — bo'sh lug'at va
+        frontend blokni umuman chizmaydi.
+        """
+        from common.maps import build_map_links
+
+        links = build_map_links(
+            latitude=self.latitude, longitude=self.longitude,
+            address=self.address, name=self.name,
+        )
+        # Egasi o'z havolasini qoldirgan bo'lsa — u BIRINCHI o'rinda.
+        # Aynan o'sha havolani u o'z mijozlariga beradi va unda ba'zan
+        # bizda yo'q tafsilot bo'ladi (kirish yo'li, ichki nuqta).
+        if self.map_link:
+            links = {"custom": self.map_link, **links}
+        return links
+
     # ===================================================================
     # To'yxonada narx qanday hisoblanadi
     #
@@ -156,6 +197,13 @@ class Business(BaseModel):
     #                oshpaz va mahsulotni to'y egasi o'zi olib boradi.
     #                Bu yerda `Hall.all_price` to'ldirilgan bo'ladi.
     #
+    #   COMBINED   — eng ko'p uchraydigani: joyning bir kunlik ijarasi
+    #                BOR va ustiga taom paketlari ham bor. To'y egasi
+    #                zalni ijaraga oladi, ovqatni esa XOHLASA to'yxonadan
+    #                buyurtma qiladi, xohlasa o'zi olib boradi. Summa
+    #                shunga qarab ikki qismdan yig'iladi:
+    #                    ijara + (kishi boshiga narx x mehmonlar).
+    #
     #   UNSET      — egasi hali hech qanday narx kiritmagan. Bron baribir
     #                qabul qilinadi, narx keyin kelishiladi — mijozga
     #                YO'Q narxni "0 so'm" qilib ko'rsatgandan ko'ra
@@ -167,6 +215,7 @@ class Business(BaseModel):
     # ===================================================================
     PRICING_PER_PERSON = "per_person"
     PRICING_FIXED = "fixed"
+    PRICING_COMBINED = "combined"
     PRICING_UNSET = "unset"
 
     def venue_pricing_mode(self) -> str:
@@ -174,9 +223,14 @@ class Business(BaseModel):
         if self.business_type != self.TYPE_VENUE:
             return self.PRICING_UNSET
         # `.all()` — prefetch qilingan bo'lsa qo'shimcha so'rov ketmaydi.
-        if any(self.pricings.all()):
+        has_packages = any(self.pricings.all())
+        has_day_rent = any(hall.all_price is not None for hall in self.halls.all())
+
+        if has_packages and has_day_rent:
+            return self.PRICING_COMBINED
+        if has_packages:
             return self.PRICING_PER_PERSON
-        if any(hall.all_price is not None for hall in self.halls.all()):
+        if has_day_rent:
             return self.PRICING_FIXED
         return self.PRICING_UNSET
 

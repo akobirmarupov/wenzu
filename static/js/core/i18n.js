@@ -9,7 +9,9 @@
  * ochilganda ular almashtiriladi. JS ichida yozilgan matnlar esa `t()`
  * orqali olinadi.
  */
-const STORAGE_KEY = "wenzu.lang";
+const STORAGE_KEY = "feasto.lang";
+// Eski nomdagi til tanlovi — bir marta ko'chiriladi.
+const LEGACY_STORAGE_KEY = "wenzu.lang";
 const SUPPORTED = ["uz", "ru", "en"];
 const DEFAULT_LANG = "uz";
 
@@ -25,7 +27,19 @@ let current = DEFAULT_LANG;
 /** Saqlangan yoki brauzer tili. */
 export function detectLanguage() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    let saved = localStorage.getItem(STORAGE_KEY);
+
+    // Eski nomdagi tanlovni bir marta ko'chiramiz — aks holda loyiha
+    // nomi o'zgargan kuni ruscha yoki inglizcha o'qiyotgan odam
+    // to'satdan o'zbekcha sahifani ko'rardi.
+    if (saved === null) {
+      const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (legacy !== null) {
+        saved = legacy;
+        localStorage.setItem(STORAGE_KEY, legacy);
+      }
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+    }
     if (SUPPORTED.includes(saved)) return saved;
   } catch {
     /* localStorage yopiq */

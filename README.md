@@ -1,4 +1,4 @@
-# WENZU — Backend
+# Feasto — Backend
 
 Restoran va to'yxonalarni onlayn qidirish, filtrlash va bron qilish platformasi.
 Django 5 + DRF + PostgreSQL + Redis + Celery.

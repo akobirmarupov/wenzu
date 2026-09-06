@@ -1,5 +1,5 @@
 {% load static %}/*
- * WENZU — Service Worker.
+ * Feasto — Service Worker.
  *
  * Vazifasi ikkita:
  *   1. Ilova telefonga O'RNATILADIGAN bo'lsin (Android "Bosh ekranga
@@ -27,8 +27,8 @@
  */
 
 const VERSION = "{{ asset_version }}";
-const SHELL_CACHE = `wenzu-shell-${VERSION}`;
-const ASSET_CACHE = `wenzu-assets-${VERSION}`;
+const SHELL_CACHE = `feasto-shell-${VERSION}`;
+const ASSET_CACHE = `feasto-assets-${VERSION}`;
 
 const OFFLINE_URL = "/oflayn/";
 

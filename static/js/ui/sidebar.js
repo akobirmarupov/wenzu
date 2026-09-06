@@ -110,7 +110,7 @@ export function initSidebar(user) {
   // Har sahifada ko'rinib turgan chiqish tugmasi tasodifan bosiladi,
   // hisob bilan bog'liq amal esa hisob sahifasida turishi to'g'ri.
   sidebar.innerHTML = `
-    <a class="brand" href="/"><span class="dot"></span>WENZU</a>
+    <a class="brand" href="/"><img class="brand-mark" src="/static/images/brand/feasto-mark.svg" alt="" width="28" height="28">Feasto</a>
     <span class="role-pill">${esc(roleLabel(user))}</span>
     ${body}
     <div class="side-nav-bottom">

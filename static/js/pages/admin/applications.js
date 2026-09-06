@@ -59,7 +59,8 @@ function init() {
   delegate("#list", "[data-reject]", async (button) => {
     const ok = await confirmDialog({
       title: "Arizani rad etasizmi?",
-      message: "Biznes profili qidiruvdan yashiriladi, lekin o'chirilmaydi.",
+      message: "Biznes profili qidiruvdan yashiriladi, lekin o'chirilmaydi — "
+        + "egasi kamchilikni to'g'rilab arizani qayta yuborishi mumkin.",
       confirmText: "Rad etish",
       danger: true,
     });

@@ -70,27 +70,45 @@ function sectionsFor(current) {
   return items;
 }
 
-/** Profil ichidagi qisqa yo'llar — alohida sahifalarga olib boradi. */
+/**
+ * Profil ichidagi qisqa yo'llar — alohida sahifalarga olib boradi.
+ *
+ * ===================================================================
+ * EGASINING PANELI TELEFONDA AYNAN SHU YERDA
+ * ===================================================================
+ * Kompyuterda "Restoran panelim" / "To'yxona panelim" chap menyuda
+ * turadi va u doim ko'rinib turadi. Telefonda esa chap menyu umuman
+ * yo'q (`_mobile.css`, 5a-bo'lim): u pastki menyuga ko'chgan, pastki
+ * menyuda esa beshta katakdan ortiq joy yo'q va panelni u yerga
+ * tiqish "Bronlarim" yoki "Profil" ni qurbon qilishni talab qilardi.
+ *
+ * Shuning uchun telefonda panelga yo'l shu kartochka orqali o'tadi va
+ * u BIRINCHI turadi — joy egasi profilga kirganda birinchi ko'radigan
+ * narsasi o'z joyi bo'lishi kerak, bronlari emas.
+ *
+ * Kompyuterda esa u oddiy kartochkalar qatorida qoladi: u yerda chap
+ * menyu allaqachon bor va ikkita bir xil darajadagi tugma ortiqcha
+ * bo'lardi.
+ */
 function shortcutsHtml(current) {
   // "Biznes ochish" kartochkasi ATAYLAB yo'q: biznes ochish endi shu
   // sahifadagi "Obuna va Premium" bo'limidan boshlanadi — tarifni
   // tanlash va biznes ochish bitta qaror.
   // Platforma egasida "Bronlarim" yo'q — u bron qilmaydi, boshqaradi.
-  const cards = current.is_staff
-    ? [{
-        href: ROUTES.adminHome,
-        icon: "🛡",
-        title: t("nav.admin"),
-        text: t("panel.overview"),
-      }]
-    : [{
-        href: ROUTES.myBookings,
-        icon: "📅",
-        title: t("profile.bookings"),
-        text: t("bookingsPage.lead"),
-      }];
+  const cards = [];
 
-  // Panelga qisqa yo'l faqat ariza TASDIQLANGANDAN keyin — aks holda
+  // Panel kartochkalari BIRINCHI — telefonda ular yagona yo'l.
+  if (current.is_staff) {
+    cards.push({
+      href: ROUTES.adminHome,
+      icon: "🛡",
+      title: t("nav.admin"),
+      text: t("panel.overview"),
+      panel: true,
+    });
+  }
+
+  // Egasining paneli faqat ariza TASDIQLANGANDAN keyin — aks holda
   // odam bo'sh, ishlamaydigan panelga tushardi.
   if (current.business?.is_approved) {
     const isVenue = current.business.type === "venue";
@@ -98,7 +116,18 @@ function shortcutsHtml(current) {
       href: ROUTES.ownerHome,
       icon: isVenue ? "🏛" : "🪑",
       title: t(isVenue ? "nav.panelVenue" : "nav.panelRestaurant"),
-      text: esc(current.business.name),
+      text: current.business.name,
+      panel: true,
+    });
+  }
+
+  // Platforma egasi bron qilmaydi — u bronlarni boshqaradi.
+  if (!current.is_staff) {
+    cards.push({
+      href: ROUTES.myBookings,
+      icon: "📅",
+      title: t("profile.bookings"),
+      text: t("bookingsPage.lead"),
     });
   }
 
@@ -107,7 +136,8 @@ function shortcutsHtml(current) {
       <div class="panel-head"><h2 class="display h3">${esc(t("profile.quickLinks"))}</h2></div>
       <div class="grid grid-auto-sm">
         ${cards.map((card) => `
-          <a class="card card-link shortcut-card" href="${card.href}">
+          <a class="card card-link shortcut-card${card.panel ? " shortcut-panel" : ""}"
+             href="${card.href}">
             <span class="ic" aria-hidden="true">${card.icon}</span>
             <b>${esc(card.title)}</b>
             <span class="small muted">${esc(card.text)}</span>

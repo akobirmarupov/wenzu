@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WENZU — Restoran va to'yxonalarni bron qiling</title>
+<title>Feasto — Restoran va to'yxonalarni bron qiling</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -385,7 +385,7 @@ footer{background:var(--emerald-900);color:#CFE1D8;padding:48px 0 26px;margin-to
 
 <script>
 /* =========================================================
-   WENZU — interaktiv prototip (front-end only, xotirada DB)
+   Feasto — interaktiv prototip (front-end only, xotirada DB)
    Model: businesses/models.py (Room, deposit_tier),
           catalog/models.py (RestaurantMenuItem, VenueMenuItem),
           reservations/models.py (Availability, Reservation)
@@ -917,7 +917,7 @@ function pubNav(){
   const u=currentUser();
   return `
   <div class="pub-nav"><div class="pub-nav-inner">
-    <a href="#" class="logo" onclick="go('home');return false;"><span class="dot"></span>WENZU</a>
+    <a href="#" class="logo" onclick="go('home');return false;"><span class="dot"></span>Feasto</a>
     <div class="pub-links">
       ${navLink('home',"Bosh sahifa")}
       ${navLink('restaurants',"Restoranlar")}
@@ -941,7 +941,7 @@ function pubFooter(){
   return `
   <footer><div class="container footer-grid">
     <div>
-      <h4>WENZU</h4>
+      <h4>Feasto</h4>
       <p style="max-width:280px;color:#AFC6BB;font-size:14px;">Restoran va to'yxonalarni onlayn bron qilish platformasi. Toshkent bo'ylab eng yaxshi joylarni toping.</p>
     </div>
     <div class="footer-cols">
@@ -952,13 +952,13 @@ function pubFooter(){
       </div>
       <div><h5>Aloqa</h5>
         <a href="#">@uvente_admin — Telegram</a>
-        <a href="#">info@wenzu.uz</a>
+        <a href="#">info@feasto.uz</a>
         <a href="#">+998 71 200 00 00</a>
       </div>
     </div>
   </div>
   <div class="container footer-bottom">
-    <span>© 2026 WENZU. Barcha huquqlar himoyalangan.</span>
+    <span>© 2026 Feasto. Barcha huquqlar himoyalangan.</span>
     <span>Bu — interaktiv prototip (demo ma'lumotlar bilan)</span>
   </div>
   </footer>`;
@@ -1021,7 +1021,7 @@ function screenHome(){
   <section class="container" style="padding-bottom:60px;">
     <div class="cta-banner">
       <div>
-        <h3>Restoran yoki to'yxonangizni WENZU'ga qo'shing</h3>
+        <h3>Restoran yoki to'yxonangizni Feasto'ga qo'shing</h3>
         <p>Oyiga atigi 255 000 so'm — birinchi 7 kun mutlaqo bepul sinab ko'ring.</p>
       </div>
       <button class="btn btn-gold" onclick="requireAuthThen(()=>{state.profileTab='business';go('profile');})">Biznesni ro'yxatga olish</button>
@@ -1261,7 +1261,7 @@ function businessTabBody(u){
   if(!state.bizChoice){
     return `<div class="panel">
       <h3>Restoran yoki to'yxona egasimisiz?</h3>
-      <p class="muted" style="font-size:13.5px;margin-bottom:18px;">WENZU platformasiga qo'shiling — mijozlar to'g'ridan-to'g'ri sizni bron qilishi mumkin bo'ladi.</p>
+      <p class="muted" style="font-size:13.5px;margin-bottom:18px;">Feasto platformasiga qo'shiling — mijozlar to'g'ridan-to'g'ri sizni bron qilishi mumkin bo'ladi.</p>
       <div class="biz-choice">
         <button class="opt" onclick="chooseBiz('restaurant')" style="cursor:pointer;">
           <div class="ic">🍽️</div><h3>Restoran ochish</h3>
@@ -1283,7 +1283,7 @@ function businessTabBody(u){
       <div class="opt" style="border-color:var(--emerald-600);">
         <div class="ic">${icon}</div>
         <h3>${label} ochish</h3>
-        <p class="muted" style="font-size:13.5px;margin-top:8px;">${type==='restaurant'?"Restoraningiz WENZU platformasida ko'rinadi, mijozlar to'g'ridan-to'g'ri xona/stol bron qilishi mumkin bo'ladi.":"To'yxonangiz WENZU platformasida ko'rinadi, mijozlar zallaringizni bron qilishi mumkin bo'ladi."}</p>
+        <p class="muted" style="font-size:13.5px;margin-top:8px;">${type==='restaurant'?"Restoraningiz Feasto platformasida ko'rinadi, mijozlar to'g'ridan-to'g'ri xona/stol bron qilishi mumkin bo'ladi.":"To'yxonangiz Feasto platformasida ko'rinadi, mijozlar zallaringizni bron qilishi mumkin bo'ladi."}</p>
         <ul class="muted" style="font-size:13.5px;margin-top:12px;padding-left:18px;line-height:1.9;">
           <li>Cheksiz miqdorda bron qabul qilish</li>
           <li>Menyu / xona-zallarni o'zingiz boshqarasiz</li>
@@ -1476,7 +1476,7 @@ function applyModalHtml(){
       <div class="field"><label>${type==='restaurant'?'Restoran':"To'yxona"} nomi</label><input id="app-bizname" placeholder="Masalan: ${type==='restaurant'?'Bahor Taomxonasi':"Navro'z Saroyi"}"></div>
       <div class="apply-msg">
         <p>Assalomu alaykum! 👋</p>
-        <p style="margin-top:10px;">Sizning ${label}ingizni WENZU platformasiga qo'shish uchun oylik obuna narxi — <b>255 000 so'm</b>. Boshlanishiga esa <b>7 kun mutlaqo bepul</b> — ya'ni tizimni tekin ishlatib ko'rasiz, keyin xohlasangiz davom etasiz.</p>
+        <p style="margin-top:10px;">Sizning ${label}ingizni Feasto platformasiga qo'shish uchun oylik obuna narxi — <b>255 000 so'm</b>. Boshlanishiga esa <b>7 kun mutlaqo bepul</b> — ya'ni tizimni tekin ishlatib ko'rasiz, keyin xohlasangiz davom etasiz.</p>
         <p style="margin-top:10px;">Arizangizni tasdiqlatish uchun <b>@uvente_admin</b> administratorga Telegram orqali murojaat qiling.</p>
       </div>
       <div class="tg-line">✈️ Telegram: <b>&nbsp;@uvente_admin</b></div>
@@ -1501,7 +1501,7 @@ function ownerShell(kind){
   if(!screens.some(x=>x[0]===state.screen.name)) state.screen.name='overview';
   return `<div class="dash ${themeClass}">
     <div class="sidebar">
-      <div class="logo2"><span class="dot" style="width:9px;height:9px;border-radius:50%;background:var(--gold-500);"></span>WENZU</div>
+      <div class="logo2"><span class="dot" style="width:9px;height:9px;border-radius:50%;background:var(--gold-500);"></span>Feasto</div>
       <div class="role-pill">${roleLabel}</div>
       ${screens.map(sc=>`<a href="#" class="side-link ${state.screen.name===sc[0]?'active':''}" onclick="go('${sc[0]}');return false;"><span class="ic">${sc[1]}</span>${sc[2]}${sc[3]?`<span class="count">${sc[3]}</span>`:''}</a>`).join('')}
       <div class="sidebar-bottom">
@@ -1701,7 +1701,7 @@ function adminShell(){
   if(!screens.some(x=>x[0]===state.screen.name)) state.screen.name='overview';
   return `<div class="dash theme-admin">
     <div class="sidebar">
-      <div class="logo2"><span class="dot" style="width:9px;height:9px;border-radius:50%;background:var(--gold-500);"></span>WENZU</div>
+      <div class="logo2"><span class="dot" style="width:9px;height:9px;border-radius:50%;background:var(--gold-500);"></span>Feasto</div>
       <div class="role-pill">Administrator</div>
       ${screens.map(sc=>`<a href="#" class="side-link ${state.screen.name===sc[0]?'active':''}" onclick="go('${sc[0]}');return false;"><span class="ic">${sc[1]}</span>${sc[2]}${sc[3]?`<span class="count">${sc[3]}</span>`:''}</a>`).join('')}
       <div class="sidebar-bottom">

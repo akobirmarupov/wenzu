@@ -104,11 +104,16 @@ class BusinessListSerializer(serializers.ModelSerializer):
     max_capacity = serializers.IntegerField(read_only=True, required=False)
     distance_km = serializers.FloatField(read_only=True, required=False)
 
+    # Xarita havolalari kartochkada ham kerak: "yaqinimda" qidiruvidan
+    # kelgan odam ro'yxatdagi joyni ochmasdan turib yo'nalishni ko'ra
+    # olishi kerak — u aynan shu narsani qidirib kelgan.
+    map_links = serializers.DictField(read_only=True)
+
     class Meta:
         model = Business
         fields = [
             "id", "name", "business_type", "business_type_display",
-            "address", "district", "latitude", "longitude",
+            "address", "district", "latitude", "longitude", "map_link", "map_links",
             "description", "cover_photo", "cuisine", "cuisine_display",
             "open_time", "close_time", "rating_avg", "reviews_count",
             "rooms_count", "halls_count", "min_capacity", "max_capacity", "distance_km",
@@ -137,11 +142,19 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
     phone_number = serializers.SerializerMethodField()
     contacts_locked = serializers.SerializerMethodField()
 
+    # --- joylashuv ---
+    #
+    # ALOQA ma'lumotidan farqli o'laroq, xarita havolasi HAMMAGA ochiq:
+    # manzil va tuman baribir ochiq turibdi, havola esa shunchaki o'sha
+    # manzilni xaritada ko'rsatadi. Yashirishning ma'nosi yo'q — aksincha,
+    # kirmagan odam ham joyni topib borishi kerak.
+    map_links = serializers.DictField(read_only=True)
+
     class Meta:
         model = Business
         fields = [
             "id", "name", "business_type", "business_type_display",
-            "address", "district", "latitude", "longitude",
+            "address", "district", "latitude", "longitude", "map_link", "map_links",
             "description", "cover_photo", "gallery",
             "cuisine", "cuisine_display", "open_time", "close_time",
             "rating_avg", "reviews_count",
@@ -228,12 +241,17 @@ class BusinessUpdateSerializer(serializers.ModelSerializer):
         model = Business
         fields = [
             "id", "name", "business_type", "address", "district",
-            "latitude", "longitude", "description", "cover_photo",
+            "latitude", "longitude", "map_link", "map_links",
+            "description", "cover_photo",
             "cuisine", "open_time", "close_time",
             "telegram_username", "phone_number",
             "rating_avg", "reviews_count", "is_visible",
         ]
-        read_only_fields = ["id", "business_type", "rating_avg", "reviews_count", "is_visible"]
+        read_only_fields = [
+            "id", "business_type", "rating_avg", "reviews_count", "is_visible", "map_links",
+        ]
+
+    map_links = serializers.DictField(read_only=True)
 
     def validate(self, attrs):
         business_type = self.instance.business_type if self.instance else None
@@ -244,6 +262,43 @@ class BusinessUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {"close_time": "Ish vaqti boshlanishi va tugashi bir xil bo'lolmaydi."}
                 )
+
+        # HAVOLADAN KOORDINATANI O'ZIMIZ CHIQARAMIZ.
+        #
+        # Joy egasi "kenglik" va "uzunlik" ni qo'lda kiritmaydi — u
+        # telefonida xaritani ochib, "ulashish" tugmasini bosadi va
+        # havolani tashlaydi. Undan sonlarni chiqarib olsak, "yaqinimda"
+        # qidiruvi hech qanday qo'shimcha harakatsiz ishlab ketadi.
+        #
+        # Qachon chiqaramiz: HAVOLA O'ZGARGANDA va egasi koordinatani
+        # o'zi tahrirlamaganda.
+        #
+        # Ikkinchi shart muhim. Sozlamalar formasi har saqlashda barcha
+        # maydonni yuboradi, ya'ni "kenglik kelgan" degani "egasi uni
+        # yozdi" degani emas. Faqat kelgan-kelmaganiga qarasak, bir marta
+        # to'lgan koordinata havola almashtirilganda ham eski joyda qotib
+        # qolardi. Aksincha, qiymatni doim havoladan olsak, egasining
+        # qo'lda aniqlashtirgan nuqtasi (havola binoning old tomonini,
+        # u esa kirish darvozasini ko'rsatishi mumkin) har saqlashda
+        # yo'qolardi.
+        link = attrs.get("map_link")
+        if not link or link == getattr(self.instance, "map_link", ""):
+            return attrs
+
+        current_lat = getattr(self.instance, "latitude", None)
+        current_lng = getattr(self.instance, "longitude", None)
+        edited_by_hand = (
+            attrs.get("latitude", current_lat) != current_lat
+            or attrs.get("longitude", current_lng) != current_lng
+        )
+        if edited_by_hand:
+            return attrs
+
+        from common.maps import coordinates_from_link
+
+        found = coordinates_from_link(link)
+        if found:
+            attrs["latitude"], attrs["longitude"] = found
         return attrs
 
 
@@ -252,13 +307,15 @@ class BusinessAdminSerializer(serializers.ModelSerializer):
 
     owner_name = serializers.CharField(source="owner.full_name", read_only=True)
     owner_phone = serializers.CharField(source="owner.phone_number", read_only=True)
+    map_links = serializers.DictField(read_only=True)
     subscription_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Business
         fields = [
             "id", "name", "business_type", "address", "district", "owner",
-            "owner_name", "owner_phone", "is_visible", "rating_avg",
+            "owner_name", "owner_phone", "map_link", "map_links",
+            "is_visible", "rating_avg",
             "reviews_count", "subscription_status", "created_at",
         ]
 

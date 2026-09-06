@@ -18,12 +18,23 @@ import { t } from "../../../core/i18n.js";
 import { $, esc, busy, formValues } from "../../../ui/dom.js";
 import { modal } from "../../../ui/modal.js";
 import { toast } from "../../../ui/toast.js";
-import { dateLabel } from "../../../ui/format.js";
+import { dateLabel, trustSeal, trustBar } from "../../../ui/format.js";
 
+/**
+ * Profildagi rol yozuvi.
+ *
+ * "Restoran egasi" / "To'yxona egasi" — faqat ARIZA TASDIQLANGANDAN
+ * keyin. Ilgari ariza yuborilishi bilan shu yozuv paydo bo'lardi va
+ * ariza rad etilgandan keyin ham qolib ketardi: odam profilida "Restoran
+ * egasi" deb turardi, lekin hech qanday joyi yo'q edi. Tekshirilmagan
+ * ariza — hali egalik emas.
+ */
 export function roleName(user) {
   if (user.is_staff) return t("panel.roleAdmin");
-  if (user.business?.type === "venue") return t("panel.roleVenue");
-  if (user.business?.type === "restaurant") return t("panel.roleRestaurant");
+  if (user.business?.is_approved) {
+    if (user.business.type === "venue") return t("panel.roleVenue");
+    if (user.business.type === "restaurant") return t("panel.roleRestaurant");
+  }
   return t("profile.roleUser");
 }
 
@@ -33,6 +44,33 @@ function row(label, value, { mono = false, extra = "" } = {}) {
     <div class="info-row">
       <span class="k">${esc(label)}</span>
       <span class="v ${mono ? "mono" : ""}">${value}${extra}</span>
+    </div>`;
+}
+
+/**
+ * Ishonchlilik qatori — bal, daraja va chiziq.
+ *
+ * Nima uchun profilda ko'rinadi. Bal joy egasiga ko'rinadi va u shunga
+ * qarab bronni tasdiqlaydi yoki rad etadi. Egasi ko'radigan, lekin
+ * odamning o'zi ko'rmaydigan baho — yashirin qora ro'yxat bo'lardi.
+ * Ko'rinib turgan bal esa o'zi ogohlantiruvchi vazifasini bajaradi:
+ * odam bekor qilishdan oldin ikkilanadi.
+ *
+ * Eski javobda `trust` bo'lmasligi mumkin (keshlangan sahifa) — u
+ * holda qator umuman chizilmaydi.
+ */
+function trustRowHtml(user) {
+  const trust = user.trust;
+  if (!trust?.bits) return "";
+
+  return `
+    <div class="info-row">
+      <span class="k">${esc(t("profile.trust"))}</span>
+      <span class="v trust-cell">
+        ${trustSeal(trust)}
+        ${trustBar(trust)}
+        <span class="xs faint">${esc(t("profile.trustHint", { points: 5 }))}</span>
+      </span>
     </div>`;
 }
 
@@ -53,6 +91,7 @@ export function render(user) {
       ${row(t("auth.username"), esc(user.username), { mono: true })}
       ${row(t("auth.phone"), esc(user.phone_number), { mono: true, extra: phoneSeal })}
       ${row(t("profile.role"), esc(roleName(user)))}
+      ${trustRowHtml(user)}
       ${row(t("profile.birthDate"), user.birth_date ? dateLabel(user.birth_date) : "—")}
       ${row(t("profile.bio"), esc(user.bio || "—"))}
       ${row(t("profile.memberSince"), dateLabel(user.date_joined))}

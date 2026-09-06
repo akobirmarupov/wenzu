@@ -138,7 +138,7 @@ export function initPublicNav() {
   }
 
   nav.innerHTML = `
-    <a class="brand" href="/"><span class="dot"></span>WENZU</a>
+    <a class="brand" href="/"><img class="brand-mark" src="/static/images/brand/feasto-mark.svg" alt="" width="28" height="28">Feasto</a>
     <p class="brand-sub">${esc(t("brand.tagline"))}</p>
 
     ${MAIN_LINKS.map(linkHtml).join("")}

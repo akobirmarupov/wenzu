@@ -69,20 +69,25 @@ export function requireOwner() {
     redirect(ROUTES.adminHome);
     return null;
   }
-  if (user.role !== "business" || !user.business) {
-    redirect(ROUTES.profile);
-    return null;
-  }
   // `is_approved` — ARIZA tasdiqlanganmi. Obuna bilan aralashtirmaslik
   // kerak: tasdiqlangan, lekin obunasi ochilmagan egasi ham panelga
   // kiradi — u yerda o'z holatini ko'rib, tarif tanlaydi. Yozish
   // amallarini server obunaga qarab cheklaydi.
   //
+  // Bu tekshiruv ROL tekshiruvidan OLDIN turadi: rol endi faqat
+  // tasdiqdan keyin beriladi, ya'ni arizasi kutayotgan odamning roli
+  // 'user'. Uni "profilga" emas, aynan arizasi turgan ekranga yuborish
+  // kerak.
+  //
   // `=== false` ataylab: eski, `is_approved` maydonisiz saqlangan
   // sessiyada qiymat `undefined` bo'ladi va odamni bekorga quvib
   // chiqarmaslik kerak — server baribir himoyalangan.
-  if (user.business.is_approved === false) {
+  if (user.business?.is_approved === false) {
     redirect(ROUTES.premium);
+    return null;
+  }
+  if (user.role !== "business" || !user.business) {
+    redirect(ROUTES.profile);
     return null;
   }
   return { user, businessType: user.business.type };

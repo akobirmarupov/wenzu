@@ -105,6 +105,46 @@ class HasContactPhone(BasePermission):
             and request.user.phone_number
         )
 
+def unapproved_application_message(application):
+    """
+    "Nega yozolmayapman?" degan savolga javob — ariza TASDIQLANMAGAN
+    hollarda.
+
+    Matn arizaning holatiga qarab boshqacha va bu tafsilot emas:
+      · rad etilgan — kutishning ma'nosi yo'q, arizani qayta yuborish kerak
+      · tarifsiz (bepul sinov) ariza — tasdiqdan keyin sinov boshlanadi
+      · pullik tarif tanlangan — sinov yo'q, obuna to'lov tasdig'idan
+        keyin o'sha muddatga faollashadi
+
+    Ilgari uchalasiga bir xil "arizangiz tasdiqlanmagan, 7 kunlik sinov
+    boshlanadi" deyilardi: pul to'lagan odam bo'lmagan sinovni kutardi,
+    rad etilgani esa umuman kelmaydigan javobni.
+
+    Ikki joyda kerak — `IsBusinessRole` (roli hali yo'q ariza egasi) va
+    `HasActiveSubscription` (obunasi ochilmagan biznes).
+    """
+    if application is not None and application.status == "rejected":
+        return (
+            "Arizangiz rad etilgan. Sababini administrator bilan "
+            "aniqlashtiring va \"Obuna va Premium\" bo'limidan arizani "
+            "qayta yuboring."
+        )
+
+    applied_plan = application.plan if application else None
+    if applied_plan is None:
+        from common.models import PlatformSettings
+        days = PlatformSettings.get_solo().trial_days
+        return (
+            "Arizangiz hali tasdiqlanmagan. Administrator tekshirgach, "
+            f"{days} kunlik bepul sinov boshlanadi va barcha bo'limlar ochiladi."
+        )
+    return (
+        "Arizangiz hali tasdiqlanmagan. Administrator to'lovingizni "
+        f"tasdiqlagach obunangiz {applied_plan.duration_label}ga faollashadi "
+        "va barcha bo'limlar ochiladi."
+    )
+
+
 class IsBusinessRole(BasePermission):
     """
     Vazifasi: faqat `role='business'` bo'lgan foydalanuvchi (restoran yoki
@@ -138,7 +178,50 @@ class IsBusinessRole(BasePermission):
             )
             return False
 
-        return request.user.role == "business"
+        if request.user.role == "business":
+            return True
+
+        # ARIZASI BOR, lekin roli hali yo'q.
+        #
+        # Rol tasdiqdan keyin beriladi, ya'ni ariza yuborgan odamning
+        # roli 'user'. Unga "bu bo'lim faqat biznes egalari uchun" deyish
+        # noto'g'ri javob bo'lardi: u aynan biznes ochmoqchi va arizasi
+        # ko'rib chiqilyapti. To'g'ri javob — arizasi qanday holatda va
+        # keyin nima bo'lishi.
+        business = request.user.businesses.select_related(
+            "application", "application__plan"
+        ).first()
+        if business is not None:
+            self.message = unapproved_application_message(
+                getattr(business, "application", None)
+            )
+        return False
+
+
+class IsBusinessOwnerOrApplicant(IsBusinessRole):
+    """
+    Vazifasi: JOYI BOR odam — roli hali 'business' bo'lmasa ham.
+
+    Rol tasdiqdan keyin beriladi (`approve_application`). Ya'ni arizasi
+    ko'rib chiqilayotgan yoki rad etilgan odamning roli 'user' bo'ladi,
+    lekin uning joyi va arizasi bor — u o'z holatini KO'RISHI kerak
+    ("arizangiz tekshiruvida" / "rad etildi, qayta yuboring").
+
+    Faqat OBUNA ekrani uchun. Panelning qolgan bo'limlari (`xonalar`,
+    `bronlar`, `menyu`) `IsBusinessRole` da qoladi: ular tasdiqlangan
+    egaga tegishli va tasdiqlanmagan odamga ko'rsatadigan narsasi yo'q.
+    """
+    message = "Bu bo'lim biznes egalari va ariza yuborganlar uchun."
+
+    def has_permission(self, request, view):
+        if super().has_permission(request, view):
+            return True
+        # Staff bu yerga ham kirmaydi — yuqoridagi tekshiruv uni allaqachon
+        # to'xtatgan va `self.message` unga tushuntirilgan.
+        user = request.user
+        if not (user and user.is_authenticated) or user.is_staff or user.is_superuser:
+            return False
+        return user.businesses.exists()
 
 
 class IsOwnerOfBusinessType(IsBusinessRole):
@@ -200,12 +283,14 @@ class HasActiveSubscription(BasePermission):
 
         subscription = getattr(business, "subscription", None)
         if subscription is None:
-            # Obuna yo'q — yozish yopiq. Lekin SABABI ikki xil bo'lishi
+            # Obuna yo'q — yozish yopiq. Lekin SABABI uch xil bo'lishi
             # mumkin va odamga to'g'risini aytish kerak:
             #   · ariza hali ko'rib chiqilmagan — kutish kifoya
             #   · ariza tasdiqlangan, ammo obuna ochilmagan (masalan bepul
             #     sinov avval ishlatilgan) — bu yerda kutish yordam
             #     bermaydi, tarif tanlash kerak
+            #   · ariza rad etilgan — kutish umuman befoyda, arizani
+            #     qayta yuborish kerak
             # Ilgari ikkalasiga bir xil "arizangiz tasdiqlanmagan" deyilardi
             # va tasdiqlangan egasi nima qilishini bilmay qolardi.
             application = getattr(business, "application", None)
@@ -217,25 +302,8 @@ class HasActiveSubscription(BasePermission):
                     "administrator bilan Telegram orqali bog'laning."
                 )
             else:
-                # Kutish matni ARIZADAGI TARIFGA bog'liq. Bepul sinov faqat
-                # tarifsiz arizada beriladi — 1 yoki 3 oylik tarif tanlagan
-                # odamga "7 kunlik bepul sinov boshlanadi" deyish yolg'on
-                # va'da bo'lardi: uning obunasi to'lov tasdiqlangan kundan
-                # boshlab o'sha muddatga ochiladi, sinovsiz.
-                applied_plan = application.plan if application else None
-                if applied_plan is None:
-                    from common.models import PlatformSettings
-                    days = PlatformSettings.get_solo().trial_days
-                    self.message = (
-                        "Arizangiz hali tasdiqlanmagan. Administrator tekshirgach, "
-                        f"{days} kunlik bepul sinov boshlanadi va barcha bo'limlar ochiladi."
-                    )
-                else:
-                    self.message = (
-                        "Arizangiz hali tasdiqlanmagan. Administrator to'lovingizni "
-                        f"tasdiqlagach obunangiz {applied_plan.duration_label}ga faollashadi "
-                        "va barcha bo'limlar ochiladi."
-                    )
+                self.message = unapproved_application_message(application)
+
             return False
         return subscription.status in ("trial", "active")
 

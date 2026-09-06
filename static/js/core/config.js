@@ -7,6 +7,25 @@
 export const API_BASE = "/api";
 
 export const STORAGE_KEYS = {
+  access: "feasto.access",
+  refresh: "feasto.refresh",
+  user: "feasto.user",
+};
+
+/**
+ * ESKI (WENZU davridagi) kalitlar.
+ *
+ * Loyiha nomi o'zgargani bilan brauzerdagi ma'lumot o'zgarmaydi: odamda
+ * hali `wenzu.access` ostida amaldagi tokeni turibdi. Yangi nomga
+ * shunchaki o'tib ketsak, saytga kirgan HAR BIR odam tizimdan chiqib
+ * qolardi — nom almashtirish uchun juda qimmat narx.
+ *
+ * Shuning uchun eski kalitlar bir marta O'QILADI va yangisiga
+ * ko'chiriladi (`storage.js`, `theme.js`, `i18n.js`). Ko'chirilgach
+ * eskisi o'chiriladi, ya'ni bu ro'yxat vaqtinchalik: bir necha oydan
+ * keyin uni olib tashlash mumkin.
+ */
+export const LEGACY_STORAGE_KEYS = {
   access: "wenzu.access",
   refresh: "wenzu.refresh",
   user: "wenzu.user",
@@ -95,6 +114,6 @@ export const PLACEHOLDER_IMAGE =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260">
        <rect width="400" height="260" fill="#EFE9DA"/>
        <text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle"
-             font-family="serif" font-size="21" fill="#B6AE97">WENZU</text>
+             font-family="serif" font-size="21" fill="#B6AE97">Feasto</text>
      </svg>`
   );

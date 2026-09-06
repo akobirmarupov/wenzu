@@ -51,9 +51,11 @@ class TrialStartsOnApprovalTest(TestCase):
         self.assertFalse(business.is_visible, "Tasdiqlanmagan joy qidiruvda ko'rinmasligi kerak")
         self.assertFalse(Subscription.objects.filter(business=business).exists())
 
-        # Rol o'zgaradi — egasi panelga kirib, arizasi holatini ko'rishi kerak.
+        # ROL O'ZGARMAYDI. Ariza — hali egalik emas: uni hech kim
+        # tekshirmagan va u rad etilishi ham mumkin. Rol tasdiqdan
+        # keyin, `approve_application` da beriladi.
         self.owner.refresh_from_db()
-        self.assertEqual(self.owner.role, "business")
+        self.assertEqual(self.owner.role, "user")
 
     def test_unapproved_business_cannot_write(self):
         _, business, _ = submit_application(

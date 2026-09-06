@@ -1,10 +1,15 @@
 /* ===================================================================
    Yuqori panel — til, tema va foydalanuvchi o'ng burchakda.
    =================================================================== */
+/* Panel balandligi bitta joyda: ochiluvchi bildirishnoma ro'yxati
+   telefonda aynan shu qiymatdan boshlab joylashadi (`_mobile.css`). */
+:root { --topbar-h: 62px; }
+@media (max-width: 940px) { :root { --topbar-h: 52px; } }
+
 .topbar {
   position: sticky; top: 0; z-index: var(--z-sticky);
   display: flex; align-items: center; gap: var(--sp-3);
-  min-height: 62px; padding: var(--sp-2) var(--sp-6);
+  min-height: var(--topbar-h); padding: var(--sp-2) var(--sp-6);
   background: color-mix(in srgb, var(--surface) 88%, transparent);
   backdrop-filter: blur(12px) saturate(1.4);
   border-bottom: 1px solid var(--line);
@@ -164,6 +169,6 @@
 .notif-row .text .body { font-size: var(--fs-xs); color: var(--ink-soft); }
 .notif-row .text .when { font-size: 10.5px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
 
-@media (max-width: 940px) {
-  .notif-panel { right: -60px; }
-}
+/* Telefondagi joylashuv `_mobile.css` da: u yerda ro'yxat qo'ng'iroqqa
+   emas, ekranga nisbatan joylashadi. Ilgari shu yerda `right: -60px`
+   turardi va ro'yxatning chap yarmi ekrandan chiqib ketardi. */

@@ -5,6 +5,7 @@
 import { ROUTES } from "../core/config.js";
 import { esc } from "../ui/dom.js";
 import { imageUrl, stars, businessTypeLabel } from "../ui/format.js";
+import { mapPinHtml } from "./map-links.js";
 
 export function businessCard(business) {
   const isVenue = business.business_type === "venue";
@@ -18,6 +19,7 @@ export function businessCard(business) {
         ${business.rating_avg ? `<span class="rating-badge">★ ${Number(business.rating_avg).toFixed(1)}</span>` : ""}
         ${business.distance_km !== undefined && business.distance_km !== null
           ? `<span class="distance-badge">${business.distance_km} km</span>` : ""}
+        ${mapPinHtml(business)}
       </div>
       <div class="card-body">
         <span class="name">${esc(business.name)}</span>
@@ -25,6 +27,7 @@ export function businessCard(business) {
           <span>${esc(business.district || businessTypeLabel(business.business_type))}</span>
           ${business.cuisine_display ? `<span>·</span><span>${esc(business.cuisine_display)}</span>` : ""}
         </div>
+        ${business.address ? `<span class="addr">📍 ${esc(business.address)}</span>` : ""}
         <div class="foot">
           <span class="rating small">${stars(business.rating_avg)}
             <span class="muted">(${business.reviews_count || 0})</span></span>

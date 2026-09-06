@@ -320,11 +320,17 @@ class AdminBusinessManagementTest(TestCase):
 
 class CancelWindowTest(TestCase):
     """
-    Bekor qilish oynasi: tasdiqlangandan keyin 1 soat.
+    Bekor qilish oynasi: bron qilingan payt bilan tadbir orasidagi
+    vaqtning TENG YARMI.
 
     Nima uchun chegara bor: joy egasi bronni tasdiqlab, o'sha vaqtni
     band qilib qo'yadi va boshqa mijozlarni rad etadi. Oxirgi daqiqadagi
     bekor qilish uning uchun to'g'ridan-to'g'ri zarar.
+
+    Nima uchun aynan yarmi, qat'iy bir soat emas: bir oy oldin bron
+    qilgan odamga bir soat berish adolatsiz (egasiga hali zarar yo'q),
+    ikki soatdan keyingi kechki ovqatni oxirgi daqiqagacha bekor qilish
+    esa aksincha — juda yumshoq. Yarim yo'l ikkalasini ham hisobga oladi.
     """
 
     def setUp(self):
@@ -352,13 +358,26 @@ class CancelWindowTest(TestCase):
             start_time=datetime.time(10, 0), end_time=datetime.time(23, 0),
         )
 
-    def _make(self, status="pending"):
-        return Reservation.objects.create(
+    def _make(self, status="pending", *, booked_ago=None):
+        """
+        Bron yaratadi. `booked_ago` — u qancha vaqt OLDIN qilingani.
+
+        Oyna `created_at` dan hisoblangani uchun testlar aynan shu
+        vaqtni siljitib ishlaydi. `auto_now_add` bo'lgani sababli u
+        yaratilgandan keyin to'g'ridan-to'g'ri yoziladi.
+        """
+        reservation = Reservation.objects.create(
             user=self.customer, business=self.business, room=self.room,
             availability=self.availability,
             start_time=datetime.time(19, 0), end_time=datetime.time(21, 0),
             guests_count=2, status=status,
         )
+        if booked_ago is not None:
+            Reservation.objects.filter(pk=reservation.pk).update(
+                created_at=timezone.now() - booked_ago
+            )
+            reservation.refresh_from_db()
+        return reservation
 
     def _cancel(self, reservation):
         return self.client.patch(
@@ -379,14 +398,39 @@ class CancelWindowTest(TestCase):
         reservation.refresh_from_db()
         self.assertIsNotNone(reservation.confirmed_at)
 
-    def test_pending_has_no_deadline(self):
-        """Tasdiqlanmagan so'rovni istalgan paytda qaytarib olish mumkin."""
+    def test_deadline_is_the_midpoint_between_booking_and_event(self):
+        """
+        Tadbirgacha 5 kun bor, bron hozir qilindi — muddat taxminan
+        2.5 kundan keyin, ya'ni ikkalasining o'rtasida.
+        """
         reservation = self._make()
 
-        self.assertIsNone(reservation.cancel_deadline())
+        deadline = reservation.cancel_deadline()
+        event_at = reservation.event_starts_at()
+        self.assertIsNotNone(deadline)
+        self.assertEqual(
+            deadline, reservation.created_at + (event_at - reservation.created_at) / 2
+        )
         self.assertTrue(reservation.cancel_check()[0])
 
-    def test_can_cancel_within_the_hour(self):
+    def test_the_window_applies_to_pending_requests_too(self):
+        """
+        Tasdiqlanmagan so'rov ham qoidadan chetda emas.
+
+        Ilgari `pending` bron istalgan paytda qaytarib olinardi. Lekin
+        joy egasi uchun farqi yo'q: u o'sha kunni allaqachon "band
+        bo'lishi mumkin" deb hisobga olgan va boshqa mijozga va'da
+        bermagan bo'ladi. Tadbir tagida bekor qilingan so'rov ham
+        o'sha kunni yo'qotadi.
+        """
+        reservation = self._make(booked_ago=datetime.timedelta(days=20))
+
+        allowed, reason = reservation.cancel_check()
+        self.assertFalse(allowed)
+        self.assertIn("muddat", reason.lower())
+
+    def test_can_cancel_in_the_first_half(self):
+        """Tadbirgacha 5 kun, bron hozirgina qilindi — birinchi yarmidamiz."""
         reservation = self._make("confirmed")
         self.client.force_authenticate(self.customer)
 
@@ -396,12 +440,10 @@ class CancelWindowTest(TestCase):
         reservation.refresh_from_db()
         self.assertEqual(reservation.status, "cancelled")
 
-    def test_cannot_cancel_after_the_hour(self):
-        reservation = self._make("confirmed")
-        # Soat o'tib ketdi.
-        Reservation.objects.filter(pk=reservation.pk).update(
-            confirmed_at=timezone.now() - datetime.timedelta(hours=1, minutes=1)
-        )
+    def test_cannot_cancel_in_the_second_half(self):
+        # Tadbirgacha 5 kun qolgan, bron esa 20 kun oldin qilingan —
+        # yarim yo'l ancha orqada qoldi.
+        reservation = self._make("confirmed", booked_ago=datetime.timedelta(days=20))
         self.client.force_authenticate(self.customer)
 
         response = self._cancel(reservation)
@@ -412,11 +454,14 @@ class CancelWindowTest(TestCase):
         reservation.refresh_from_db()
         self.assertEqual(reservation.status, "confirmed")
 
-    def test_exactly_on_the_boundary_still_works(self):
-        """59 daqiqa — hali mumkin. Chegara "keyin" tomonda yopiladi."""
+    def test_just_before_the_midpoint_still_works(self):
+        """Chegara "keyin" tomonda yopiladi — o'rtaga yetmasdan mumkin."""
         reservation = self._make("confirmed")
+        # Yarim yo'lgacha bir daqiqa qolgan holatga surib qo'yamiz.
+        event_at = reservation.event_starts_at()
+        gap = event_at - timezone.now()
         Reservation.objects.filter(pk=reservation.pk).update(
-            confirmed_at=timezone.now() - datetime.timedelta(minutes=59)
+            created_at=timezone.now() - gap + datetime.timedelta(minutes=2)
         )
         self.client.force_authenticate(self.customer)
 
@@ -428,10 +473,7 @@ class CancelWindowTest(TestCase):
         qila olishi kerak, aks holda har e'tiroz bazaga qo'lda kirishni
         talab qilardi.
         """
-        reservation = self._make("confirmed")
-        Reservation.objects.filter(pk=reservation.pk).update(
-            confirmed_at=timezone.now() - datetime.timedelta(days=2)
-        )
+        reservation = self._make("confirmed", booked_ago=datetime.timedelta(days=30))
         staff = User.objects.create_user(
             username="cw_staff", password="StrongPass123!",
             phone_number="+998900000403", full_name="Admin", is_staff=True,

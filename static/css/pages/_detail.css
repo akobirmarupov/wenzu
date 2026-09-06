@@ -73,6 +73,20 @@
 }
 .tab.active { color: var(--emerald-800); border-bottom-color: var(--emerald-600); }
 
+/* Xona/zal kartochkasidagi "Band qilish" tugmasi.
+
+   `margin-top: auto` — tugma kartochkaning ENG PASTIGA yopishadi.
+   Bir qatordagi kartochkalar to'rda teng balandlikda bo'ladi, lekin
+   ichidagi ma'lumot har xil: bir zalda ijara narxi bor, ikkinchisida
+   yo'q. Usiz tugmalar turli balandlikda turib, ro'yxat qiyshiq
+   ko'rinardi.
+
+   Ilgari bu qiymat tugmaning O'ZIDA `style="margin-top:..."` bo'lib
+   turardi va inline uslub har qanday CSS qoidasini bosib ketardi. */
+.grid-auto > .card { display: flex; flex-direction: column; }
+.grid-auto > .card > .card-body { flex: 1; }
+.card-body > .book-btn { margin-top: auto; }
+
 .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--sp-4); }
 .menu-item { border: 1px solid var(--line); border-radius: var(--radius-m); overflow: hidden; background: var(--surface); position: relative; }
 .menu-item img { aspect-ratio: 4 / 3; object-fit: cover; width: 100%; background: var(--surface-2); }

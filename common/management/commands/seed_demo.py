@@ -414,6 +414,34 @@ VENUES = [
                        "kelishiladi.",
         "halls": [("Bog' maydoni", 500)],
     },
+    # ---------------------------------------------------------------
+    # ARALASH OQIM — eng ko'p uchraydigani.
+    #
+    # Zal bir kunga ijaraga olinadi (15 000 000 so'm), ovqat esa
+    # IXTIYORIY qo'shimcha: to'y egasi xohlasa to'yxonadan 1/2/3 xil
+    # taom buyurtma qiladi, xohlasa oshpazini o'zi olib keladi.
+    #
+    # Demo ma'lumotda bu yozuv bo'lishi SHART: qolgan to'yxonalarning
+    # hammasi yo faqat kishi boshiga, yo faqat ijara bilan ishlaydi va
+    # ikkalasi birga turgan ekranni ochib ko'rib bo'lmasdi.
+    # ---------------------------------------------------------------
+    {
+        "name": "Olloyor To'yxonasi", "district": "Qibray",
+        "lat": 41.3925, "lng": 69.4267, "photos": "wedding-hall",
+        "description": "Zal bir kunga to'liq ijaraga beriladi. Ovqatni "
+                       "xohlasangiz bizdan buyurtma qilasiz — 1, 2 yoki 3 xil "
+                       "taom, kishi boshiga; xohlasangiz o'z oshpazingiz bilan "
+                       "kelasiz va faqat ijara to'lanadi.",
+        "halls": [("Katta zal", 500, 15_000_000), ("Yozgi zal", 250, 9_000_000)],
+        "pricing": {1: 90_000, 2: 120_000, 3: 160_000},
+        "menu": [
+            ("To'y oshi", "main", "plov"),
+            ("Norin", "main", "norin"),
+            ("Kabob", "main", "shashlik"),
+            ("Achchiq-chuchuk", "salad", "salad-platter"),
+            ("Somsa", "starter", "samsa"),
+        ],
+    },
 ]
 
 # ===================================================================
@@ -537,6 +565,8 @@ OWNERS = {
     # --- qishloq to'yxonalari (kishi boshiga emas, kunlik ijara) ---
     "Urgut Saroy To'yxonasi":  ("demo_baxtiyor_sattorov", "Baxtiyor Sattorov", "+998901010211"),
     "Zarafshon Bog'i":         ("demo_alisher_rajabov", "Alisher Rajabov", "+998901010212"),
+    # --- ijara + ixtiyoriy taom (aralash oqim) ---
+    "Olloyor To'yxonasi":      ("demo_olloyor_tursunov", "Olloyor Tursunov", "+998901010213"),
 }
 
 # ===================================================================
@@ -954,15 +984,22 @@ class Command(BaseCommand):
                     # bron narxsiz qoladi. Bu xato holat emas: narx keyin
                     # egasi bilan kelishiladi.
                     pricing = business.pricings.order_by("?").first()
+                    # Summa ikki qismdan: zalning bir kunlik ijarasi va
+                    # (agar taom paketi bo'lsa) kishi boshiga narx.
+                    # Ikkalasi ham bo'lmasa bron narxsiz qoladi.
+                    food_total = pricing.price_per_person * guests if pricing else None
+                    total = (
+                        None if hall.all_price is None and food_total is None
+                        else (hall.all_price or 0) + (food_total or 0)
+                    )
                     reservation = Reservation.objects.create(
                         user=customer, business=business, hall=hall,
                         availability=availability,
                         guests_count=guests, status=status,
                         dish_count=pricing.dish_count if pricing else None,
                         price_per_person=pricing.price_per_person if pricing else None,
-                        total_price=(
-                            pricing.price_per_person * guests if pricing else hall.all_price
-                        ),
+                        day_rent_price=hall.all_price,
+                        total_price=total,
                         deposit_amount=hall.deposit_amount,
                     )
 

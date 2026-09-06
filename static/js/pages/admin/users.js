@@ -5,7 +5,7 @@ import { $, render, delegate, esc, busy } from "../../ui/dom.js";
 import { skeletonRows, errorState } from "../../ui/state.js";
 import { paginationHtml } from "../../ui/pagination.js";
 import { toast } from "../../ui/toast.js";
-import { dateLabel, initials } from "../../ui/format.js";
+import { dateLabel, initials, trustSeal } from "../../ui/format.js";
 
 const ROLES = [
   { value: "", label: "Barchasi" },
@@ -73,6 +73,9 @@ function row(item) {
       <td class="mono small">${esc(item.username)}</td>
       <td class="mono small">${esc(item.phone_number)}</td>
       <td><span class="tag">${esc(item.role_display)}</span></td>
+      <td>${trustSeal(item.trust, { compact: true })}${
+        item.cancelled_reservations_count
+          ? `<div class="xs faint">${item.cancelled_reservations_count} bekor</div>` : ""}</td>
       <td>${item.is_active
         ? '<span class="seal seal-ok">Faol</span>'
         : '<span class="seal seal-bad">Bloklangan</span>'}
@@ -105,17 +108,17 @@ function countLabel(data) {
 }
 
 async function load() {
-  $("#list").innerHTML = `<tr><td colspan="6">${skeletonRows(4)}</td></tr>`;
+  $("#list").innerHTML = `<tr><td colspan="7">${skeletonRows(4)}</td></tr>`;
   $("#pager").innerHTML = "";
   try {
     const data = await api.admin.users({ ...filters, page_size: 20 });
     $("#user-count").textContent = countLabel(data);
     $("#list").innerHTML = data.results.length
       ? data.results.map(row).join("")
-      : `<tr><td colspan="6"><p class="muted center" style="padding:var(--sp-8)">Hech kim topilmadi</p></td></tr>`;
+      : `<tr><td colspan="7"><p class="muted center" style="padding:var(--sp-8)">Hech kim topilmadi</p></td></tr>`;
     $("#pager").innerHTML = paginationHtml(data);
   } catch (error) {
     $("#user-count").textContent = "";
-    $("#list").innerHTML = `<tr><td colspan="6">${errorState(error.message)}</td></tr>`;
+    $("#list").innerHTML = `<tr><td colspan="7">${errorState(error.message)}</td></tr>`;
   }
 }

@@ -33,7 +33,7 @@ logger = logging.getLogger("common")
 API = "https://commons.wikimedia.org/w/api.php"
 
 # Commons qoidasi: har bir mijoz o'zini tanishtirishi kerak.
-USER_AGENT = "WENZU-demo-seeder/1.0 (https://wenzu.uz; student project) python-urllib"
+USER_AGENT = "Feasto-demo-seeder/1.0 (https://feasto.uz; student project) python-urllib"
 
 TIMEOUT = 25
 CACHE_DIR = Path(settings.MEDIA_ROOT) / "_demo_cache"

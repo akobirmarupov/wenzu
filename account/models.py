@@ -4,6 +4,7 @@ from django.db import models
 from common.models import Role
 from common.validators import validate_image_file
 
+from .trust import TRUST_CANCEL_PENALTY, TRUST_MAX, TRUST_MIN, TRUST_START, clamp_bits, describe
 from .validators import validate_phone_number, validate_username
 
 
@@ -88,6 +89,32 @@ class User(AbstractUser):
         default=False, verbose_name="Bepul sinov ishlatilgan",
         help_text="Bir marta berilgach qaytarilmaydi.",
     )
+
+    # ISHONCHLILIK BALI — "Bit".
+    #
+    # Joy egasi bron so'rovini ko'rganda uni kim yuborganini bilishi
+    # kerak: bu odam ilgari o'z bronini bekor qilganmi? Band qilingan,
+    # lekin kelinmagan kun egasi uchun to'g'ridan-to'g'ri zarar — u
+    # o'sha kunga boshqa mijozlarni rad etgan bo'ladi.
+    #
+    # Qoida `account.trust` da: 100 dan boshlanadi, har bir bekor
+    # qilishda 5 Bit ayiriladi, 1 Bitdan pastga tushmaydi.
+    #
+    # Nega hisoblab chiqarilmaydi (bekor qilingan bronlarni sanab):
+    # jazo qoidasi vaqt o'tib o'zgarishi mumkin, o'zgargan kuni esa
+    # BARCHA foydalanuvchining bali orqaga qarab qayta yozilardi. Bal
+    # tarixiy fakt bo'lib qolgani to'g'riroq.
+    trust_bits = models.PositiveSmallIntegerField(
+        default=TRUST_START, db_index=True,
+        verbose_name="Ishonchlilik (Bit)",
+        help_text=f"{TRUST_MIN}–{TRUST_MAX}. Yangi hisob {TRUST_START} Bit bilan boshlanadi.",
+    )
+    cancelled_reservations_count = models.PositiveIntegerField(
+        default=0, verbose_name="Bekor qilgan bronlari",
+        help_text="Faqat foydalanuvchining O'ZI bekor qilganlari. "
+                  "Joy egasi rad etgan bronlar bu yerga qo'shilmaydi.",
+    )
+
     updated_at = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = "username"
@@ -99,6 +126,7 @@ class User(AbstractUser):
         indexes = [
             models.Index(fields=["role", "is_active"], name="idx_user_role_active"),
             models.Index(fields=["phone_number"], name="idx_user_phone"),
+            models.Index(fields=["trust_bits"], name="idx_user_trust_bits"),
         ]
 
     def __str__(self):
@@ -118,3 +146,30 @@ class User(AbstractUser):
     def is_platform_admin(self) -> bool:
         """Super-admin — TZ bo\'yicha alohida rol emas, Django huquqi orqali."""
         return self.is_staff or self.is_superuser
+
+    # ---------------- ishonchlilik ----------------
+    @property
+    def trust(self) -> dict:
+        """Bal va daraja bitta lug'atda: `{bits, level, level_display, tone}`."""
+        return describe(self.trust_bits)
+
+    def penalize_trust(self, *, points: int = TRUST_CANCEL_PENALTY, reason: str = "") -> int:
+        """
+        Balni kamaytiradi va bazaga darhol yozadi. Yangi balni qaytaradi.
+
+        Faqat SHU ikki maydon yoziladi (`update_fields`): bekor qilish
+        tranzaksiyasi ichida foydalanuvchining boshqa maydonlari —
+        masalan ayni damda tahrirlanayotgan profili — tasodifan eski
+        qiymatga qaytib qolmasligi kerak.
+        """
+        self.trust_bits = clamp_bits(self.trust_bits - points)
+        self.cancelled_reservations_count += 1
+        self.save(update_fields=["trust_bits", "cancelled_reservations_count", "updated_at"])
+
+        if reason:
+            import logging
+            logging.getLogger("account").info(
+                f"Trust penalty: user_id={self.id}, -{points} bit, "
+                f"now={self.trust_bits}, reason={reason}"
+            )
+        return self.trust_bits

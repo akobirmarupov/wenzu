@@ -1,6 +1,6 @@
 {% load static %}{
-  "name": "WENZU — restoran va to'yxona bron qilish",
-  "short_name": "WENZU",
+  "name": "Feasto — restoran va to'yxona bron qilish",
+  "short_name": "Feasto",
   "description": "Toshkentdagi restoran va to'yxonalarni qidiring, bo'sh vaqtni ko'ring va bir necha bosishda bron qiling.",
   "lang": "uz",
   "dir": "ltr",

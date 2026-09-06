@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% comment %}
   Kirish / ro'yxatdan o'tish qobig'i.
@@ -15,7 +16,7 @@
 {% block body %}
 <div class="auth-wrap">
   <aside class="auth-visual">
-    <a href="/" class="logo"><span class="dot"></span>WENZU</a>
+    <a href="/" class="logo"><img class="brand-mark" src="{% static 'images/brand/feasto-mark.svg' %}" alt="" width="28" height="28">Feasto</a>
 
     <div class="auth-text">
       {% block visual %}
@@ -27,6 +28,21 @@
 
   <main class="auth-form-side">
     <div class="auth-controls" id="auth-controls"></div>
+
+    {% comment %}
+      Telefondagi brend.
+
+      Chap ustun (`auth-visual`) 860 px dan tor ekranda umuman
+      yashiriladi va u bilan birga logotip ham ketardi — kirish sahifasi
+      qaysi saytga tegishli ekani bilinmay qolardi. Bu qator aynan
+      o'sha bo'shliqni to'ldiradi va kompyuterda ko'rinmaydi
+      (`_auth.css`).
+    {% endcomment %}
+    <a class="auth-brand" href="/">
+      <img class="brand-mark" src="{% static 'images/brand/feasto-mark.svg' %}"
+           alt="" width="34" height="34">Feasto
+    </a>
+
     <div class="auth-card">
       {% block content %}{% endblock %}
     </div>

@@ -91,3 +91,74 @@ export function imageUrl(value) {
 export function businessTypeLabel(type) {
   return type === "venue" ? "To'yxona" : type === "restaurant" ? "Restoran" : "—";
 }
+
+/* ===================================================================
+ * Ishonchlilik ("Bit")
+ *
+ * Daraja va rang SERVERDAN keladi (`account/trust.py`) — bu yerda
+ * qoida qaytadan yozilmaydi, aks holda ikkalasi bir kun bir-biriga
+ * zid bo'lib qolardi. Bu funksiyalar faqat CHIZADI.
+ * =================================================================== */
+
+const TRUST_TONE_CLASS = {
+  ok: "seal-ok",
+  info: "seal-info",
+  warn: "seal-warn",
+  danger: "seal-bad",
+};
+
+/**
+ * Ishonchlilik nishoni: "92 Bit · A'lo".
+ *
+ * `trust` — serverdagi `{bits, level, level_display, tone}` obyekti.
+ * Eski javoblarda u bo'lmasligi mumkin, shunda hech narsa chizilmaydi:
+ * "0 Bit" deb ko'rsatish odamni haqsiz ravishda ishonchsiz qilib
+ * qo'yardi.
+ */
+export function trustSeal(trust, { compact = false } = {}) {
+  if (!trust || trust.bits === undefined || trust.bits === null) return "";
+  const tone = TRUST_TONE_CLASS[trust.tone] || "seal-info";
+  const label = compact
+    ? `${trust.bits} Bit`
+    : `${trust.bits} Bit · ${trust.level_display || ""}`;
+  return `<span class="seal ${tone} trust-seal" title="Ishonchlilik bali">🛡 ${esc(label.trim())}</span>`;
+}
+
+/** 0–100 oralig'idagi ishonchlilik chizig'i (progress). */
+export function trustBar(trust) {
+  if (!trust || !trust.bits) return "";
+  const tone = TRUST_TONE_CLASS[trust.tone] || "seal-info";
+  return `
+    <span class="trust-bar ${esc(tone)}">
+      <span class="fill" style="width:${Math.max(2, Math.min(100, trust.bits))}%"></span>
+    </span>`;
+}
+
+/* ===================================================================
+ * Bekor qilish muddati
+ * =================================================================== */
+
+/**
+ * Muddatgacha qancha qolganini odam tilida aytadi.
+ *
+ * Nega faqat daqiqa emas: bekor qilish oynasi endi tadbirgacha bo'lgan
+ * vaqtning yarmi, ya'ni u bir necha KUN bo'lishi mumkin. "4320 daqiqa
+ * qoldi" degan yozuvni hech kim o'qiy olmasdi.
+ */
+export function timeLeftLabel(deadline) {
+  const left = new Date(deadline) - Date.now();
+  if (Number.isNaN(left) || left <= 0) return "";
+
+  const minutes = Math.ceil(left / 60000);
+  if (minutes < 60) return `${minutes} daqiqa`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    const rest = minutes % 60;
+    return rest ? `${hours} soat ${rest} daqiqa` : `${hours} soat`;
+  }
+
+  const days = Math.floor(hours / 24);
+  const restHours = hours % 24;
+  return restHours ? `${days} kun ${restHours} soat` : `${days} kun`;
+}

@@ -1,5 +1,5 @@
 """
-WENZU — Django sozlamalari.
+Feasto — Django sozlamalari.
 
 Barcha muhitga bog'liq qiymatlar `.env` orqali beriladi. Standart qiymatlar
 XAVFSIZ tomonga og'ib turadi: `.env` unutilsa loyiha production rejimida
@@ -246,7 +246,7 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "WENZU API",
+    "TITLE": "Feasto API",
     "DESCRIPTION": "Restoran va to'yxonalarni onlayn qidirish va bron qilish platformasi",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
@@ -289,7 +289,7 @@ CACHES = {
             # "bo'sh" bo'lib qoladi va so'rovlar bazaga tushadi.
             "IGNORE_EXCEPTIONS": True,
         },
-        "KEY_PREFIX": "wenzu",
+        "KEY_PREFIX": "feasto",
     }
 }
 DJANGO_REDIS_IGNORE_EXCEPTIONS = True
@@ -327,7 +327,7 @@ if "test" in sys.argv:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "wenzu-tests",
+            "LOCATION": "feasto-tests",
         }
     }
 
@@ -507,7 +507,7 @@ LOGGING = {
         },
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
-            "filename": LOG_DIR / "wenzu.log",
+            "filename": LOG_DIR / "feasto.log",
             "maxBytes": 10 * 1024 * 1024,
             "backupCount": 10,
             "formatter": "verbose",

@@ -1,6 +1,7 @@
 """reservations ilovasining BARCHA serializerlari shu faylda."""
 
 import datetime
+from decimal import Decimal
 
 from django.utils import timezone
 from rest_framework import serializers
@@ -73,14 +74,70 @@ class BusyRangeSerializer(serializers.Serializer):
 # ===================================================================
 # Reservation
 # ===================================================================
+class ReservationCustomerSerializer(serializers.Serializer):
+    """
+    Bron yuborgan MIJOZNING kartochkasi — joy egasi uchun.
+
+    Nima uchun kerak. Joy egasi bron so'rovini ko'rganda bitta savolga
+    javob izlaydi: "bu odam kelmaydimi?". Band qilingan, lekin kelinmagan
+    kun uning uchun to'g'ridan-to'g'ri zarar — u o'sha kunga boshqa
+    mijozlarni rad etgan bo'ladi.
+
+    Shuning uchun bu yerda ism-familiya, telefon va rasmdan tashqari
+    ISHONCHLILIK BALI ham bor (`account.trust`): 100 Bitdan boshlanadi
+    va har bir bekor qilishda 5 Bit kamayadi.
+
+    Maxfiylik: bu blok faqat BRONNI KO'RA OLADIGANLARGA yetib boradi —
+    mijozning o'ziga, joy egasiga va administratorga (view'dagi tekshiruv).
+    Ommaviy ro'yxatlarda bu serializer umuman ishlatilmaydi.
+    """
+
+    id = serializers.IntegerField(read_only=True)
+    username = serializers.CharField(read_only=True)
+    full_name = serializers.CharField(read_only=True)
+    phone_number = serializers.CharField(read_only=True)
+    initials = serializers.CharField(read_only=True)
+    avatar = serializers.SerializerMethodField()
+
+    trust_bits = serializers.IntegerField(read_only=True)
+    trust_level = serializers.SerializerMethodField()
+    trust_level_display = serializers.SerializerMethodField()
+    trust_tone = serializers.SerializerMethodField()
+    cancelled_reservations_count = serializers.IntegerField(read_only=True)
+    date_joined = serializers.DateTimeField(read_only=True)
+
+    def get_avatar(self, obj) -> str | None:
+        if not obj.avatar:
+            return None
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.avatar.url) if request else obj.avatar.url
+
+    def get_trust_level(self, obj) -> str:
+        return obj.trust["level"]
+
+    def get_trust_level_display(self, obj) -> str:
+        return obj.trust["level_display"]
+
+    def get_trust_tone(self, obj) -> str:
+        return obj.trust["tone"]
+
+
 class ReservationSerializer(serializers.ModelSerializer):
     """Bronni ko'rish — mijoz, biznes egasi va admin uchun bir xil ko'rinish."""
 
     user_name = serializers.CharField(source="user.full_name", read_only=True)
     user_phone = serializers.CharField(source="user.phone_number", read_only=True)
+    # Joy egasi ko'radigan to'liq mijoz kartochkasi: rasm, bal, tarix.
+    # Yuqoridagi ikki maydon eski mijozlar (mobil ilova) uchun qoladi.
+    customer = ReservationCustomerSerializer(source="user", read_only=True)
+
     business_name = serializers.CharField(source="business.name", read_only=True)
     business_type = serializers.CharField(source="business.business_type", read_only=True)
     business_telegram = serializers.CharField(source="business.telegram_username", read_only=True)
+    business_address = serializers.CharField(source="business.address", read_only=True)
+    business_district = serializers.CharField(source="business.district", read_only=True)
+    business_map_links = serializers.SerializerMethodField()
+
     room_name = serializers.CharField(source="room.name", read_only=True)
     hall_name = serializers.CharField(source="hall.name", read_only=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
@@ -92,21 +149,30 @@ class ReservationSerializer(serializers.ModelSerializer):
     can_cancel = serializers.SerializerMethodField()
     cancel_deadline = serializers.SerializerMethodField()
     cancel_blocked_reason = serializers.SerializerMethodField()
+    # Tadbir qachon boshlanishi — bekor qilish muddati aynan shundan
+    # hisoblanadi, ya'ni mijoz ikkala sanani yonma-yon ko'rishi kerak.
+    event_starts_at = serializers.SerializerMethodField()
 
     class Meta:
         model = Reservation
         fields = [
-            "id", "user", "user_name", "user_phone",
+            "id", "user", "user_name", "user_phone", "customer",
             "business", "business_name", "business_type", "business_telegram",
+            "business_address", "business_district", "business_map_links",
             "room", "room_name", "hall", "hall_name",
-            "availability", "date", "start_time", "end_time",
+            "availability", "date", "start_time", "end_time", "event_starts_at",
             "guests_count", "special_request", "selected_menu",
-            "dish_count", "price_per_person", "total_price", "deposit_amount",
+            "dish_count", "price_per_person", "day_rent_price",
+            "total_price", "deposit_amount",
             "status", "status_display", "confirmed_at",
             "can_cancel", "cancel_deadline", "cancel_blocked_reason",
             "created_at",
         ]
         read_only_fields = fields
+
+    def get_business_map_links(self, obj) -> dict:
+        """Bron kartochkasidagi "Xaritada ochish" tugmalari."""
+        return obj.business.map_links
 
     def get_can_cancel(self, obj) -> bool:
         return obj.cancel_check()[0]
@@ -118,6 +184,10 @@ class ReservationSerializer(serializers.ModelSerializer):
     def get_cancel_blocked_reason(self, obj) -> str:
         allowed, reason = obj.cancel_check()
         return "" if allowed else reason
+
+    def get_event_starts_at(self, obj) -> str | None:
+        event_at = obj.event_starts_at()
+        return event_at.isoformat() if event_at else None
 
 
 MAX_BOOKING_DAYS_AHEAD = 365
@@ -201,27 +271,31 @@ class VenueReservationCreateSerializer(serializers.Serializer):
     To'yxona broni: butun kunga, bitta zal.
 
     ===================================================================
-    Shahar va qishloq to'yxonasi bir xil ishlamaydi
+    Summa IKKI QISMDAN yig'iladi
     ===================================================================
-    Shaharda narx KISHI BOSHIGA hisoblanadi va tanlangan taom soniga
-    bog'liq (`VenuePricing`): umumiy summa = kishi boshiga narx ×
-    mehmonlar soni. Mijoz menyudan taom tanlaydi va summani darhol
-    ko'radi.
+    1. BIR KUNLIK IJARA (`Hall.all_price`) — zalning o'zi uchun. Masalan
+       15 000 000 so'm. Bu qism mehmonlar soniga BOG'LIQ EMAS: zal
+       qancha odam kelishidan qat'i nazar bir kunga band qilinadi.
 
-    Qishloqda esa unday emas. U yerda to'yxona BUTUNLAY ijaraga olinadi:
-    bir kunlik to'y uchun, masalan, 15 000 000 so'm to'lanadi va oshpazni
-    ham, mahsulotni ham to'y egasining o'zi olib boradi. Kishi boshiga
-    hech narsa to'lanmaydi, menyu ham to'yxonaniki emas.
+    2. TAOM (`VenuePricing`) — IXTIYORIY. To'y egasi xohlasa 1, 2 yoki
+       3 xil taomni to'yxonadan buyurtma qiladi va bu qism kishi
+       boshiga hisoblanadi. Xohlamasa — oshpazni ham, mahsulotni ham
+       o'zi olib boradi va bu qism umuman bo'lmaydi.
 
-    Shuning uchun bu yerda `dish_count` ham, `menu_items` ham MAJBURIY
-    EMAS:
+    Shuning uchun har uch holat ham to'g'ri:
 
-      * taom tanlanmasa — bron baribir qabul qilinadi;
-      * egasi kishi boshiga narx kiritmagan bo'lsa — zalning bir kunlik
-        ijarasi (`Hall.all_price`) olinadi;
-      * u ham kiritilmagan bo'lsa — bron narxsiz yaratiladi va narx egasi
-        bilan keyin kelishiladi. Bu "0 so'm" deb yozib qo'yishdan yaxshi:
-        nol summa mijozga ham, egasiga ham noto'g'ri va'da beradi.
+      * faqat ijara      → 15 000 000
+      * ijara + 2 xil taom (300 kishi × 120 000)  → 15 000 000 + 36 000 000
+      * faqat kishi boshiga (shahar to'yxonasi, ijara kiritilmagan)
+
+    Egasi hech qanday narx kiritmagan bo'lsa, bron NARXSIZ yaratiladi
+    va summa keyin kelishiladi. Bu "0 so'm" deb yozib qo'yishdan yaxshi:
+    nol summa mijozga ham, egasiga ham noto'g'ri va'da beradi.
+
+    YAGONA QAT'IY QOIDA: taom soni tanlangan bo'lsa, menyudan AYNAN
+    shuncha xil taom belgilanishi shart. "2 xil taom" paketini tanlab,
+    menyudan bittasini ham ko'rsatmagan bron oshxona uchun bajarib
+    bo'lmaydigan buyurtma bo'lardi.
     """
 
     hall = serializers.UUIDField()
@@ -229,7 +303,8 @@ class VenueReservationCreateSerializer(serializers.Serializer):
     guests_count = serializers.IntegerField(min_value=1, max_value=5000)
     dish_count = serializers.IntegerField(
         min_value=1, max_value=3, required=False, allow_null=True, default=None,
-        help_text="Ixtiyoriy. Faqat kishi boshiga narx belgilangan to'yxonalarda.",
+        help_text="Ixtiyoriy: 1, 2 yoki 3 xil taom. Tanlansa, `menu_items` da "
+                  "aynan shuncha taom ko'rsatilishi shart.",
     )
     menu_items = serializers.ListField(
         child=serializers.UUIDField(), required=False, default=list, max_length=MAX_MENU_ITEMS
@@ -288,32 +363,45 @@ class VenueReservationCreateSerializer(serializers.Serializer):
                                f"belgilanmagan. Mavjud paketlar: {available}."}
             )
 
-        if pricing is not None:
-            attrs["price_per_person"] = pricing.price_per_person
-            attrs["total_price"] = pricing.price_per_person * attrs["guests_count"]
-        elif hall.all_price is not None:
-            # Qishloq oqimi: kishi boshiga emas, butun zal uchun bir kunlik ijara.
-            attrs["price_per_person"] = None
-            attrs["total_price"] = hall.all_price
-        else:
-            # Egasi hali narx kiritmagan. Bron o'tadi, summa keyin kelishiladi.
-            attrs["price_per_person"] = None
-            attrs["total_price"] = None
+        # Ikki qism ALOHIDA hisoblanadi va alohida saqlanadi — mijoz ham,
+        # joy egasi ham "15 000 000 ijara + 36 000 000 taom" ni ko'rishi
+        # kerak, yagona yig'indini emas.
+        day_rent = hall.all_price
+        food_total = (
+            pricing.price_per_person * attrs["guests_count"] if pricing is not None else None
+        )
 
+        if day_rent is None and food_total is None:
+            # Egasi hali narx kiritmagan. Bron o'tadi, summa keyin kelishiladi.
+            total = None
+        else:
+            total = (day_rent or Decimal(0)) + (food_total or Decimal(0))
+
+        attrs["price_per_person"] = pricing.price_per_person if pricing is not None else None
+        attrs["day_rent_price"] = day_rent
+        attrs["total_price"] = total
         attrs["dish_count"] = dish_count
 
         # --- menyu ---
         # Taom tanlash MAJBURIY emas: to'y egasi o'z oshpazi bilan kelishi
-        # mumkin. Tanlangan bo'lsa — soni e'lon qilingan taom soniga mos
-        # kelishi kerak, aks holda hisob-kitob mijoz ko'rgan narxdan
-        # boshqacha chiqib qolardi.
+        # mumkin va bunda faqat ijara to'lanadi.
+        #
+        # Lekin TAOM PAKETI tanlangan bo'lsa (`pricing`), menyudan aynan
+        # shuncha xil taom belgilanishi SHART. "2 xil taom" uchun pul
+        # to'lab, qaysi ikkitasi ekanini aytmagan bron oshxona uchun
+        # bajarib bo'lmaydigan buyurtma bo'lardi — va mijoz to'y kuni
+        # buni bilib qolardi.
+        if pricing is not None and len(menu_ids) != dish_count:
+            raise serializers.ValidationError({
+                "menu_items": f"Menyudan aynan {dish_count} xil taom tanlang "
+                              f"(hozir {len(menu_ids)} ta belgilangan). Taom "
+                              f"kerak bo'lmasa, taom sonini bo'sh qoldiring — "
+                              f"u holda faqat zal ijarasi to'lanadi."
+            })
+
         if menu_ids:
             from catalog.models import VenueMenuItem
 
-            if pricing is not None and len(menu_ids) != dish_count:
-                raise serializers.ValidationError(
-                    {"menu_items": f"{dish_count} xil taom tanlanishi kerak."}
-                )
             items = list(
                 VenueMenuItem.objects.filter(
                     id__in=menu_ids, business=hall.business

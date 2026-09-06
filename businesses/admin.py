@@ -39,8 +39,28 @@ class BusinessAdmin(ModelAdmin):
     )
     list_filter = ("business_type", "is_visible", "district", "cuisine")
     search_fields = ("name", "address", "district", "owner__username", "owner__full_name")
-    readonly_fields = ("rating_avg", "reviews_count")
+    readonly_fields = ("rating_avg", "reviews_count", "map_preview")
     list_select_related = ("owner",)
+
+    @admin.display(description="Xaritada")
+    def map_preview(self, obj):
+        """
+        Administrator uchun tayyor havola.
+
+        Joyni tekshirayotgan odam koordinatalarni ko'chirib, xaritaga
+        qo'lda qo'yishi kerak emas — bir bosishda o'sha nuqta ochiladi
+        va manzil to'g'rimi-yo'qmi ko'rinadi.
+        """
+        from django.utils.html import format_html
+
+        links = obj.map_links
+        if not links:
+            return "— (koordinata ham, manzil ham kiritilmagan)"
+        return format_html(
+            '<a href="{}" target="_blank" rel="noopener">Google Maps</a> · '
+            '<a href="{}" target="_blank" rel="noopener">Yandex</a>',
+            links.get("google", ""), links.get("yandex", ""),
+        )
 
     def get_inlines(self, request, obj=None):
         if obj is None:
