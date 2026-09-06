@@ -283,14 +283,14 @@
      turgan "eyebrow", katta sarlavha, ikki qatorli tavsif, tur
      tugmalari, ikki qatorga o'ralgan qidiruv va statistika.
 
-     Ikkita yozuv butunlay olib tashlanadi:
-       · "TOSHKENT · RESTORAN VA TO'YXONALAR" — sarlavhaning o'zi
-         allaqachon shuni aytadi;
-       · tavsif — "Joyni oldindan band qiling, navbatda turmang" dan
-         keyin u yangi hech narsa qo'shmaydi, faqat ikki qator joy
-         oladi. Kompyuterda ikkalasi ham qoladi: u yerda joy bor. */
+     Tavsif telefonda yashiriladi: "Joyni oldindan band qiling,
+     navbatda turmang" degan sarlavhadan keyin u yangi hech narsa
+     qo'shmaydi, faqat ikki qator joy oladi. Kompyuterda qoladi —
+     u yerda joy bor.
+
+     ("Toshkent · restoran va to'yxonalar" yozuvi esa butunlay olib
+     tashlandi: platforma bitta shahar bilan chegaralanmaydi.) */
   .home-head { padding: var(--sp-4) 0 var(--sp-3); gap: var(--sp-3); }
-  .home-head .eyebrow,
   .home-head .lede { display: none; }
   .home-head h1 { font-size: 21px; }
   .home-tab { padding: 6px 14px; font-size: var(--fs-xs); }
@@ -499,10 +499,13 @@
   /* ---------------- pastki menyu ----------------
      52 px dan 48 px ga — barmoq uchun hali ham qulay, lekin ekranda
      to'rt piksel ko'proq mazmun qoladi. */
-  :root { --tabbar-h: 48px; }
-  .tabbar-item { padding: 5px 2px 4px; gap: 2px; }
-  .tabbar-item .ic { font-size: 17px; }
-  .tabbar-item .lb { font-size: 9.5px; }
+  /* Bandlar BESHTA — 390 px li ekranda har biriga ~78 px. Bu yozuvni
+     ham, nishonchani ham qulay o'lchamda saqlashga yetadi: pastki
+     menyu eng ko'p bosiladigan joy, uni maydalash noto'g'ri bo'lardi. */
+  :root { --tabbar-h: 52px; }
+  .tabbar-item { padding: 6px 2px 5px; gap: 3px; }
+  .tabbar-item .ic { font-size: 18px; }
+  .tabbar-item .lb { font-size: 10px; }
 }
 
 /* Juda tor ekran (≤ 380 px): rasmlar yana bir pog'ona pasayadi. */
@@ -561,6 +564,17 @@
 @media (max-width: 560px) {
   /* Tor ekranda tavsif matni tugmalarni siqib qo'yardi. */
   .install-bar .install-text span { display: none; }
+}
+
+/* Kompyuterda tasma CHAP MENYUNI bosib qolmasin.
+
+   U `position: fixed` bo'lgani uchun butun ekran kengligini oladi va
+   yon menyuning eng pastidagi bandni ("Taklif yuborish") yopib turardi:
+   havola bor, lekin uni ko'rib bo'lmasdi.
+
+   Chegara 940 px — yon menyu aynan shundan kengroq ekranda ko'rinadi. */
+@media (min-width: 941px) {
+  .install-bar { left: calc(var(--sidebar-width) + var(--sp-4)); }
 }
 
 /* -------------------------------------------------------------------

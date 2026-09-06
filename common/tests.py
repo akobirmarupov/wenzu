@@ -581,3 +581,126 @@ class RuralVenueFlowTest(TestCase):
         }, format="json")
         self.assertEqual(response.status_code, 400, response.data)
         self.assertIn("dish_count", response.data["error"]["details"])
+
+
+class FeedbackTest(TestCase):
+    """
+    Takliflar oqimi — sinov davridagi asosiy teskari aloqa kanali.
+
+    Eng muhim qoida: forma KIRISH TALAB QILMAYDI. Eng foydali fikr
+    ko'pincha ro'yxatdan o'tmagan, ya'ni saytni tashlab ketayotgan
+    odamdan keladi.
+    """
+
+    def setUp(self):
+        from common.models import Feedback
+
+        self.Feedback = Feedback
+        self.client = APIClient()
+        self.url = "/api/feedback/"
+
+        self.admin = User.objects.create_user(
+            username="fb_admin", password="StrongPass123!", full_name="Admin",
+            phone_number="+998900007001", is_staff=True,
+        )
+        self.customer = User.objects.create_user(
+            username="fb_user", password="StrongPass123!", full_name="Mijoz Mijozov",
+            phone_number="+998900007002",
+        )
+
+    def test_guest_can_send_feedback(self):
+        """Kirmagan odam ham yoza olishi SHART — aks holda kanal yarim yopiq."""
+        response = self.client.post(self.url, {
+            "kind": "problem",
+            "message": "Qidiruvda tumanni tanlash qulay bo'lmadi.",
+            "contact": "+998901112233",
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201, response.data)
+        feedback = self.Feedback.objects.get()
+        self.assertIsNone(feedback.user, "Mehmonning taklifi muallifsiz saqlanadi")
+        self.assertEqual(feedback.kind, "problem")
+        self.assertEqual(feedback.status, self.Feedback.STATUS_NEW)
+
+    def test_signed_in_author_is_recorded(self):
+        """Kirgan odam yozsa, administrator u bilan bog'lana olishi kerak."""
+        self.client.force_authenticate(self.customer)
+        response = self.client.post(self.url, {
+            "message": "Bron oynasida sana tanlash tushunarsiz.",
+            "page": "/toyxonalar/",
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201, response.data)
+        feedback = self.Feedback.objects.get()
+        self.assertEqual(feedback.user, self.customer)
+        self.assertEqual(feedback.page, "/toyxonalar/")
+
+    def test_too_short_message_is_rejected(self):
+        """Tasodifan bosilgan ikki harf administratorning vaqtini olmasin."""
+        response = self.client.post(self.url, {"message": "yaxshi"}, format="json")
+        self.assertEqual(response.status_code, 400, response.data)
+
+    def test_author_cannot_be_forged(self):
+        """
+        Mehmon `user` maydonini o'zi yuborsa ham, u E'TIBORGA OLINMAYDI —
+        aks holda birovning nomidan xabar qoldirish mumkin bo'lardi.
+        """
+        response = self.client.post(self.url, {
+            "message": "Bu xabar boshqa odam nomidan yozilmoqchi.",
+            "user": self.customer.pk,
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertIsNone(self.Feedback.objects.get().user)
+
+    def test_staff_are_notified(self):
+        """Administrator taklifdan darhol xabar topishi kerak."""
+        from notifications.models import Notification
+
+        Notification.objects.all().delete()
+        self.client.post(self.url, {
+            "message": "Telefonda kartochkalar juda katta ko'rinadi.",
+        }, format="json")
+
+        self.assertEqual(Notification.objects.filter(user=self.admin).count(), 1)
+
+    def test_only_admin_can_read_the_list(self):
+        self.client.post(self.url, {"message": "Oddiy bir taklif matni."}, format="json")
+
+        self.client.force_authenticate(self.customer)
+        self.assertEqual(self.client.get("/api/admin/feedback/").status_code, 403)
+
+        self.client.force_authenticate(self.admin)
+        response = self.client.get("/api/admin/feedback/")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["unread"], 1)
+
+    def test_admin_can_mark_as_done(self):
+        self.client.post(self.url, {"message": "Yana bitta taklif matni."}, format="json")
+        feedback = self.Feedback.objects.get()
+
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch(
+            f"/api/admin/feedback/{feedback.id}/",
+            {"status": "done", "admin_note": "Kelasi versiyada"}, format="json",
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        feedback.refresh_from_db()
+        self.assertEqual(feedback.status, "done")
+        self.assertEqual(feedback.admin_note, "Kelasi versiyada")
+
+    def test_message_cannot_be_edited_by_admin(self):
+        """Foydalanuvchining so'zi o'zgarmasligi kerak."""
+        self.client.post(self.url, {"message": "Asl matn shu yerda turibdi."}, format="json")
+        feedback = self.Feedback.objects.get()
+
+        self.client.force_authenticate(self.admin)
+        self.client.patch(
+            f"/api/admin/feedback/{feedback.id}/",
+            {"message": "O'zgartirilgan matn"}, format="json",
+        )
+
+        feedback.refresh_from_db()
+        self.assertEqual(feedback.message, "Asl matn shu yerda turibdi.")

@@ -26,6 +26,20 @@ export const api = {
   // ---------------- ommaviy ----------------
   settings: () => http.get("/settings/", null, { auth: false }),
 
+  /**
+   * Platforma haqidagi taklif.
+   *
+   * Sozlama SUKUT bo'yicha qoldirilgan (`auth: true`) — ataylab.
+   * `http.js` tokenni faqat MAVJUD bo'lsa qo'shadi, ya'ni:
+   *   · kirgan odam yozsa — server uni taniydi va javob bera oladi;
+   *   · mehmon yozsa — so'rov shunchaki tokensiz ketadi va server
+   *     uni `AllowAny` bilan qabul qiladi.
+   *
+   * `auth: false` yozilsa, kirgan foydalanuvchining tokeni ham
+   * yuborilmasdi va har bir taklif "mehmondan" bo'lib qolardi.
+   */
+  feedback: (data) => http.post("/feedback/", data),
+
   /** Reklama / e'lon bannerlari — admin panelda boshqariladi. */
   banners: (params) => http.get("/banners/", params, { auth: false }),
 
@@ -186,6 +200,9 @@ export const api = {
 
     settings: () => http.get("/admin/settings/"),
     updateSettings: (data) => http.patch("/admin/settings/", data),
+
+    feedback: (params) => http.get("/admin/feedback/", params),
+    updateFeedback: (id, data) => http.patch(`/admin/feedback/${id}/`, data),
 
     banners: (params) => http.get("/admin/banners/", params),
     createBanner: (data) => http.post("/admin/banners/", data),

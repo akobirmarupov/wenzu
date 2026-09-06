@@ -66,6 +66,16 @@
 .detail-title { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sp-6); flex-wrap: wrap; margin-block: var(--sp-6) var(--sp-4); }
 .detail-meta { display: flex; align-items: center; gap: var(--sp-4); flex-wrap: wrap; color: var(--ink-soft); font-size: var(--fs-sm); }
 
+/* Sarlavha ostidagi "Yo'nalish" havolasi — qatordagi qolgan yozuvlar
+   bilan bir xil o'lchamda, lekin bosilishi bilinib tursin. */
+.detail-meta .meta-link {
+  display: inline-flex; align-items: center; gap: 5px;
+  color: var(--theme-accent); font-weight: 700; text-decoration: none;
+  border-bottom: 1px solid transparent; transition: border-color var(--transition);
+}
+.detail-meta .meta-link:hover { border-bottom-color: currentColor; }
+.detail-meta .meta-link svg { flex-shrink: 0; }
+
 .tabs { display: flex; gap: var(--sp-1); border-bottom: 1px solid var(--line); margin-bottom: var(--sp-6); overflow-x: auto; }
 .tab {
   padding: 12px 18px; font-weight: 700; font-size: var(--fs-sm); color: var(--ink-soft);

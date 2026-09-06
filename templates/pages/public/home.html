@@ -6,7 +6,6 @@
 
   {# --- qidiruv va tur tanlash --- #}
   <section class="home-head">
-    <span class="eyebrow" data-i18n="home.heroEyebrow">Toshkent</span>
     <h1 class="display">
       <span data-i18n="home.heroTitle">Joyni oldindan band qiling</span>,
       <em data-i18n="home.heroTitleAccent">navbatda turmang</em>
@@ -78,6 +77,28 @@
       </div>
       <div class="news-strip" id="news-strip"></div>
     </div>
+  </section>
+
+  {% comment %}
+    TAKLIFLAR — taomlar ro'yxatidan keyin.
+
+    Joy ataylab shu yerda. Odam bosh sahifani shu joygacha aylantirgan
+    bo'lsa, u platformani ko'rib chiqqan va endi u haqida fikri bor
+    bo'lishi mumkin. Yuqorida turgan chaqiruv esa hali hech narsa
+    ko'rmagan odamdan fikr so'ragan bo'lardi.
+
+    Ko'rinishi ham shunga yarasha jimgina: bitta qator, chegarasi
+    uzuq-yuluq chiziq. Bu reklama emas, taklif.
+  {% endcomment %}
+  <section class="section-sm">
+    <button type="button" class="feedback-strip" data-feedback>
+      <span class="ic" aria-hidden="true">💡</span>
+      <span class="text">
+        <b data-i18n="feedback.stripTitle">Platforma uchun taklifingiz bormi?</b>
+        <span class="small" data-i18n="feedback.stripText">Nima yoqmadi yoki nimani qo'shsak — yozib qoldiring.</span>
+      </span>
+      <span class="go" aria-hidden="true">→</span>
+    </button>
   </section>
 
   {# --- yangiliklar kartochkalari --- #}

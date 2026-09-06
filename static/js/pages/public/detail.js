@@ -15,7 +15,7 @@ import { initTopbar } from "../../ui/topbar.js";
 import { emptyState, errorState } from "../../ui/state.js";
 import { money, stars, imageUrl, timeLabel, dateLabel, initials, businessTypeLabel } from "../../ui/format.js";
 import { openRoomBooking, openHallBooking, setBookingMenu } from "../../components/booking-modal.js";
-import { mapLinksHtml } from "../../components/map-links.js";
+import { mapLinksHtml, ROUTE_ICON } from "../../components/map-links.js";
 
 theme.init();
 await initI18n();
@@ -348,9 +348,21 @@ function miniProfileHtml() {
        </div>`;
 
   // Joylashuv bloki aloqadan OLDIN: odam avval "qayerda?" deb so'raydi,
-  // "qanday bog'lanaman?" degan savol undan keyin keladi. Va u kirmagan
-  // bo'lsa ham xaritani ko'ra oladi — manzil baribir ochiq turibdi.
-  const location = mapLinksHtml(business);
+  // "qanday bog'lanaman?" degan savol undan keyin keladi.
+  //
+  // Kirmagan foydalanuvchiga aniq manzil ham, xarita ham KO'RINMAYDI —
+  // server ularni umuman qaytarmaydi (`location_locked`). Uning
+  // o'rniga aloqa blokidagi kabi "kirish kerak" kartochkasi chiziladi.
+  const location = business.location_locked
+    ? `<a class="biz-locked" href="${ROUTES.login}?next=${encodeURIComponent(window.location.pathname)}">
+         <span class="ic" aria-hidden="true">🔒</span>
+         <span>
+           <b>${esc(t("detail.locationLocked"))}</b>
+           <span class="small">${esc(t("detail.locationLockedText"))}</span>
+         </span>
+         <span class="go" aria-hidden="true">→</span>
+       </a>`
+    : mapLinksHtml(business);
 
   return `
     <aside class="biz-profile">
@@ -402,7 +414,7 @@ function renderPage() {
             ? `<span>🕗 ${timeLabel(business.open_time)}–${timeLabel(business.close_time)}</span>` : ""}
           ${business.map_links?.google_directions
             ? `<a class="meta-link" href="${esc(business.map_links.google_directions)}"
-                  target="_blank" rel="noopener noreferrer">🚗 ${esc(t("detail.directions"))}</a>` : ""}
+                  target="_blank" rel="noopener noreferrer">${ROUTE_ICON}${esc(t("detail.directions"))}</a>` : ""}
         </div>
       </div>
     </div>

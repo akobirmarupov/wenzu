@@ -58,6 +58,7 @@ STYLESHEETS = [
     "css/components/_pricing.css",
     "css/components/_news.css",
     "css/components/_trust-map.css",
+    "css/components/_feedback.css",
     # 3. Sahifalar
     "css/pages/_home.css",
     "css/pages/_catalog.css",

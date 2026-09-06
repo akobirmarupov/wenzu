@@ -6,6 +6,7 @@
  * shu faylda bir marta belgilangan, sahifalar bu haqda bilmaydi.
  */
 import { t } from "../core/i18n.js";
+import { bindFeedbackLinks } from "../components/feedback-modal.js";
 import { $, esc } from "./dom.js";
 
 const OWNER_COMMON = [
@@ -114,6 +115,10 @@ export function initSidebar(user) {
     <span class="role-pill">${esc(roleLabel(user))}</span>
     ${body}
     <div class="side-nav-bottom">
+      <button type="button" class="nav-feedback" data-feedback>
+        <span class="ic" aria-hidden="true">💡</span>
+        <span>${esc(t("feedback.link"))}</span>
+      </button>
       <a class="nav-item" href="/"><span class="ic">🌐</span><span>${esc(t("nav.home"))}</span></a>
       <a class="nav-item ${path === "/profil/" ? "active" : ""}" href="/profil/">
         <span class="ic">👤</span><span>${esc(t("nav.profile"))}</span>
@@ -135,6 +140,7 @@ export function initSidebar(user) {
     if (event.target.closest("a")) close();
   });
 
+  bindFeedbackLinks();
   return user;
 }
 

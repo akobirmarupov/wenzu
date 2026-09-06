@@ -521,6 +521,8 @@ class BusinessContactPrivacyTest(TestCase):
             owner=owner, application=application, name="Maxfiy Restoran",
             business_type=Business.TYPE_RESTAURANT, is_visible=True,
             telegram_username="maxfiy_admin", phone_number="+998901234567",
+            district="Yunusobod", address="Amir Temur ko'chasi 12",
+            latitude=41.311081, longitude=69.240562,
         )
         # Egasi ma'lumot tahrirlay olishi uchun obuna kerak — tasdiqlangan
         # biznesda u avtomatik ochiladi, bu yerda esa qo'lda beramiz.
@@ -565,6 +567,73 @@ class BusinessContactPrivacyTest(TestCase):
         row = response.data["results"][0]
         self.assertNotIn("telegram_username", row)
         self.assertNotIn("phone_number", row)
+
+    # ---------------- joylashuv ----------------
+    #
+    # Manzil va koordinata ham aloqa kabi yopiq: ochiq turgan ro'yxat
+    # raqobatchiga ham, ma'lumot yig'uvchi botga ham tayyor baza bo'lib
+    # beriladi. Tuman esa ochiq qoladi — qidiruv va filtrlash unga
+    # tayanadi.
+    def test_anonymous_cannot_see_the_location(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.data["address"])
+        self.assertIsNone(response.data["latitude"])
+        self.assertIsNone(response.data["longitude"])
+        self.assertEqual(response.data["map_links"], {})
+        self.assertTrue(response.data["location_locked"])
+
+        # Koordinata javobning HECH QAYERIDA bo'lmasligi kerak —
+        # xarita havolasi ichida ham.
+        self.assertNotIn("41.311081", str(response.data))
+        self.assertNotIn("Amir Temur", str(response.data))
+
+        # Tuman esa ko'rinadi: usiz katalog o'z ma'nosini yo'qotardi.
+        self.assertEqual(response.data["district"], "Yunusobod")
+
+    def test_authenticated_user_sees_the_location(self):
+        self.client.force_authenticate(self.customer)
+
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["address"], "Amir Temur ko'chasi 12")
+        self.assertAlmostEqual(response.data["latitude"], 41.311081, places=4)
+        self.assertFalse(response.data["location_locked"])
+        self.assertIn("41.311081", response.data["map_links"]["google"])
+
+    def test_public_list_hides_the_location_too(self):
+        """Ro'yxat ham yopiq: bitta so'rov bilan butun baza olinmasin."""
+        response = self.client.get("/api/businesses/?type=restaurant")
+
+        row = response.data["results"][0]
+        self.assertIsNone(row["address"])
+        self.assertIsNone(row["latitude"])
+        self.assertEqual(row["map_links"], {})
+        self.assertTrue(row["location_locked"])
+
+    def test_list_cache_does_not_leak_between_audiences(self):
+        """
+        Ro'yxat javobi KESHLANADI. Kesh kaliti auditoriyani hisobga
+        olmasa, mehmon birinchi so'ragan javob kirgan foydalanuvchiga
+        ham berilardi — yoki teskarisi, ya'ni koordinatalar mehmonga
+        oqib ketardi.
+        """
+        anon_row = self.client.get("/api/businesses/?type=restaurant").data["results"][0]
+        self.assertTrue(anon_row["location_locked"])
+
+        self.client.force_authenticate(self.customer)
+        auth_row = self.client.get("/api/businesses/?type=restaurant").data["results"][0]
+        self.assertFalse(auth_row["location_locked"])
+        self.assertEqual(auth_row["address"], "Amir Temur ko'chasi 12")
+
+        # Teskari yo'nalish ham: kirgan javob keshlangandan keyin
+        # mehmon yana yopiq javobni olishi kerak.
+        self.client.force_authenticate(None)
+        again = self.client.get("/api/businesses/?type=restaurant").data["results"][0]
+        self.assertTrue(again["location_locked"])
+        self.assertIsNone(again["address"])
 
     def test_owner_sees_own_contacts_in_settings(self):
         """Egasi o'z ma'lumotini albatta ko'rishi va tahrirlashi kerak."""

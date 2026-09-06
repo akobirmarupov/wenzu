@@ -141,11 +141,29 @@ class BusinessListAPIView(APIView):
         if isinstance(geo, Response):
             return geo
 
+        # Kesh kalitiga KIRGAN/KIRMAGAN holati ham qo'shiladi.
+        #
+        # Javobda endi joylashuv bor va u auditoriyaga qarab o'zgaradi:
+        # aniq manzil, koordinata va xarita havolalari faqat ro'yxatdan
+        # o'tganlarga qaytadi (`BusinessListSerializer`).
+        #
+        # Auditoriya kalitda bo'lmasa, keshni birinchi to'ldirgan so'rov
+        # hammaga xizmat qilardi:
+        #   · mehmon birinchi bo'lsa — kirgan foydalanuvchi ham manzilni
+        #     ko'rmasdi;
+        #   · kirgan birinchi bo'lsa — butun ro'yxatning koordinatalari
+        #     MEHMONGA ham ketardi, ya'ni yashirishning ma'nosi
+        #     qolmasdi.
+        #
+        # Ikkita variant yetarli — har bir foydalanuvchiga alohida yozuv
+        # emas, ya'ni kesh samarasi deyarli o'zgarmaydi.
+        audience = "auth" if request.user.is_authenticated else "anon"
         cache_key = build_cache_key(
             "biz:list",
             sorted(request.GET.items()),
             request.GET.get("page", 1),
             request.GET.get("page_size", ""),
+            audience,
         )
         data = cached_response(
             cache_key,

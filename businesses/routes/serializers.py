@@ -104,20 +104,42 @@ class BusinessListSerializer(serializers.ModelSerializer):
     max_capacity = serializers.IntegerField(read_only=True, required=False)
     distance_km = serializers.FloatField(read_only=True, required=False)
 
-    # Xarita havolalari kartochkada ham kerak: "yaqinimda" qidiruvidan
-    # kelgan odam ro'yxatdagi joyni ochmasdan turib yo'nalishni ko'ra
-    # olishi kerak — u aynan shu narsani qidirib kelgan.
-    map_links = serializers.DictField(read_only=True)
+    # --- joylashuv: faqat ro'yxatdan o'tganlarga (`_can_see_location`) ---
+    address = serializers.SerializerMethodField()
+    latitude = serializers.SerializerMethodField()
+    longitude = serializers.SerializerMethodField()
+    map_links = serializers.SerializerMethodField()
+    location_locked = serializers.SerializerMethodField()
 
     class Meta:
         model = Business
         fields = [
             "id", "name", "business_type", "business_type_display",
-            "address", "district", "latitude", "longitude", "map_link", "map_links",
+            "address", "district", "latitude", "longitude", "map_links",
+            "location_locked",
             "description", "cover_photo", "cuisine", "cuisine_display",
             "open_time", "close_time", "rating_avg", "reviews_count",
             "rooms_count", "halls_count", "min_capacity", "max_capacity", "distance_km",
         ]
+
+    def _can_see_location(self) -> bool:
+        request = self.context.get("request")
+        return bool(request and request.user and request.user.is_authenticated)
+
+    def get_address(self, obj) -> str | None:
+        return obj.address if self._can_see_location() else None
+
+    def get_latitude(self, obj) -> float | None:
+        return obj.latitude if self._can_see_location() else None
+
+    def get_longitude(self, obj) -> float | None:
+        return obj.longitude if self._can_see_location() else None
+
+    def get_map_links(self, obj) -> dict:
+        return obj.map_links if self._can_see_location() else {}
+
+    def get_location_locked(self, obj) -> bool:
+        return not self._can_see_location()
 
 
 class BusinessDetailSerializer(serializers.ModelSerializer):
@@ -142,19 +164,19 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
     phone_number = serializers.SerializerMethodField()
     contacts_locked = serializers.SerializerMethodField()
 
-    # --- joylashuv ---
-    #
-    # ALOQA ma'lumotidan farqli o'laroq, xarita havolasi HAMMAGA ochiq:
-    # manzil va tuman baribir ochiq turibdi, havola esa shunchaki o'sha
-    # manzilni xaritada ko'rsatadi. Yashirishning ma'nosi yo'q — aksincha,
-    # kirmagan odam ham joyni topib borishi kerak.
-    map_links = serializers.DictField(read_only=True)
+    # --- joylashuv (faqat ro'yxatdan o'tganlarga) ---
+    address = serializers.SerializerMethodField()
+    latitude = serializers.SerializerMethodField()
+    longitude = serializers.SerializerMethodField()
+    map_links = serializers.SerializerMethodField()
+    location_locked = serializers.SerializerMethodField()
 
     class Meta:
         model = Business
         fields = [
             "id", "name", "business_type", "business_type_display",
-            "address", "district", "latitude", "longitude", "map_link", "map_links",
+            "address", "district", "latitude", "longitude", "map_links",
+            "location_locked",
             "description", "cover_photo", "gallery",
             "cuisine", "cuisine_display", "open_time", "close_time",
             "rating_avg", "reviews_count",
@@ -190,6 +212,42 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
     def get_contacts_locked(self, obj) -> bool:
         """Frontend shu bayroqqa qarab "kirish kerak" blokini ko'rsatadi."""
         return not self._can_see_contacts()
+
+    # ===================================================================
+    # JOYLASHUV ham YOPIQ turadi
+    #
+    # Aniq manzil, koordinatalar va xarita havolalari faqat ro'yxatdan
+    # o'tganlarga qaytadi.
+    #
+    # Sabab aloqa ma'lumotidagi bilan bir xil: joy egasining manzili
+    # uning aktivi. Ochiq turgan ro'yxat raqobatchiga ham, ma'lumot
+    # yig'uvchi botga ham tayyor baza bo'lib beriladi — bir so'rov bilan
+    # butun Toshkentdagi to'yxonalarning koordinatasini olib ketish
+    # mumkin bo'lardi.
+    #
+    # TUMAN ochiq qoladi. U joyni topishga yetmaydi, lekin qidiruv va
+    # filtrlash aynan shunga tayanadi: mehmon "Yunusobodda nima bor?"
+    # deb ko'ra olishi kerak, aks holda katalogning o'zi ma'nosini
+    # yo'qotardi. Aniq manzil uchun esa kirish kerak — bu bir bosishlik
+    # ish va bron qilish uchun baribir talab qilinadi.
+    # ===================================================================
+    def _can_see_location(self) -> bool:
+        return self._can_see_contacts()
+
+    def get_address(self, obj) -> str | None:
+        return obj.address if self._can_see_location() else None
+
+    def get_latitude(self, obj) -> float | None:
+        return obj.latitude if self._can_see_location() else None
+
+    def get_longitude(self, obj) -> float | None:
+        return obj.longitude if self._can_see_location() else None
+
+    def get_map_links(self, obj) -> dict:
+        return obj.map_links if self._can_see_location() else {}
+
+    def get_location_locked(self, obj) -> bool:
+        return not self._can_see_location()
 
     def get_rooms(self, obj) -> list:
         if obj.business_type != Business.TYPE_RESTAURANT:

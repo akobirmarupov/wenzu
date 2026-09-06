@@ -56,3 +56,14 @@ class BusinessApplicationThrottle(UserRateThrottle):
 
 class ReviewCreateThrottle(UserRateThrottle):
     scope = "review_create"
+
+
+class FeedbackThrottle(UserRateThrottle):
+    """
+    Takliflar formasi kirish talab qilmaydi, ya'ni u eng ochiq nuqta.
+
+    `UserRateThrottle` ikkala holatni ham qoplaydi: kirgan foydalanuvchi
+    hisobi bo'yicha, mehmon esa IP manzili bo'yicha cheklanadi.
+    """
+
+    scope = "feedback"

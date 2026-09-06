@@ -19,6 +19,7 @@ import { ROUTES } from "../core/config.js";
 import { api } from "../core/api.js";
 import { t } from "../core/i18n.js";
 import { $, esc } from "./dom.js";
+import { bindFeedbackLinks } from "../components/feedback-modal.js";
 
 const MAIN_LINKS = [
   { href: ROUTES.home, icon: "◈", key: "nav.home" },
@@ -57,6 +58,15 @@ function tabbarItems(user) {
     { href: ROUTES.venues, icon: "🎉", key: "nav.shortVenues" },
   ];
 
+  // TAKLIFLAR bu yerda YO'Q — ataylab.
+  //
+  // Pastki menyuda beshta band bo'lishi kerak: bosh sahifa, restoran,
+  // to'yxona, bronlarim, profil. Bular — odam saytga KELGAN maqsadi.
+  // Oltinchi band ularning har birini toraytirib, yozuvlarni o'qib
+  // bo'lmaydigan darajaga tushirardi.
+  //
+  // Taklif yozish esa boshqa toifadagi amal va u bosh sahifada,
+  // taomlar ro'yxatidan keyin turadi (`home.html`).
   if (!user) {
     return [...base, { href: ROUTES.login, icon: "→", key: "nav.shortLogin" }];
   }
@@ -82,12 +92,20 @@ function renderTabbar(user) {
   const bar = $("#tabbar");
   if (!bar) return;
 
-  bar.innerHTML = tabbarItems(user).map(({ href, icon, key }) => `
-    <a class="tabbar-item ${isActive(href) ? "active" : ""}" href="${href}"
-       ${isActive(href) ? 'aria-current="page"' : ""}>
+  bar.innerHTML = tabbarItems(user).map(({ href, icon, key, action }) => {
+    const inner = `
       <span class="ic" aria-hidden="true">${icon}</span>
-      <span class="lb">${esc(t(key))}</span>
-    </a>`).join("");
+      <span class="lb">${esc(t(key))}</span>`;
+
+    // Amal bandi (takliflar) — havola emas, tugma. `<a href="#">` bo'lsa
+    // brauzer manzilga `#` qo'shib, sahifani tepaga sakratib yuborardi.
+    if (action) {
+      return `<button type="button" class="tabbar-item" data-${action}>${inner}</button>`;
+    }
+    return `
+      <a class="tabbar-item ${isActive(href) ? "active" : ""}" href="${href}"
+         ${isActive(href) ? 'aria-current="page"' : ""}>${inner}</a>`;
+  }).join("");
 }
 
 export function initPublicNav() {
@@ -137,6 +155,17 @@ export function initPublicNav() {
     });
   }
 
+  // TAKLIF YUBORISH — menyuning eng pastida, jimgina.
+  //
+  // Sinov davrida foydalanuvchi fikri eng qimmat ma'lumot, lekin havola
+  // shu sababli KATTA bo'lishi kerak degani emas: odam saytga joy bron
+  // qilgani keladi, fikr yozgani emas. Shuning uchun u chiziq ostida,
+  // kulrang va kichik — ishlayotgan odamni chalg'itmaydi, lekin izlagan
+  // odam darrov topadi.
+  //
+  // `side-nav-bottom` `margin-top: auto` bilan ishlaydi (`_shell.css`),
+  // ya'ni menyuda nechta band bo'lishidan qat'i nazar u har doim eng
+  // pastga yopishadi.
   nav.innerHTML = `
     <a class="brand" href="/"><img class="brand-mark" src="/static/images/brand/feasto-mark.svg" alt="" width="28" height="28">Feasto</a>
     <p class="brand-sub">${esc(t("brand.tagline"))}</p>
@@ -144,7 +173,14 @@ export function initPublicNav() {
     ${MAIN_LINKS.map(linkHtml).join("")}
 
     <div class="nav-group-label">${esc(t("nav.menu"))}</div>
-    ${secondary.map(linkHtml).join("")}`;
+    ${secondary.map(linkHtml).join("")}
+
+    <div class="side-nav-bottom">
+      <button type="button" class="nav-feedback" data-feedback>
+        <span class="ic" aria-hidden="true">💡</span>
+        <span>${esc(t("feedback.link"))}</span>
+      </button>
+    </div>`;
 
   // Mobil: gamburger va orqa fon
   const toggle = $("[data-nav-toggle]");
@@ -163,6 +199,7 @@ export function initPublicNav() {
   });
 
   fillFooterContacts();
+  bindFeedbackLinks();
 }
 
 /** Poyloqdagi aloqa ma'lumotini platforma sozlamalaridan to'ldiradi. */

@@ -57,6 +57,12 @@ ignore = [
 "common/routes/health.py" = ["BLE001"]
 "common/queue.py" = ["BLE001"]
 
+# Takliflar: administratorga xabar yuborish YO'LDAGI qadam, maqsad emas.
+# Xabar yuborilmagani foydalanuvchining fikrini yo'qotmasligi kerak —
+# u allaqachon bazaga yozilgan. Shuning uchun bu yerda har qanday xato
+# ushlanadi va faqat logga tushadi.
+"common/routes/feedback.py" = ["BLE001"]
+
 # Uchidan-uchiga oqim testi ataylab uzun: u foydalanuvchining butun
 # yo'lini bir joyda ko'rsatadi. Bo'laklarga bo'lish "keyingi qadam
 # qayerda?" degan savolni tug'dirardi.

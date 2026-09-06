@@ -363,13 +363,29 @@ class MapLinkTest(TestCase):
         self.business = make_venue(self.owner, name="Saroy To'yxonasi")
 
     def test_detail_returns_google_and_yandex_links(self):
-        response = APIClient().get(f"/api/businesses/{self.business.id}/")
+        # Joylashuv faqat RO'YXATDAN O'TGANLARGA qaytadi — mehmonga
+        # bo'sh lug'at keladi (`BusinessDetailSerializer`). Shuning
+        # uchun bu yerda kirgan foydalanuvchi kerak.
+        viewer = User.objects.create_user(
+            username="map_viewer", password="StrongPass123!",
+            full_name="Ko'ruvchi", phone_number="+998900001234",
+        )
+        client = APIClient()
+        client.force_authenticate(user=viewer)
+
+        response = client.get(f"/api/businesses/{self.business.id}/")
         links = response.data["map_links"]
         self.assertIn("41.311081,69.240562", links["google"])
         # Yandex koordinatani teskari tartibda kutadi.
         self.assertIn("69.240562,41.311081", links["yandex"])
         self.assertIn("google_directions", links)
         self.assertIn("yandex_directions", links)
+
+    def test_guest_gets_no_map_links(self):
+        """Kirmagan odamga joylashuv umuman berilmaydi."""
+        response = APIClient().get(f"/api/businesses/{self.business.id}/")
+        self.assertEqual(response.data["map_links"], {})
+        self.assertTrue(response.data["location_locked"])
 
     def test_falls_back_to_a_text_search_without_coordinates(self):
         self.business.latitude = 0

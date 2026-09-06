@@ -34,8 +34,8 @@ const PIN_ICON = icon(
    <circle cx="12" cy="10" r="3"></circle>`
 );
 
-/** Yo'nalish — burilish belgisi. */
-const ROUTE_ICON = icon(
+/** Yo'nalish — burilish belgisi. Detal sahifasi ham ishlatadi. */
+export const ROUTE_ICON = icon(
   `<polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>`
 );
 

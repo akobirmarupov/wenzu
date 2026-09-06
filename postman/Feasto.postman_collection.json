@@ -318,6 +318,48 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Taklif yuborish (auth shart emas)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/feedback/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "feedback"
+              ]
+            },
+            "description": "Admin Telegram'i, bepul sinov muddati, depozit narxlari va tarif rejalari.\n\nMobil ilova \"Biznes ochish\" ekranini shu bitta so'rov bilan to'ldiradi.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"kind\": \"idea\",\n  \"message\": \"Qidiruvda tumanni tanlash qulay bo'lmadi.\",\n  \"page\": \"/toyxonalar/\",\n  \"contact\": \"+998901112233\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -4278,6 +4320,84 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Takliflar ro'yxati",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/feedback/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "feedback"
+              ]
+            },
+            "description": "Admin Telegram'i, bepul sinov muddati, depozit narxlari va tarif rejalari.\n\nMobil ilova \"Biznes ochish\" ekranini shu bitta so'rov bilan to'ldiradi.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Taklif holatini yangilash",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/admin/feedback/{{feedback_id}}/",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "feedback",
+                "{{feedback_id}}"
+              ]
+            },
+            "description": "Admin Telegram'i, bepul sinov muddati, depozit narxlari va tarif rejalari.\n\nMobil ilova \"Biznes ochish\" ekranini shu bitta so'rov bilan to'ldiradi.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"done\",\n  \"admin_note\": \"Kelasi versiyada\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
         }
       ]
     },

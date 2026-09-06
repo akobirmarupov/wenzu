@@ -1,0 +1,69 @@
+/* ===================================================================
+   TAKLIFLAR — havola va oyna.
+
+   Sinov davrida foydalanuvchi fikri eng qimmat ma'lumot, lekin havola
+   shu sababli e'tiborni tortishi shart emas: odam saytga joy bron
+   qilgani keladi, fikr yozgani emas.
+
+   Shuning uchun havola boshqa menyu bandlaridan ATAYLAB ajralib
+   turmaydi — kulrang, kichikroq shrift, fonsiz. Faqat ustiga
+   borilganda yorishadi.
+   =================================================================== */
+
+.nav-feedback {
+  display: flex; align-items: center; gap: var(--sp-3);
+  width: 100%; padding: 9px var(--sp-3);
+  border-radius: var(--radius-s);
+  font-size: var(--fs-xs); font-weight: 600;
+  color: var(--ink-faint); text-align: left; cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.nav-feedback:hover { background: var(--surface-2); color: var(--ink-soft); }
+.nav-feedback .ic { font-size: 14px; line-height: 1; }
+
+/* Panel menyusi qorong'i fonli — u yerda kulrang o'z rangida bo'lsin. */
+.side-nav.panel .nav-feedback { color: rgba(255, 255, 255, .45); }
+.side-nav.panel .nav-feedback:hover { background: rgba(255, 255, 255, .08); color: #FFFFFF; }
+
+/* -------------------------------------------------------------------
+   Oynadagi tur tanlagichi.
+
+   Bu yerda `.row-2` ISHLATILMAYDI — ataylab. Telefonda modal ichidagi
+   `.row-2` tugmalarni ustunga, ustiga TESKARI tartibda joylashtiradi
+   (`_mobile.css`): u "Bekor qilish / Tasdiqlash" juftligi uchun
+   yozilgan. Uchta teng chip esa yonma-yon turishi kerak.
+   ------------------------------------------------------------------- */
+.feedback-kinds { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.feedback-kinds .chip { flex: 1 1 auto; min-width: 88px; }
+
+/* -------------------------------------------------------------------
+   Bosh sahifadagi chaqiruv — taomlar ro'yxatidan keyin.
+
+   Uzuq-yuluq chegara ataylab: u "bu yerga bosish mumkin" deb aytadi,
+   lekin to'ldirilgan tugma kabi e'tiborni tortmaydi. Sahifadagi
+   asosiy amallar (qidirish, bron qilish) ustun bo'lib qolishi kerak.
+   ------------------------------------------------------------------- */
+.feedback-strip {
+  display: flex; align-items: center; gap: var(--sp-4);
+  width: 100%; padding: var(--sp-4) var(--sp-5);
+  border: 1px dashed var(--line); border-radius: var(--radius-m);
+  background: none; text-align: left; cursor: pointer;
+  color: var(--ink-soft);
+  transition: border-color var(--transition), background var(--transition);
+}
+.feedback-strip:hover { border-color: var(--theme-accent); background: var(--surface); }
+.feedback-strip .ic { font-size: 22px; line-height: 1; flex-shrink: 0; }
+.feedback-strip .text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.feedback-strip .text b { color: var(--ink); font-size: var(--fs-sm); }
+.feedback-strip .text .small { color: var(--ink-faint); }
+.feedback-strip .go {
+  margin-left: auto; flex-shrink: 0; color: var(--ink-faint);
+  transition: transform var(--transition), color var(--transition);
+}
+.feedback-strip:hover .go { transform: translateX(3px); color: var(--theme-accent); }
+
+@media (max-width: 560px) {
+  .feedback-strip { padding: var(--sp-3) var(--sp-4); gap: var(--sp-3); }
+  .feedback-strip .ic { font-size: 18px; }
+  .feedback-strip .text .small { font-size: 11px; }
+}

@@ -2,6 +2,7 @@ import uuid
 from contextvars import ContextVar
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.cache import cache
 from django.db import models
 
@@ -96,3 +97,111 @@ class PlatformSettings(models.Model):
 
         _solo_memo.set(obj)
         return obj
+
+
+class Feedback(BaseModel):
+    """
+    Platforma haqidagi taklif yoki shikoyat.
+
+    ===================================================================
+    NEGA KERAK
+    ===================================================================
+    Sinov davrida eng qimmat ma'lumot — foydalanuvchi nimadan
+    qiynalayotgani. Uni faqat bitta yo'l bilan bilish mumkin: so'rash.
+
+    Shuning uchun forma menyuning eng pastida, jimgina turadi: kerak
+    bo'lganda topiladi, lekin ishlayotgan odamning e'tiborini tortmaydi.
+
+    ===================================================================
+    NEGA KIRISH TALAB QILINMAYDI
+    ===================================================================
+    `user` bo'sh bo'lishi MUMKIN.
+
+    Eng qimmatli fikr ko'pincha ro'yxatdan O'TMAGAN odamdan keladi:
+    "tushunmadim", "qidirganimni topolmadim" — ya'ni aynan shu odam
+    saytni tashlab ketgan. Kirishni talab qilsak, u fikrini yozmasdan
+    ketardi va biz sababni hech qachon bilmasdik.
+
+    Spam xavfi cheklov bilan ushlanadi (`FeedbackThrottle`), mazmunni
+    esa administrator o'zi o'qib chiqadi — sinov davrida ular ko'p
+    bo'lmaydi.
+
+    `on_delete=SET_NULL`: foydalanuvchi hisobini o'chirsa ham taklif
+    qoladi. U shaxsga emas, MAHSULOTGA tegishli fikr.
+    """
+
+    KIND_IDEA = "idea"
+    KIND_PROBLEM = "problem"
+    KIND_OTHER = "other"
+    KIND_CHOICES = (
+        (KIND_IDEA, "Taklif"),
+        (KIND_PROBLEM, "Muammo"),
+        (KIND_OTHER, "Boshqa"),
+    )
+
+    STATUS_NEW = "new"
+    STATUS_SEEN = "seen"
+    STATUS_DONE = "done"
+    STATUS_CHOICES = (
+        (STATUS_NEW, "Yangi"),
+        (STATUS_SEEN, "O'qilgan"),
+        (STATUS_DONE, "Hal qilingan"),
+    )
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name="feedbacks",
+        verbose_name="Kim yozgan",
+        help_text="Bo'sh — kirmagan foydalanuvchi yozgan.",
+    )
+    kind = models.CharField(
+        max_length=10, choices=KIND_CHOICES, default=KIND_IDEA, db_index=True,
+        verbose_name="Turi",
+    )
+    message = models.TextField(max_length=1000, verbose_name="Matn")
+
+    # QAYSI SAHIFADAN yozilgani.
+    #
+    # "tugma ishlamadi" degan fikr o'z-o'zicha deyarli foydasiz —
+    # qaysi ekranda ekani ma'lum bo'lsa, muammoni izlash daqiqalar
+    # ishiga aylanadi. Shuning uchun manzil avtomatik qo'shiladi va
+    # foydalanuvchidan hech narsa so'ralmaydi.
+    page = models.CharField(
+        max_length=200, blank=True, verbose_name="Qaysi sahifadan",
+    )
+
+    # Kirmagan odam javob olishni xohlasa qoldiradigan aloqa.
+    # Majburiy emas: talab qilsak, aynan qisqa va foydali fikrlar
+    # yozilmay qolardi.
+    contact = models.CharField(
+        max_length=120, blank=True, verbose_name="Aloqa (ixtiyoriy)",
+        help_text="Telefon yoki Telegram — javob kerak bo'lsa.",
+    )
+
+    status = models.CharField(
+        max_length=10, choices=STATUS_CHOICES, default=STATUS_NEW, db_index=True,
+        verbose_name="Holati",
+    )
+    admin_note = models.TextField(
+        blank=True, verbose_name="Administrator izohi",
+        help_text="Faqat ichki foydalanish uchun — foydalanuvchiga ko'rinmaydi.",
+    )
+
+    class Meta:
+        verbose_name = "Taklif"
+        verbose_name_plural = "Takliflar"
+        ordering = ["-created_at"]
+        indexes = [
+            # Administratorning asosiy ekrani: "yangi takliflar, yangisi tepada".
+            models.Index(fields=["status", "-created_at"], name="idx_feedback_status_created"),
+        ]
+
+    def __str__(self):
+        author = self.user.username if self.user_id else "mehmon"
+        return f"{self.get_kind_display()} — {author}"
+
+    @property
+    def short(self) -> str:
+        """Ro'yxatda ko'rsatish uchun qisqartirilgan matn."""
+        text = self.message.strip().replace("\n", " ")
+        return text if len(text) <= 80 else text[:77] + "…"

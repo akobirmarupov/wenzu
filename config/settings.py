@@ -233,6 +233,9 @@ REST_FRAMEWORK = {
         "reservation_create": "10/hour",
         "business_application": "3/day",
         "review_create": "20/day",
+
+        # Taklif — kirish talab qilinmaydi, shuning uchun cheklov qattiqroq.
+        "feedback": "10/day",
     },
     # DEBUG'da brauzerdan sinash qulay, productionda faqat JSON.
     "DEFAULT_RENDERER_CLASSES": (
