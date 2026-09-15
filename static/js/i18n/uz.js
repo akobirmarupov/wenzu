@@ -127,6 +127,10 @@ export default {
     all: "Barchasi",
     nothingFound: "Hech narsa topilmadi",
     tryOther: "Boshqa kalit so'z yoki filtr bilan urinib ko'ring.",
+    rank: "{n}-o'rin",
+    newPlace: "Yangi",
+    upToPeople: "{count} kishigacha",
+    fromPrice: "{price} dan",
   },
 
   detail: {

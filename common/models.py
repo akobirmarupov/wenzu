@@ -48,10 +48,10 @@ class PlatformSettings(models.Model):
     CACHE_TTL = 300
 
     admin_telegram_username = models.CharField(
-        max_length=32, default="uvente",
+        max_length=32, default="akobir_marupov",
         help_text="@ belgisiz kiriting. Business ariza/to'lov oqimida foydalanuvchiga shu ko'rsatiladi.",
     )
-    support_phone = models.CharField(max_length=20, blank=True)
+    support_phone = models.CharField(max_length=20, blank=True, default="+998771210418")
 
     # --- depozit narxlari ---
     room_deposit_premium = models.DecimalField(

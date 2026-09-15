@@ -355,7 +355,15 @@
 
   .biz-card .foot { margin-top: 4px; gap: 4px; flex-wrap: wrap; }
   .biz-card .foot .rating { font-size: 11px; gap: 1px; }
-  .biz-card .foot .tag { font-size: 10px; padding: 2px 7px; }
+  .biz-card .foot .tag,
+  .biz-card .foot .rank-tag { font-size: 10px; padding: 2px 7px; }
+  /* Ikki ustunda "350 kishigacha · 15 000 000 so'm dan" bitta qatorga
+     sig'maydi va uch nuqta bilan kesilardi — aynan NARX ko'rinmay
+     qolardi. Shuning uchun telefonda u o'raladi. */
+  .biz-card .facts {
+    font-size: 10px; margin-top: 3px; line-height: 1.35;
+    white-space: normal; overflow: visible; text-overflow: clip;
+  }
 
   .biz-card-media .rating-badge { top: 6px; right: 6px; padding: 2px 7px; font-size: 10px; }
   .biz-card-media .distance-badge { bottom: 6px; left: 6px; padding: 2px 7px; font-size: 10px; }

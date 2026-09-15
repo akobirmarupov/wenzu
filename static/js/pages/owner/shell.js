@@ -55,7 +55,7 @@ async function checkSubscription() {
 function showLock(subscription) {
   const content = $("#dash-content");
   if (!content) return;
-  const telegram = subscription.admin_telegram || "@uvente";
+  const telegram = subscription.admin_telegram || "@akobir_marupov";
 
   const block = document.createElement("div");
   block.className = "subscription-lock";
@@ -81,7 +81,7 @@ function showLock(subscription) {
 function showRejected(subscription) {
   const content = $("#dash-content");
   if (!content) return;
-  const telegram = subscription.admin_telegram || "@uvente";
+  const telegram = subscription.admin_telegram || "@akobir_marupov";
 
   const block = document.createElement("div");
   block.className = "subscription-lock";

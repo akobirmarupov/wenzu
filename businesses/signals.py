@@ -26,6 +26,31 @@ def invalidate_on_business_change(sender, instance, **kwargs):
     invalidate_business_cache()
 
 
+@receiver(post_save, sender=Business)
+@receiver(post_delete, sender=Business)
+def recalculate_ranks_when_the_list_changes(sender, instance, **kwargs):
+    """
+    Joy qo'shilganda, o'chirilganda yoki YASHIRILGANDA o'rinlar jadvali
+    qayta taqsimlanadi.
+
+    Nega kerak: o'rinlar faqat sharh yozilganda hisoblanardi. Ya'ni
+    yangi ochilgan joy birorta sharh kelguncha "o'rinsiz" (rank=0)
+    qolib ketardi, yashiringan joy esa o'z o'rnini band qilib turardi —
+    ro'yxatda raqamlar 1, 2, 4 bo'lib sakrardi.
+
+    Reyting yangilanishida ISHLAMAYDI: `recalculate_business_rating`
+    faqat ball maydonlarini saqlaydi va o'rinni sharh signali o'zi
+    qayta hisoblaydi — ikki marta hisoblashning hojati yo'q.
+    """
+    update_fields = kwargs.get("update_fields")
+    if update_fields is not None and "is_visible" not in update_fields:
+        return
+
+    from reviews.services import recalculate_ranks
+
+    recalculate_ranks(instance.business_type)
+
+
 @receiver(post_delete, sender=Business)
 def reset_owner_role_when_business_is_gone(sender, instance, **kwargs):
     """

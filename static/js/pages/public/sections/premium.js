@@ -68,7 +68,7 @@ function panelRedirectHtml(subscription) {
  * arizani QAYTA yuboradi: eski joyi o'sha yangi arizaga ulanadi.
  */
 function rejectedHtml(subscription) {
-  const telegram = subscription.admin_telegram || "@uvente";
+  const telegram = subscription.admin_telegram || "@akobir_marupov";
   return `
     ${adminContactHtml(telegram)}
 
@@ -104,7 +104,7 @@ function rejectedHtml(subscription) {
 }
 
 function awaitingHtml(subscription) {
-  const telegram = subscription.admin_telegram || "@uvente";
+  const telegram = subscription.admin_telegram || "@akobir_marupov";
   return `
     ${adminContactHtml(telegram)}
 
@@ -197,7 +197,7 @@ function adminHtml() {
  */
 function guestHtml(settings, user) {
   const plans = settings?.plans || [];
-  const telegram = settings?.admin_telegram || "@uvente";
+  const telegram = settings?.admin_telegram || "@akobir_marupov";
 
   // Katta "hero" bloki ATAYLAB olib tashlandi.
   //
@@ -297,7 +297,7 @@ export async function load(user) {
       root.innerHTML = reapply ? rejectedHtml(subscription) : awaitingHtml(subscription);
       bindPricing("#premium-pricing", {
         plans: subscription.plans || [],
-        telegram: subscription.admin_telegram || "@uvente",
+        telegram: subscription.admin_telegram || "@akobir_marupov",
         mode: reapply ? "open" : "renew",
         onSent: () => load(user),
       });
@@ -308,7 +308,7 @@ export async function load(user) {
       // Biznesi yo'q — tarif tanlash BIZNES OCHISH arizasini boshlaydi.
       bindPricing("#premium-pricing", {
         plans: settings?.plans || [],
-        telegram: settings?.admin_telegram || "@uvente",
+        telegram: settings?.admin_telegram || "@akobir_marupov",
         mode: "open",
         onSent: () => load(user),
       });

@@ -104,6 +104,10 @@ export default {
     all: "Все",
     nothingFound: "Ничего не найдено",
     tryOther: "Попробуйте другое слово или фильтр.",
+    rank: "{n}-е место",
+    newPlace: "Новое",
+    upToPeople: "до {count} гостей",
+    fromPrice: "от {price}",
   },
 
   detail: {

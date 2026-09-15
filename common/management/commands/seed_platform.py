@@ -26,7 +26,7 @@ class Command(BaseCommand):
     help = "Platforma sozlamalari va tarif rejalarini yaratadi (mavjudlarini buzmaydi)."
 
     def add_arguments(self, parser):
-        parser.add_argument("--telegram", default="uvente", help="Admin Telegram username (@ siz)")
+        parser.add_argument("--telegram", default="akobir_marupov", help="Admin Telegram username (@ siz)")
         parser.add_argument(
             "--reset-prices", action="store_true",
             help="Mavjud rejalarning narxini ham standartga qaytaradi.",

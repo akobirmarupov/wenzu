@@ -17,7 +17,7 @@ function formHtml(settings) {
       <div class="field">
         <label for="admin_telegram_username">Admin Telegram (@ siz)</label>
         <input class="input" id="admin_telegram_username" name="admin_telegram_username"
-               value="${esc(settings.admin_telegram_username || "")}" placeholder="uvente">
+               value="${esc(settings.admin_telegram_username || "")}" placeholder="akobir_marupov">
         <span class="field-hint">Ariza va bron oqimida foydalanuvchiga shu ko'rsatiladi</span>
       </div>
       <div class="field">

@@ -306,7 +306,7 @@ function pendingNoticeHtml(pending) {
  * foydalanuvchi uchun BITTA qaror ("shu narxga ishlayman"). Ularni ikki
  * ekranga bo'lish "endi qayerga bosay?" degan savol tug'dirardi.
  */
-export function bindPricing(root, { plans, telegram = "@uvente", onSent, mode = "renew" } = {}) {
+export function bindPricing(root, { plans, telegram = "@akobir_marupov", onSent, mode = "renew" } = {}) {
   const container = typeof root === "string" ? document.querySelector(root) : root;
   if (!container) return;
 

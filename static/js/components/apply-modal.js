@@ -103,7 +103,7 @@ export async function openApplyModal(type, { plan = null, onSent } = {}) {
   }
 
   const trialDays = settings?.trial_days ?? 7;
-  const telegram = settings?.admin_telegram || "@uvente";
+  const telegram = settings?.admin_telegram || "@akobir_marupov";
 
   // Izoh matni tarifga qarab boshqacha.
   //

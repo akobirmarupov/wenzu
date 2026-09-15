@@ -5,7 +5,18 @@ from math import asin, cos, radians, sin, sqrt
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Count, IntegerField, Max, Min, OuterRef, Subquery
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    IntegerField,
+    Max,
+    Min,
+    OuterRef,
+    Subquery,
+    Value,
+    When,
+)
 from django.db.models.functions import Coalesce
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import OpenApiParameter, extend_schema
@@ -64,6 +75,20 @@ def bounding_box(lat, lng, radius_km):
     return lat - lat_delta, lat + lat_delta, lng - lng_delta, lng + lng_delta
 
 
+#: Ro'yxatdagi tartib — kartochkadagi O'RIN bilan bir xil bo'lishi shart.
+#
+# Ilgari ro'yxat `-rating_avg` bo'yicha kelardi, o'rin esa yulduzlar
+# YIG'INDISI bo'yicha hisoblanadi (`reviews.services.recalculate_ranks`).
+# Ikki mezon har xil bo'lgani uchun mijoz "1-o'rin, 7-o'rin, 2-o'rin"
+# deb sochilib yotgan raqamlarni ko'rardi. Endi ro'yxat o'rinning
+# o'zi bo'yicha keladi: 1-o'rin birinchi, 2-o'rin ikkinchi.
+#
+# `unranked` — hali o'rin berilmagan (rank=0) yangi joylar. Ular
+# ro'yxat OXIRIDA turadi: nol raqami o'sish tartibida birinchi bo'lib
+# chiqib, hech qanday sharhi yo'q joyni eng tepaga ko'targan bo'lardi.
+RANKED_ORDER = ("unranked", "rank", "-rating_points", "-rating_avg", "-created_at")
+
+
 def annotated_business_queryset():
     """
     Ro'yxat uchun asosiy queryset.
@@ -82,12 +107,25 @@ def annotated_business_queryset():
     return (
         Business.objects.filter(is_visible=True)
         .annotate(
+            # O'rni yo'qlar (rank=0) uchun bayroq — `RANKED_ORDER` ni qarang.
+            unranked=Case(
+                When(rank=0, then=Value(1)), default=Value(0), output_field=IntegerField()
+            ),
             rooms_count=Coalesce(sub(rooms, Count("id")), 0),
             halls_count=Coalesce(sub(halls, Count("id")), 0),
             # Sig'im: restoranda xonalardan, to'yxonada zallardan olinadi —
             # `guests` filtri ikkalasida ham bir xil maydon bilan ishlashi uchun.
             min_capacity=Coalesce(sub(rooms, Min("capacity")), sub(halls, Min("people"))),
             max_capacity=Coalesce(sub(rooms, Max("capacity")), sub(halls, Max("people"))),
+            # To'yxona kartochkasida bir kunlik ijara ham ko'rinadi.
+            # ENG ARZON zal olinadi ("... so'mdan boshlab"): joyda bir
+            # nechta zal bo'lsa, mijozga eng past chegarani ko'rsatish
+            # to'g'riroq — u shundan boshlab tanlaydi.
+            min_day_price=Subquery(
+                Hall.objects.filter(business=OuterRef("pk"), all_price__isnull=False)
+                .order_by().values("business").annotate(v=Min("all_price")).values("v")[:1],
+                output_field=DecimalField(max_digits=14, decimal_places=2),
+            ),
         )
         .only(
             "id", "name", "business_type", "address", "district",
@@ -96,6 +134,7 @@ def annotated_business_queryset():
             # so'rov ketardi (deferred field).
             "latitude", "longitude", "map_link", "description", "cover_photo",
             "cuisine", "open_time", "close_time", "rating_avg", "reviews_count",
+            "rating_points", "rank",
         )
     )
 
@@ -211,7 +250,7 @@ class BusinessListAPIView(APIView):
         paginator = self.pagination_class()
 
         if geo is None:
-            queryset = queryset.order_by("-rating_avg", "-created_at")
+            queryset = queryset.order_by(*RANKED_ORDER)
             page = paginator.paginate_queryset(queryset, request, view=self)
             return paginator.get_paginated_response(
                 BusinessListSerializer(page, many=True, context={"request": request}).data

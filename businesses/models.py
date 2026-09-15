@@ -27,13 +27,6 @@ class BusinessApplication(BaseModel):
     applicant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="applications")
     business_type = models.CharField(max_length=15, choices=BUSINESS_TYPE_CHOICES)
     business_name = models.CharField(max_length=200)
-
-    # Ariza QAYSI tarif bilan berilgani.
-    #
-    # `None` — bepul sinov: tasdiqlangach 7 kunlik muddat ochiladi.
-    # Reja ko'rsatilgan — pullik: tasdiqlangach obuna darhol o'sha
-    # muddatga faollashadi, sinov berilmaydi (odam pul to'lagan, unga
-    # yana bepul kun qo'shishning ma'nosi yo'q).
     plan = models.ForeignKey(
         "subscriptions.SubscriptionPlan", null=True, blank=True,
         on_delete=models.SET_NULL, related_name="applications",
@@ -79,8 +72,6 @@ class Business(BaseModel):
     application = models.OneToOneField(BusinessApplication, on_delete=models.CASCADE, related_name="business")
     name = models.CharField(max_length=200, db_index=True)
     business_type = models.CharField(max_length=15, choices=TYPE_CHOICES, db_index=True)
-
-    # --- joylashuv ---
     address = models.CharField(max_length=255, blank=True)
     district = models.CharField(
         max_length=100, blank=True, db_index=True,
@@ -88,26 +79,12 @@ class Business(BaseModel):
     )
     latitude = models.FloatField(default=0, validators=[validate_latitude])
     longitude = models.FloatField(default=0, validators=[validate_longitude])
-
-    # Joy egasi TASHLAYDIGAN havola.
-    #
-    # Amalda hech kim "kenglik" va "uzunlik" ni qo'lda kiritmaydi: odam
-    # telefonida Google Maps yoki Yandex'ni ochadi, "ulashish" tugmasini
-    # bosadi va havolani tashlaydi. Shuning uchun havolani ham qabul
-    # qilamiz — koordinatani `common.maps.coordinates_from_link` o'zi
-    # chiqarib oladi va "yaqinimda" qidiruvi ishlab ketadi.
-    #
-    # Havolaning o'zi ham saqlanadi: qisqartirilgan manzillarda
-    # (maps.app.goo.gl/...) koordinata bo'lmaydi, lekin mijoz uni bosib
-    # baribir joyga boradi.
     map_link = models.URLField(
         max_length=500, blank=True,
         verbose_name="Xaritadagi havola",
         help_text="Google Maps yoki Yandex Xaritadan \"ulashish\" havolasini "
                   "shu yerga qo'ying. Koordinatalar undan avtomatik olinadi.",
     )
-
-    # --- profil ---
     description = models.TextField(blank=True)
     cover_photo = models.ImageField(
         upload_to="business_covers/", null=True, blank=True, validators=[validate_image_file]
@@ -118,13 +95,6 @@ class Business(BaseModel):
     )
     open_time = models.TimeField(null=True, blank=True, help_text="Ish boshlanish vaqti (restoran).")
     close_time = models.TimeField(null=True, blank=True, help_text="Ish tugash vaqti (restoran).")
-    # --- aloqa ---
-    #
-    # MUHIM: bu ikki maydon faqat RO'YXATDAN O'TGAN foydalanuvchiga
-    # ko'rinadi (`BusinessDetailSerializer` ga qarang). Sabab oddiy:
-    # ochiq turgan telefon va Telegram bir kunda spam-botlar ro'yxatiga
-    # tushadi, joy egasi esa buni bizdan biladi. Bron qilish uchun
-    # baribir kirish kerak — ya'ni haqiqiy mijoz hech narsa yo'qotmaydi.
     telegram_username = models.CharField(
         max_length=32, blank=True,
         help_text="@ belgisiz. Mijoz depozit to'lovi uchun shu manzilga yozadi. "
@@ -136,7 +106,6 @@ class Business(BaseModel):
         help_text="+998XXXXXXXXX. Faqat ro'yxatdan o'tgan foydalanuvchilarga ko'rinadi.",
     )
 
-    # --- holat va denormalizatsiya ---
     is_visible = models.BooleanField(default=True, db_index=True)
     rating_avg = models.FloatField(default=0, db_index=True)
     reviews_count = models.PositiveIntegerField(
@@ -144,15 +113,26 @@ class Business(BaseModel):
         help_text="Denormalizatsiya: ro'yxat so'rovida COUNT(*) qilmaslik uchun.",
     )
 
+
+    rating_points = models.PositiveIntegerField(
+        default=0, db_index=True,
+        verbose_name="Yulduzlar yig'indisi",
+        help_text="Barcha sharhlardagi yulduzlar jami. O'rin shunga qarab beriladi.",
+    )
+    rank = models.PositiveIntegerField(
+        default=0, db_index=True,
+        verbose_name="O'rin",
+        help_text="1 — eng ko'p yulduz yig'gan joy. 0 — hali hisoblanmagan.",
+    )
+
     class Meta:
         verbose_name_plural = "Businesses"
         ordering = ["-rating_avg", "-created_at"]
         indexes = [
-            # Bosh sahifadagi asosiy so'rov: ko'rinadigan + turi bo'yicha + reyting tartibida.
             models.Index(fields=["is_visible", "business_type", "-rating_avg"], name="idx_biz_visible_type_rating"),
             models.Index(fields=["is_visible", "district"], name="idx_biz_visible_district"),
             models.Index(fields=["is_visible", "cuisine"], name="idx_biz_visible_cuisine"),
-            # Geo-qidiruvdagi bounding box prefiltri shu indeksdan foydalanadi.
+            models.Index(fields=["business_type", "-rating_points"], name="idx_biz_type_points"),
             models.Index(fields=["latitude", "longitude"], name="idx_biz_lat_lng"),
             models.Index(fields=["owner"], name="idx_biz_owner"),
         ]
@@ -162,57 +142,17 @@ class Business(BaseModel):
 
     @property
     def map_links(self) -> dict:
-        """
-        Mijoz bosadigan xarita havolalari: Google va Yandex, har biri
-        "ko'rish" va "yo'nalish" ko'rinishida.
-
-        Koordinata bo'lsa aniq nuqtaga, bo'lmasa nom + manzil bo'yicha
-        qidiruvga olib boradi. Ikkalasi ham bo'lmasa — bo'sh lug'at va
-        frontend blokni umuman chizmaydi.
-        """
         from common.maps import build_map_links
 
         links = build_map_links(
             latitude=self.latitude, longitude=self.longitude,
             address=self.address, name=self.name,
         )
-        # Egasi o'z havolasini qoldirgan bo'lsa — u BIRINCHI o'rinda.
-        # Aynan o'sha havolani u o'z mijozlariga beradi va unda ba'zan
-        # bizda yo'q tafsilot bo'ladi (kirish yo'li, ichki nuqta).
         if self.map_link:
             links = {"custom": self.map_link, **links}
         return links
 
-    # ===================================================================
-    # To'yxonada narx qanday hisoblanadi
-    #
-    # Shahar va qishloq to'yxonasi bir xil ishlamaydi:
-    #
-    #   PER_PERSON — shahar odati. Egasi 1/2/3 xil taom uchun kishi
-    #                boshiga narx kiritgan (`VenuePricing`), mijoz taom
-    #                sonini tanlaydi va summa kishi soniga ko'payadi.
-    #
-    #   FIXED      — qishloq odati. Kishi boshiga hech narsa to'lanmaydi:
-    #                bir kunlik ijara (masalan 15 000 000 so'm) to'lanadi,
-    #                oshpaz va mahsulotni to'y egasi o'zi olib boradi.
-    #                Bu yerda `Hall.all_price` to'ldirilgan bo'ladi.
-    #
-    #   COMBINED   — eng ko'p uchraydigani: joyning bir kunlik ijarasi
-    #                BOR va ustiga taom paketlari ham bor. To'y egasi
-    #                zalni ijaraga oladi, ovqatni esa XOHLASA to'yxonadan
-    #                buyurtma qiladi, xohlasa o'zi olib boradi. Summa
-    #                shunga qarab ikki qismdan yig'iladi:
-    #                    ijara + (kishi boshiga narx x mehmonlar).
-    #
-    #   UNSET      — egasi hali hech qanday narx kiritmagan. Bron baribir
-    #                qabul qilinadi, narx keyin kelishiladi — mijozga
-    #                YO'Q narxni "0 so'm" qilib ko'rsatgandan ko'ra
-    #                hech narsa ko'rsatmagan yaxshi.
-    #
-    # Rejim ALOHIDA maydonda saqlanmaydi — u egasi kiritgan ma'lumotdan
-    # kelib chiqadi. Aks holda egasi narxni o'chirib, rejimni almashtirishni
-    # unutsa, mijoz mavjud bo'lmagan narxni ko'rib turardi.
-    # ===================================================================
+
     PRICING_PER_PERSON = "per_person"
     PRICING_FIXED = "fixed"
     PRICING_COMBINED = "combined"
@@ -222,7 +162,6 @@ class Business(BaseModel):
         """To'yxona narxi qaysi rejimda. Restoran uchun har doim UNSET."""
         if self.business_type != self.TYPE_VENUE:
             return self.PRICING_UNSET
-        # `.all()` — prefetch qilingan bo'lsa qo'shimcha so'rov ketmaydi.
         has_packages = any(self.pricings.all())
         has_day_rent = any(hall.all_price is not None for hall in self.halls.all())
 
@@ -236,11 +175,6 @@ class Business(BaseModel):
 
 
 class BusinessPhoto(BaseModel):
-    """
-    Biznes galereyasi — detal sahifasidagi rasm karuseli.
-    `cover_photo` bosh rasm bo'lib qoladi, bular qo'shimcha.
-    """
-
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name="photos")
     image = models.ImageField(upload_to="business_photos/", validators=[validate_image_file])
     order = models.PositiveSmallIntegerField(default=0, help_text="Karuseldagi tartib.")
@@ -254,7 +188,6 @@ class BusinessPhoto(BaseModel):
 
 
 class Room(BaseModel):
-    """Restoran xonasi / stoli."""
 
     ROOM_TYPE_CHOICES = (
         ("vip", "VIP xona"),

@@ -103,6 +103,10 @@ class BusinessListSerializer(serializers.ModelSerializer):
     min_capacity = serializers.IntegerField(read_only=True, required=False)
     max_capacity = serializers.IntegerField(read_only=True, required=False)
     distance_km = serializers.FloatField(read_only=True, required=False)
+    # To'yxona kartochkasida bir kunlik ijara — eng arzon zal bo'yicha.
+    min_day_price = serializers.DecimalField(
+        max_digits=14, decimal_places=2, read_only=True, required=False
+    )
 
     # --- joylashuv: faqat ro'yxatdan o'tganlarga (`_can_see_location`) ---
     address = serializers.SerializerMethodField()
@@ -119,7 +123,9 @@ class BusinessListSerializer(serializers.ModelSerializer):
             "location_locked",
             "description", "cover_photo", "cuisine", "cuisine_display",
             "open_time", "close_time", "rating_avg", "reviews_count",
-            "rooms_count", "halls_count", "min_capacity", "max_capacity", "distance_km",
+            "rating_points", "rank",
+            "rooms_count", "halls_count", "min_capacity", "max_capacity",
+            "min_day_price", "distance_km",
         ]
 
     def _can_see_location(self) -> bool:
@@ -179,7 +185,7 @@ class BusinessDetailSerializer(serializers.ModelSerializer):
             "location_locked",
             "description", "cover_photo", "gallery",
             "cuisine", "cuisine_display", "open_time", "close_time",
-            "rating_avg", "reviews_count",
+            "rating_avg", "reviews_count", "rating_points", "rank",
             "telegram_username", "phone_number", "contacts_locked",
             "is_visible", "owner_username",
             "rooms", "halls", "menu", "dish_pricing", "pricing_mode", "created_at",

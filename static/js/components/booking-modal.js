@@ -608,7 +608,7 @@ function confirmPriceRowHtml(isRestaurant) {
 function doneHtml() {
   const telegram = state.business.telegram_username
     ? `@${state.business.telegram_username}`
-    : "@uvente";
+    : "@akobir_marupov";
   const handle = telegram.replace("@", "");
   return `
     <h2>Ariza yuborildi ✅</h2>

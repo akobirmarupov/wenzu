@@ -104,6 +104,10 @@ export default {
     all: "All",
     nothingFound: "Nothing found",
     tryOther: "Try another keyword or filter.",
+    rank: "#{n}",
+    newPlace: "New",
+    upToPeople: "up to {count} guests",
+    fromPrice: "from {price}",
   },
 
   detail: {

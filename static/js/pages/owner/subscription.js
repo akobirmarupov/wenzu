@@ -39,7 +39,7 @@ function statusCardsHtml(subscription) {
   // to'g'risini aytadi va pastdagi tarif kartochkalari ochiq turadi —
   // birortasini tanlash yangi arizani boshlaydi.
   if (subscription.can_reapply) {
-    const telegram = subscription.admin_telegram || "@uvente";
+    const telegram = subscription.admin_telegram || "@akobir_marupov";
     return `
       <div class="price-pending" style="border-color:var(--danger);background:var(--danger-dim)">
         <span class="ic" aria-hidden="true">⛔</span>
@@ -63,7 +63,7 @@ function statusCardsHtml(subscription) {
           <b>Arizangiz administrator tekshiruvida</b>
           <span class="small">
             ${pendingApprovalText(subscription)}
-            Tezlashtirish uchun ${esc(subscription.admin_telegram || "@uvente")} ga yozing.
+            Tezlashtirish uchun ${esc(subscription.admin_telegram || "@akobir_marupov")} ga yozing.
           </span>
         </span>
       </div>`;
@@ -116,7 +116,7 @@ async function load() {
     return;
   }
 
-  const telegram = subscription.admin_telegram || "@uvente";
+  const telegram = subscription.admin_telegram || "@akobir_marupov";
   const plans = subscription.plans || [];
   const businessType =
     subscription.business_type || session.businessType || "restaurant";
