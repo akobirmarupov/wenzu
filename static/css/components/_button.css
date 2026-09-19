@@ -1,9 +1,42 @@
-/* Tugmalar */
+/* ===================================================================
+   TUGMALAR.
+
+   BITTA O'LCHAM SHKALASI, uchta pog'ona. Ilgari har bir variant o'z
+   ichki bo'shligi bilan o'lchanardi va natijada bir qatorda turgan
+   tugmalar turli balandlikda chiqardi:
+
+     .btn        11px 22px  →  ~47 px
+     .btn-ghost   9px 14px  →  ~43 px   (asosiy tugmadan 4 px past)
+     .btn-sm      7px 15px  →  ~35 px
+     .btn-lg     14px 28px  →  ~54 px
+     .btn-icon    9px       →  kvadrat emas, matnli tugmadan past
+     .icon-btn   34x34      →  boshqa fayldan (`_shell.css`)
+
+   Endi balandlikni `min-height` beradi (`--ctl-h-*` tokenlari), ichki
+   bo'shliq esa faqat GORIZONTAL. Uch sabab:
+
+     1. Balandlik shriftga bog'liq bo'lmay qoladi. Telefonda butun
+        shrift shkalasi bir pog'ona pasayadi (`_mobile.css`) — vertikal
+        bo'shliq bilan o'lchanganda tugmalar ham o'z-o'zidan pasayib,
+        barmoq nishoni kichrayib ketardi.
+     2. Ikonkali tugmani matnli tugma bilan tenglashtirish uchun
+        kvadrat o'lcham berish kifoya — hisob-kitob kerak emas.
+     3. Tugma yonidagi boshqa boshqaruvlar (`.chip`, `.search`,
+        `.input`, `.map-btn`) ham AYNAN shu tokenlarga tayanadi, ya'ni
+        filtr qatori va qidiruv qatori bir tekisda turadi.
+
+   Gorizontal bo'shliq ham shkaladan: sm → `--sp-4`, oddiy → `--sp-5`,
+   lg → `--sp-6`.
+
+   `white-space: nowrap` bo'lgani uchun matn hech qachon o'ralmaydi va
+   `min-height` + `align-items: center` balandlikni ishonchli beradi.
+   =================================================================== */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
-  padding: 11px 22px; border-radius: var(--radius-pill);
+  min-height: var(--ctl-h); padding: 0 var(--sp-5);
+  border-radius: var(--radius-pill);
   border: 1.5px solid transparent;
-  font-weight: 700; font-size: 14.5px; white-space: nowrap;
+  font-weight: 700; font-size: var(--fs-base); white-space: nowrap;
   transition: background var(--transition), color var(--transition),
               box-shadow var(--transition), transform var(--transition);
 }
@@ -22,16 +55,34 @@
 .btn-outline-light { border-color: rgba(255,255,255,.5); color: var(--white); }
 .btn-outline-light:hover { background: rgba(255,255,255,.15); }
 
-.btn-ghost { color: var(--theme-accent-dark); padding: 9px 14px; }
+/* Fonsiz tugma. Balandligi asosiy tugma bilan BIR XIL qoladi — u
+   qatordagi qo'shnisidan past bo'lmasligi kerak, faqat yengilroq
+   ko'rinadi. O'zgaradigan yagona narsa — gorizontal bo'shliq: fon yo'q
+   ekan, keng chet matnni qatordan uzib qo'yardi.
+
+   Rangi `--theme-accent-dark` emas, `--theme-accent`: tungi rejimda
+   to'q aksent (#16775F) qorong'i yuzada 3.2 kontrast berib, matn
+   o'qilmay qolardi. Yorug' aksent ikkala temada ham 5.4 dan yuqori. */
+.btn-ghost { color: var(--theme-accent); padding: 0 var(--sp-3); }
 .btn-ghost:hover { background: var(--surface-2); }
 
 .btn-danger { background: var(--danger-dim); color: var(--danger); }
-.btn-danger:hover { background: var(--danger); color: var(--white); }
+.btn-danger:hover { background: var(--danger); color: var(--on-accent); }
 
-.btn-sm { padding: 7px 15px; font-size: var(--fs-sm); }
-.btn-lg { padding: 14px 28px; font-size: var(--fs-md); }
+.btn-sm { min-height: var(--ctl-h-sm); padding: 0 var(--sp-4); font-size: var(--fs-sm); }
+.btn-lg { min-height: var(--ctl-h-lg); padding: 0 var(--sp-6); font-size: var(--fs-md); }
 .btn-block { width: 100%; }
-.btn-icon { padding: 9px; border-radius: 50%; }
+
+/* Faqat ikonkadan iborat tugma — KVADRAT va matnli tugma bilan bir xil
+   balandlikda. Ilgari `padding: 9px` edi: ichidagi ikonka kengligi
+   balandligidan farq qilgani uchun tugma ovalsimon chiqardi va qator
+   bo'ylab har xil kenglikda turardi. */
+.btn-icon {
+  width: var(--ctl-h); height: var(--ctl-h); min-height: 0; padding: 0;
+  border-radius: 50%;
+}
+.btn-sm.btn-icon { width: var(--ctl-h-sm); height: var(--ctl-h-sm); }
+.btn-lg.btn-icon { width: var(--ctl-h-lg); height: var(--ctl-h-lg); }
 
 /* Yuklanayotgan tugmadagi aylanma */
 .btn[aria-busy="true"]::after {

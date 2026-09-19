@@ -23,9 +23,15 @@ app.conf.beat_schedule = {
         "task": "subscriptions.tasks.notify_expiring_subscriptions_task",
         "schedule": crontab(hour=9, minute=0),
     },
-    # O'tib ketgan sana bronlarini avtomatik yakunlash.
+    # Vaqti tugagan bronlarni yakunlash va mijozdan sharh so'rash.
+    #
+    # HAR 15 DAQIQADA, kuniga bir marta emas: mijoz joydan chiqqanda
+    # sharh yozish imkoni DARHOL ochilishi kerak. Kuniga bir marta
+    # ishlaganda soat 20:00 da tugagan bron faqat ertasiga yakunlanardi
+    # va odam o'sha paytgacha sharh yoza olmasdi — amalda esa u ertasiga
+    # qaytib kelmasdi.
     "complete-past-reservations": {
         "task": "reservations.tasks.complete_past_reservations_task",
-        "schedule": crontab(hour=4, minute=0),
+        "schedule": crontab(minute="*/15"),
     },
 }

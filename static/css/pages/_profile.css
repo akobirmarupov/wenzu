@@ -1,237 +1,352 @@
 /* ===================================================================
    Profil sahifasi.
 
-   Tuzilma: yuqorida "cover" bloki (avatar + ism + holat), ostida
-   statistika, keyin chapda bo'limlar menyusi va o'ngda mazmun.
-   Bo'limlar ro'yxati ROLGA qarab o'zgaradi — oddiy foydalanuvchi,
-   biznes egasi va admin bir xil ekranni ko'rmaydi.
+   Uch qatlam: kim ekanligi → bo'limlar tasmasi → tanlangan bo'lim.
+
+   Butun sahifa BITTA o'lcham ritmiga bo'ysunadi:
+     · sarlavha        — .display.h3 (20px), boshqa o'lcham ishlatilmaydi;
+     · yordamchi yozuv — var(--fs-sm) (13.5px);
+     · eng mayda izoh  — var(--fs-xs) (12px);
+     · bloklar orasi   — var(--sp-5), blok ichida var(--sp-4).
+   Shu uchta o'lchamdan tashqari hech narsa yo'q: ilgari bu sahifada
+   sakkizta har xil kattalikdagi yozuv bor edi va ular bir-biriga
+   tekislanmagan ko'rinardi.
    =================================================================== */
-.profile-cover {
-  position: relative; overflow: hidden;
-  border-radius: var(--radius-l);
-  background: linear-gradient(125deg, var(--emerald-900) 0%, var(--emerald-800) 48%, #06231D 100%);
-  padding: var(--sp-8) var(--sp-8) var(--sp-6);
-  color: #FFFFFF;
+.profile-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
 }
-:root[data-theme="dark"] .profile-cover {
-  background: linear-gradient(125deg, #0E1D30 0%, #12283E 48%, #08111C 100%);
+
+/* ===================================================================
+   1-qatlam: kim ekanligi
+   =================================================================== */
+.profile-id {
+  background: var(--surface);
   border: 1px solid var(--line);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .profile-cover {
-    background: linear-gradient(125deg, #0E1D30 0%, #12283E 48%, #08111C 100%);
-    border: 1px solid var(--line);
-  }
-}
-.profile-cover::before {
-  content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(circle at 88% 12%, rgba(224, 192, 90, .22), transparent 46%);
-}
-/* Nozik naqsh — sharqona motiv hissi */
-.profile-cover::after {
-  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .07;
-  background-image: radial-gradient(circle at 1px 1px, #FFF 1px, transparent 0);
-  background-size: 22px 22px;
+  border-radius: var(--radius-l);
+  padding: var(--sp-6);
+  box-shadow: var(--shadow-sm);
 }
 
-.profile-head {
-  position: relative; z-index: 1;
-  display: flex; align-items: flex-end; gap: var(--sp-6); flex-wrap: wrap;
-}
-.profile-identity { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
-.profile-identity h1 { font-size: clamp(22px, 3vw, 32px); line-height: 1.1; }
-.profile-identity .handle {
-  font-family: var(--font-mono); font-size: var(--fs-sm);
-  color: rgba(255, 255, 255, .62);
-}
-.profile-badges { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-top: var(--sp-2); }
-.profile-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 4px 12px; border-radius: var(--radius-pill);
-  font-size: 11.5px; font-weight: 800; letter-spacing: .03em;
-  background: rgba(255, 255, 255, .12); color: #FFFFFF;
-  border: 1px solid rgba(255, 255, 255, .18);
-}
-.profile-badge-gold {
-  background: var(--gold-shine); color: #1A1405;
-  border-color: transparent; box-shadow: var(--gold-glow);
-}
-.profile-badge-ok { background: rgba(63, 190, 134, .18); border-color: rgba(63, 190, 134, .40); }
-.profile-badge-warn { background: rgba(224, 188, 85, .16); border-color: rgba(224, 188, 85, .38); }
-
-/* Avatar ramkasi cover ustida biroz "chiqib" turadi */
-.profile-avatar { position: relative; z-index: 1; }
-.profile-avatar .avatar-ring::after { background: var(--emerald-900); }
-:root[data-theme="dark"] .profile-avatar .avatar-ring::after { background: #0E1D30; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .profile-avatar .avatar-ring::after { background: #0E1D30; }
+.pid-main {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
 }
 
-/* Statistika */
-.profile-stats {
-  position: relative; z-index: 1;
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: var(--sp-3); margin-top: var(--sp-8);
-  padding-top: var(--sp-5); border-top: 1px solid rgba(255, 255, 255, .14);
+.pid-avatar {
+  flex: none;
+  /* `inline-block` bo'lganda qatordagi bazaviy chiziq uchun ostida
+     bo'sh joy qolardi va "bottom: 0" ga qo'yilgan kamera tugmasi
+     avatarning O'RTASIGA tushib, bosh harflarni yopib qo'yardi. */
+  display: inline-flex;
 }
-.profile-stat { display: flex; flex-direction: column; gap: 2px; }
-.profile-stat .value {
-  font-family: var(--font-display); font-size: 26px; font-weight: 600; line-height: 1;
+
+/* Avatar 64 px dan kattaroq: kamera tugmasi uning chetiga osilib
+   turadi va kichik doirada bosh harflarni yarmigacha yopib qo'yardi.
+   Tugmaning o'zi ham kichraytirildi — u yordamchi amal, avatarning
+   uchdan biri bo'lib turishi shart emas. */
+.pid-avatar .avatar { width: 84px; height: 84px; font-size: 30px; }
+.pid-avatar .avatar-edit {
+  width: 28px; height: 28px;
+  right: -2px; bottom: -2px;
+}
+
+/* Matn bloki o'rtadagi bo'sh joyni egallaydi — amallar esa o'ng chetga
+   yopishadi. `min-width: 0` bo'lmasa uzun ism blokni cho'zib yuboradi. */
+.pid-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.pid-text h1 {
+  margin: 0;
+  /* Uzun ism ikki qatorga tushmasin: muqova balandligi barcha
+     foydalanuvchida bir xil qolishi kerak. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pid-meta {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  color: var(--ink-soft);
+}
+.pid-meta .dot { color: var(--ink-faint); }
+
+.pid-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: 2px;
+}
+
+.pid-actions {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sp-2);
+}
+/* Uchala tugma bir xil enda: har biri o'z yozuviga qarab turli enda
+   bo'lsa, ustun tishli ko'rinadi. */
+.pid-actions .btn { justify-content: flex-start; width: 100%; }
+
+/* --- statistika chiplari ---
+   Ilgari bu to'rtta ulkan raqam bo'lgan alohida tasma edi va muqovaning
+   yarmini egallardi. Endi ular mayda chiplar: ma'lumot o'sha, joy uch
+   baravar kam. */
+.pid-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-5);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line-soft);
+}
+.pid-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  font-size: var(--fs-sm);
+  color: var(--ink-soft);
+}
+.pid-stat b {
+  font-size: var(--fs-md);
+  font-weight: 800;
+  color: var(--ink);
   font-variant-numeric: tabular-nums;
-  background: var(--gold-shine);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-}
-.profile-stat .label {
-  font-size: 10.5px; font-weight: 800; letter-spacing: .09em;
-  text-transform: uppercase; color: rgba(255, 255, 255, .58);
 }
 
-/* Ikki ustunli tanasi */
-.profile-body {
-  display: grid; grid-template-columns: 232px minmax(0, 1fr);
-  gap: var(--sp-6); align-items: start; margin-top: var(--sp-6);
+/* ===================================================================
+   2-qatlam: bo'limlar tasmasi
+   =================================================================== */
+.profile-tabs {
+  display: flex;
+  gap: var(--sp-2);
+  padding: 5px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-pill);
+  /* Tor ekranda tasma suriladi — bandlar siqilib, yozuvi kesilmaydi. */
+  overflow-x: auto;
+  scrollbar-width: none;
 }
-@media (max-width: 900px) { .profile-body { grid-template-columns: 1fr; } }
+.profile-tabs::-webkit-scrollbar { display: none; }
+.profile-tabs:empty { display: none; }
 
-.profile-menu {
-  position: sticky; top: 78px;
-  display: flex; flex-direction: column; gap: 2px;
-  background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--radius-m); padding: var(--sp-2);
-}
-@media (max-width: 900px) {
-  .profile-menu { position: static; flex-direction: row; overflow-x: auto; }
-  .profile-menu .nav-group-label { display: none; }
-}
-.profile-menu .nav-group-label { padding: var(--sp-3) var(--sp-3) var(--sp-1); }
-.profile-menu button {
-  display: flex; align-items: center; gap: var(--sp-3); width: 100%;
-  padding: 10px var(--sp-3); border-radius: var(--radius-s);
-  font-size: var(--fs-sm); font-weight: 600; color: var(--ink-soft);
-  text-align: left; white-space: nowrap;
+.profile-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 9px 16px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ink-soft);
   transition: background var(--transition), color var(--transition);
 }
-.profile-menu button:hover { background: var(--surface-2); color: var(--ink); }
-.profile-menu button.active { background: var(--theme-accent); color: var(--on-accent); }
-.profile-menu .ic { width: 20px; text-align: center; }
-
-/* Biznes ochish tanlovi */
-.biz-choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--sp-4); }
-.biz-choice .opt {
-  border: 1.5px solid var(--line); border-radius: var(--radius-m);
-  padding: var(--sp-6); text-align: center; background: var(--surface);
-  transition: all var(--transition);
+.profile-tab:hover { color: var(--ink); background: var(--surface); }
+.profile-tab.is-active {
+  background: var(--theme-accent);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-sm);
 }
-.biz-choice button.opt:hover {
-  border-color: var(--gold-500); transform: translateY(-2px);
-  box-shadow: var(--shadow); 
-}
-.biz-choice .ic { font-size: 34px; }
 
-/* Ma'lumot qatorlari */
-.info-row {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: var(--sp-4); padding: var(--sp-3) 0;
+/* ===================================================================
+   3-qatlam: bo'lim tarkibi
+   =================================================================== */
+
+/* Ma'lumot va ishonchlilik yonma-yon: ikkinchisi ensiz, chunki unda
+   bitta ko'rsatkich bor. Bitta kartochka qolsa u butun enni egallaydi. */
+.profile-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+  gap: var(--sp-5);
+  align-items: start;
+}
+/* Yon ustuni yo'q bo'lim (Premium, Boshqaruv) butun enni oladi. */
+.profile-grid.is-single { grid-template-columns: 1fr; }
+
+.pg-main { min-width: 0; }
+.pg-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+/* --- ma'lumot kataklari --- */
+.info-cells {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-4);
+}
+.info-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding-bottom: var(--sp-3);
   border-bottom: 1px solid var(--line-soft);
 }
-.info-row:last-child { border-bottom: 0; }
-.info-row .k { font-size: var(--fs-sm); color: var(--ink-soft); font-weight: 600; }
-.info-row .v { font-weight: 700; text-align: right; }
+/* Uzun matnli maydon (qisqacha ma'lumot) ikkala ustunni egallaydi. */
+.info-cell.is-wide { grid-column: 1 / -1; }
 
-/* ===================================================================
-   Sahifa sarlavhasi (Bronlarim, Biznes ochish kabi alohida sahifalar)
-   =================================================================== */
-.page-head {
-  display: flex; align-items: flex-end; justify-content: space-between;
-  gap: var(--sp-6); flex-wrap: wrap; margin-bottom: var(--sp-6);
+.cell-label {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.cell-value {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-base);
+  font-weight: 600;
+  color: var(--ink);
+  /* Uzun username yoki matn katakni kengaytirib yubormasin. */
+  overflow-wrap: anywhere;
 }
 
-/* Profil ichidagi qisqa yo'l kartochkalari */
-.shortcut-card {
-  position: relative;
-  display: flex; flex-direction: column; gap: 6px;
-  padding: var(--sp-5); text-decoration: none;
+/* Bo'sh maydondagi "Qo'shish" — tugmaga o'xshamaydi, lekin bosiladi. */
+.cell-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--theme-accent);
+  transition: color var(--transition);
 }
-.shortcut-card .ic { font-size: 26px; line-height: 1; }
-.shortcut-card b { font-size: var(--fs-md); }
-.shortcut-card .go {
-  position: absolute; top: var(--sp-4); right: var(--sp-4);
-  color: var(--ink-faint); transition: transform var(--transition), color var(--transition);
+.cell-add:hover { color: var(--theme-accent-dark); }
+
+.info-card .field-hint { margin-top: var(--sp-4); }
+
+/* --- ishonchlilik kartochkasi --- */
+.trust-card .trust-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;   /* nishon o'z eniga teng bo'lsin, cho'zilmasin */
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-3);
 }
-.shortcut-card:hover .go { transform: translateX(3px); color: var(--theme-accent); }
+.trust-card .trust-body > * { max-width: 100%; }
+/* Chiziq esa aksincha — to'liq enni egallaydi, u o'lchov. */
+.trust-card .trust-bar,
+.trust-card .progress { width: 100%; }
 
-/* ===================================================================
-   EGASINING PANELIGA KIRISH KARTOCHKASI
-   ===================================================================
-   Kompyuterda u oddiy kartochkalar qatorida turadi — chap menyuda
-   allaqachon "Restoran panelim" bandi bor va bu yerda ikkinchi marta
-   qichqirishning hojati yo'q.
-
-   TELEFONDA esa chap menyu umuman yo'q (`_mobile.css`, 5a-bo'lim) va
-   bu kartochka panelga olib boradigan YAGONA yo'l. Shuning uchun u
-   o'sha yerda ajralib turadi: rangli hoshiya, kattaroq nishon va
-   "PANEL" yozuvi. Joy egasi profilga kirganda uni izlab yurmaydi.
-   =================================================================== */
-.shortcut-panel { border-color: color-mix(in srgb, var(--theme-accent) 45%, var(--line)); }
-.shortcut-panel .ic { color: var(--theme-accent); }
-
-@media (max-width: 940px) {
-  .shortcut-panel {
-    background: linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--theme-accent) 12%, var(--surface)),
-      var(--surface) 60%
-    );
-    border-color: var(--theme-accent);
-  }
-  /* Yozuv "→" nishonchasining CHAP yonida turadi.
-     Nishoncha `right: var(--sp-4)` da, shuning uchun bu yerda undan
-     kattaroq qadam kerak — bo'lmasa ikkalasi ustma-ust tushardi.
-     Shkalada `--sp-9` YO'Q (4, 8, 12, 16, 20, 24, 32, 40...), va uni
-     ishlatgan qoida brauzer tomonidan jimgina tashlab yuborilardi:
-     `right` `auto` bo'lib qolib, yozuv kartochkaning chap chetiga,
-     nishon ustiga tushardi. */
-  .shortcut-panel::after {
-    content: "PANEL";
-    position: absolute; top: var(--sp-4); right: var(--sp-10);
-    font-size: 9.5px; font-weight: 800; letter-spacing: .1em;
-    color: var(--theme-accent);
-  }
-  .shortcut-panel .go { color: var(--theme-accent); }
+/* --- qisqa yo'llar --- */
+.link-tiles {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--sp-3);
 }
-
-/* Chiqish bloki — profil sahifasining eng pastida */
-.sign-out {
-  display: flex; align-items: center; justify-content: space-between;
-  gap: var(--sp-4); flex-wrap: wrap;
-  border-color: var(--line);
-}
-.sign-out b { font-size: var(--fs-md); }
-
-/* ===================================================================
-   "Admin bilan bog'lanish" — "Biznes ochish" sahifasining tepasida.
-
-   Doim ko'rinib turadi: ariza yuborgan odam "keyinroq bog'lanaman"
-   desa, admin manzilini qayta izlab yurmasligi kerak.
-   =================================================================== */
-.admin-contact {
-  display: flex; align-items: center; gap: var(--sp-4);
-  padding: var(--sp-4) var(--sp-5);
-  margin-bottom: var(--sp-5);
+.link-tile {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--line);
   border-radius: var(--radius-m);
-  background: linear-gradient(120deg, #1B7FA8 0%, #2AA0CC 100%);
-  color: #FFFFFF;
-  box-shadow: var(--shadow);
-  transition: filter var(--transition), transform var(--transition);
+  background: var(--surface-2);
+  color: var(--ink);
+  transition: border-color var(--transition), transform var(--transition),
+              box-shadow var(--transition);
 }
-.admin-contact:hover { filter: brightness(1.07); transform: translateY(-2px); }
-.admin-contact .ic { font-size: 24px; line-height: 1; flex-shrink: 0; }
-.admin-contact .text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.admin-contact b { font-size: var(--fs-md); }
-.admin-contact .small { color: rgba(255, 255, 255, .85); font-size: var(--fs-sm); }
-.admin-contact .go { margin-left: auto; font-size: 20px; font-weight: 800; }
+.link-tile:hover {
+  border-color: var(--theme-accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.lt-ic {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-s);
+  background: var(--theme-accent-dim);
+  color: var(--theme-accent);
+}
+.lt-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.lt-text b { font-size: var(--fs-base); }
+.lt-text span {
+  font-size: var(--fs-sm);
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lt-go { margin-left: auto; color: var(--ink-faint); flex: none; }
 
-@media (max-width: 560px) {
-  .admin-contact { padding: var(--sp-4); gap: var(--sp-3); }
-  .admin-contact .go { display: none; }
+/* --- chiqish qatori --- */
+.profile-signout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-m);
+}
+.profile-signout .btn { flex: none; }
+
+/* ===================================================================
+   Telefon
+   =================================================================== */
+@media (max-width: 720px) {
+  .profile-id { padding: var(--sp-5); }
+
+  /* Muqova ustunga aylanadi: yonma-yon turgan rasm, ism va tugmalar
+     390 px ga sig'maydi — tugmalar ikki qatorga bo'linib ketardi. */
+  .pid-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--sp-4);
+  }
+  .pid-actions {
+    flex-direction: row;
+    width: 100%;
+  }
+  .pid-actions .btn { flex: 1; }
+
+  .pid-stats { gap: 6px; }
+
+  /* Ajratuvchi nuqtalar telefonda olib tashlanadi: qator ko'chganda
+     ular satr oxirida osilib qolardi ("+998... ·"). Bo'shliqning o'zi
+     ajratish uchun yetarli. */
+  .pid-meta { gap: 2px 12px; }
+  .pid-meta .dot { display: none; }
+
+  .profile-grid,
+  .info-cells { grid-template-columns: 1fr; }
+
+  /* Chiqish: yozuv va tugma ustma-ust — yonma-yon turganda tugmaga
+     ikki so'zlik joy qolardi. */
+  .profile-signout {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-3);
+  }
 }

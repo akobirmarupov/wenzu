@@ -34,6 +34,17 @@
   --gold-400: #E0C05A;
   --gold-100: #F6EFD6;
 
+  /* Oltin gradient USTIDAGI matn rangi.
+     Gradientning eng to'q joyi #B8912B, eng yorug'i #FFF3C4 — ya'ni fon
+     bitta rang emas, chiziq bo'ylab o'zgaradi. Shuning uchun ustidagi
+     matn gradientning ENG TO'Q nuqtasida ham o'qilishi kerak: #1A1405
+     o'sha nuqtada 6.2, o'rtasida esa 11.8 kontrast beradi.
+     Bu qiymat o'n bir joyda qo'lda takrorlanib yurardi (tugma, chip,
+     nishon, til tanlagichi...) — endi bitta manbadan. Tungi rejimda ham
+     o'zgarmaydi, chunki foni ham o'zgarmaydi: gradient ikkala temada
+     ham yorug'. */
+  --on-gold: #1A1405;
+
   /* Yaltiroq oltin — sarlavha va nishonlarda ishlatiladi.
      Tekis rang o'rniga gradient: metall yaltirashi shundan chiqadi. */
   --gold-shine: linear-gradient(115deg, #B8912B 0%, #E9CE72 28%, #FFF3C4 45%,
@@ -51,7 +62,13 @@
   --surface-2:  #F4EEE0;
   --ink:        #1A2019;
   --ink-soft:   #55605A;
-  --ink-faint:  #6C746A;
+  /* Eng sust matn rangi. Ilgari #6C746A edi va WCAG AA dan YIQILARDI:
+     `--ground` (#F7F3E8) ustida 4.36, `--surface-2` (#F4EEE0) ustida
+     4.18 — talab esa 4.5. Bu rang sana, izoh, "0 ta natija" kabi
+     yozuvlarda ishlatiladi, ya'ni aynan mayda matnda. Ikki pog'ona
+     to'qlashtirildi: endi eng yomon holatda (surface-2) 4.77.
+     `--ink-soft` (6.4) bilan farqi saqlanib qoldi — ierarxiya buzilmadi. */
+  --ink-faint:  #636B61;
   --line:       #E4DDCB;
   --line-soft:  #EEE8DA;
   --overlay-bg: rgba(20, 26, 20, .74);
@@ -63,17 +80,39 @@
      Bu qiymat tungi rejimda ham o'zgarmaydi — foni ham o'zgarmaydi. */
   --ink-on-light: #1A2019;
 
-  /* --- holat ranglari --- */
-  --ok:     #1B7A52;  --ok-dim:     #DCF0E5;
+  /* --- holat ranglari ---
+     `--ok` bir pog'ona to'qlashtirildi (#1B7A52 → #19724C): eski qiymat
+     o'z fonida (`--ok-dim`) 4.46 kontrast berardi, ya'ni AA dan arzimas
+     farq bilan yiqilardi. Aynan shu juftlik `.seal-ok`, `.price-save`,
+     `.news-cat-tip` va `.form-alert-ok` da uchraydi — hammasi mayda
+     matn. Endi 4.96. */
+  --ok:     #19724C;  --ok-dim:     #DCF0E5;
   --warn:   #87690B;  --warn-dim:   #FAF0CC;
   --danger: #9A2F3A;  --danger-dim: #F7DFE1;
   --info:   #1A6485;  --info-dim:   #DCEBF3;
 
-  /* --- panel aksentlari (rolga qarab almashadi) --- */
+  /* --- panel aksentlari (rolga qarab almashadi) ---
+
+     `--on-accent-dim` — `--theme-accent-dim` FONIDAGI matn rangi
+     (nishon, chip, "3-o'rin" yorlig'i, to'lov qadami raqami).
+
+     Nega alohida token kerak bo'ldi: bu joylarda `--theme-accent-dark`
+     ishlatilardi. Kunduzgi rejimda u to'g'ri — to'q rang yorug' fonda
+     11.5 kontrast beradi. Tungi rejimda esa fon ham, matn ham
+     qorong'ilashadi: #16775F matn #10302A fonda atigi 2.6 chiqib,
+     nishon deyarli ko'rinmay qolardi. Tungi rejimda bu joylarda
+     YORUG' aksent kerak, ya'ni `--theme-accent`.
+
+     Qiymat har bir blokda ATAYLAB qo'lda yozilgan, `var()` bilan emas:
+     custom property ichidagi `var()` u E'LON QILINGAN elementda
+     hisoblanadi. `:root` da `var(--theme-accent)` deb yozilsa, panel
+     o'zining aksentini keyin belgilaganda ham `:root` niki qolib
+     ketardi va panellarda rang noto'g'ri chiqardi. */
   --theme-accent:      var(--emerald-600);
   --theme-accent-dark: var(--emerald-900);
   --theme-accent-dim:  var(--emerald-100);
   --on-accent:         #FFFFFF;
+  --on-accent-dim:     #08322A;
 
   /* --- soyalar --- */
   --shadow-sm: 0 1px 3px rgba(18, 33, 28, .07);
@@ -85,10 +124,48 @@
   --font-body: 'Manrope', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
+  /* `--fs-2xs` — MAYDA YORLIQ pog'onasi: katta harflar bilan yozilgan,
+     harflar orasi kengaytirilgan sarlavhacha ("ISHONCHLILIK", "TARIF",
+     "YANGILIK"). U `--fs-xs` dan kichik bo'lishi SHART, chunki bunday
+     yozuvda har bir harf katta va harf oralig'i ham keng: 12 px da u
+     yonidagi oddiy matndan KATTAROQ ko'rinib qoladi.
+     Qiymat o'ylab topilmadi — u CSS bo'ylab o'n ikki joyda qo'lda
+     10.5 px deb yozilgan edi, ya'ni pog'ona amalda allaqachon bor edi,
+     faqat nomi yo'q edi. Yonidagi 9 / 10 / 11 / 11.5 / 12.5 px lar esa
+     xuddi shu yorliqning tasodifiy nusxalari bo'lib, "bir element
+     katta, bir element kichik" ko'rinishini aynan shular berardi. */
+  --fs-2xs: 10.5px;
   --fs-xs: 12px;  --fs-sm: 13.5px; --fs-base: 15px;
   --fs-md: 17px;  --fs-lg: 20px;   --fs-xl: 26px;  --fs-2xl: 34px;
 
-  /* --- masofa (4px shkalasi) --- */
+  /* --- boshqaruv balandligi (tugma, maydon, chip, ikonkali tugma) ---
+
+     Uchta pog'ona, boshqa hech qanday balandlik yo'q. Ilgari har bir
+     boshqaruv o'z ichki bo'shlig'i bilan o'lchanardi va bir qatorda
+     turgan uchta element uch xil balandlikda chiqardi: `.btn` ~47 px,
+     `.chip` ~42 px, `.map-btn` ~37 px. Foydalanuvchi shuni "bir element
+     katta, bir element kichik" deb ko'rgan.
+
+     Endi balandlikni `min-height` beradi, ichki bo'shliq esa faqat
+     GORIZONTAL. Shunda shrift o'zgarsa ham (telefonda shkala bir pog'ona
+     pasayadi) qator balandligi joyida qoladi va ikonkali tugmani matnli
+     tugma bilan tenglashtirish uchun kvadrat o'lcham berish kifoya.
+
+       sm  34 px — ikkilamchi: yuqori paneldagi boshqaruvlar, kartochka
+                   ichidagi kichik havolalar. Sichqoncha uchun yetarli.
+       oddiy 44 px — asosiy o'lcham. Apple va Google tavsiya qiladigan
+                   eng kichik barmoq nishoni ham aynan shu.
+       lg  52 px — sahifadagi bosh amal (kirish, band qilish). */
+  --ctl-h-sm: 34px;  --ctl-h: 44px;  --ctl-h-lg: 52px;
+
+  /* --- masofa (4px shkalasi) ---
+
+     CSS da bundan tashqari yagona qiymat uchraydi: `gap: 6px`. U
+     o'n to'rt joyda BIR XIL ishlatiladi (nishon ichidagi ikonka bilan
+     yozuv orasi, ikki qatorli kichik ro'yxatlar) va ataylab qoldirildi:
+     4 px da ikonka yozuvga yopishadi, 8 px da esa nishon ichida
+     ortiqcha bo'shliq paydo bo'ladi. Ya'ni bu tasodifiy qiymat emas,
+     "yarim pog'ona" — shkalaning o'zi emas, uning ichidagi istisno. */
   --sp-1: 4px;   --sp-2: 8px;   --sp-3: 12px;  --sp-4: 16px;
   --sp-5: 20px;  --sp-6: 24px;  --sp-8: 32px;  --sp-10: 40px;
   --sp-12: 48px; --sp-16: 64px; --sp-20: 80px;
@@ -113,6 +190,12 @@
     --surface-2:  #172336;
     --ink:        #E6EDF5;
     --ink-soft:   #9CAEC2;
+    /* Tungi `--ink-faint` ikki blokda ikki xil edi (#8095AC va #6E8299),
+       ya'ni sayt tizim sozlamasidan qorayganda va foydalanuvchi o'zi
+       tanlaganda sust yozuvlar boshqa-boshqa rangda chiqardi. To'qrog'i
+       (#6E8299) `--surface` ustida 4.37, `--surface-2` ustida 4.00 —
+       ikkalasi ham AA dan past. Shuning uchun ikkala blok ham yorug'roq
+       variantda birlashtirildi: eng yomon holatda 5.12. */
     --ink-faint:  #8095AC;
     --line:       #22314A;
     --line-soft:  #1A2739;
@@ -124,8 +207,6 @@
     --emerald-500: #2CBF97;
 
     --gold-500: #E0BC55;
-  --gold-ink:  #E7C86B;
-  --gold-mark: #E0BC55;
     --gold-ink:  #E7C86B;
     --gold-mark: #E0BC55;
     --gold-400: #F0D785;
@@ -144,6 +225,7 @@
     --theme-accent-dark: #16775F;
     --theme-accent-dim:  #10302A;
     --on-accent:         #04140F;
+    --on-accent-dim:     #22A583;
 
     --shadow-sm: 0 1px 3px rgba(0, 0, 0, .40);
     --shadow:    0 6px 20px -8px rgba(0, 0, 0, .60);
@@ -159,7 +241,9 @@
   --surface-2:  #172336;
   --ink:        #E6EDF5;
   --ink-soft:   #9CAEC2;
-  --ink-faint:  #6E8299;
+  /* Yuqoridagi tizim bloki bilan AYNAN bir xil qiymat — izohi o'sha
+     yerda. Ikkalasi hech qachon ajralmasligi kerak. */
+  --ink-faint:  #8095AC;
   --line:       #22314A;
   --line-soft:  #1A2739;
   --overlay-bg: rgba(3, 7, 13, .88);
@@ -188,34 +272,48 @@
   --theme-accent-dark: #16775F;
   --theme-accent-dim:  #10302A;
   --on-accent:         #04140F;
+  --on-accent-dim:     #22A583;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, .40);
   --shadow:    0 6px 20px -8px rgba(0, 0, 0, .60);
   --shadow-lg: 0 18px 44px -18px rgba(0, 0, 0, .75);
 }
 
-/* ---------- Panel temalari (rolga qarab aksent) ---------- */
+/* ---------- Panel temalari (rolga qarab aksent) ----------
+
+   Restoran aksenti #C05A2E dan #AE4E25 ga TO'QLASHTIRILDI. Eski qiymat
+   to'rtta joyda birdan WCAG AA dan yiqilardi: ustidagi oq matn 4.43,
+   o'zi esa `--surface` fonida 4.35, `--ground` da 3.99, `--surface-2`
+   da 3.83 (talab — 4.5). Ya'ni restoran panelida yozuvlar va tugma
+   matni boshqa panellardagidan sezilarli darajada sustroq chiqardi.
+   Rang toni (terrakota) saqlanib qoldi, faqat to'qligi oshdi: endi eng
+   yomon holatda 4.64. */
 [data-panel="restaurant"] {
-  --theme-accent: #C05A2E; --theme-accent-dark: #8A3D1B;
+  --theme-accent: #AE4E25; --theme-accent-dark: #8A3D1B;
   --theme-accent-dim: #F7E5DB; --on-accent: #FFFFFF;
+  --on-accent-dim: #8A3D1B;
 }
 [data-panel="venue"] {
   --theme-accent: #6B4489; --theme-accent-dark: #48295F;
   --theme-accent-dim: #EFE5F6; --on-accent: #FFFFFF;
+  --on-accent-dim: #48295F;
 }
 [data-panel="admin"] {
   --theme-accent: var(--emerald-700); --theme-accent-dark: var(--emerald-900);
   --theme-accent-dim: var(--emerald-100); --on-accent: #FFFFFF;
+  --on-accent-dim: #08322A;
 }
 :root[data-theme="dark"] [data-panel="restaurant"],
 :root[data-theme="dark"][data-panel="restaurant"] {
   --theme-accent: #E0855A; --theme-accent-dark: #B0603A;
   --theme-accent-dim: #2E1A11; --on-accent: #1A0C05;
+  --on-accent-dim: #E0855A;
 }
 :root[data-theme="dark"] [data-panel="venue"],
 :root[data-theme="dark"][data-panel="venue"] {
   --theme-accent: #A985C7; --theme-accent-dark: #7B5C99;
   --theme-accent-dim: #21172B; --on-accent: #14091C;
+  --on-accent-dim: #A985C7;
 }
 
 /* ---------- Yaltiroq oltin yordamchilari ---------- */
@@ -224,14 +322,4 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-}
-.shine-bg {
-  background: var(--gold-shine);
-  color: #1A1405;
-  box-shadow: var(--gold-glow);
-}
-.shine-line {
-  height: 2px; border: 0; border-radius: 2px;
-  background: var(--gold-shine);
-  box-shadow: var(--gold-glow);
 }

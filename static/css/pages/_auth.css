@@ -4,7 +4,10 @@
   background: var(--ground);
 }
 .auth-visual {
-  position: relative; overflow: hidden; color: #FFFFFF;
+  position: relative; overflow: hidden; color: var(--white);
+  /* Brend gradienti — chap ustun har ikki temada ham qorong'i qoladi,
+     shuning uchun to'xtashlar tokenga bog'lanmaydi. Tungi variantda
+     faqat ko'k tomonga suriladi (quyida). */
   background: radial-gradient(120% 140% at 20% 10%, #12513F 0%, var(--emerald-900) 60%, #061F1A 100%);
   display: flex; flex-direction: column; justify-content: space-between; gap: var(--sp-6);
   padding: var(--sp-10) var(--sp-10) var(--sp-12);
@@ -22,7 +25,7 @@
   content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background-image: radial-gradient(circle at 80% 25%, rgba(224,192,90,.22), transparent 45%);
 }
-.auth-visual .logo { color: #FFFFFF; align-self: flex-start; }
+.auth-visual .logo { color: var(--white); align-self: flex-start; }
 
 /* Matn bloki — logotip tepada, matn pastda */
 .auth-text { display: flex; flex-direction: column; gap: var(--sp-4); }
@@ -33,9 +36,9 @@
   background: var(--gold-shine);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
+/* Doimiy och rang: foni gradient yoki surat, ya'ni temaga bog'liq
+   emas. Kontrast 14.4. */
 .auth-visual p { color: #E4EDE8; max-width: 40ch; }
-.auth-points { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-6); }
-.auth-points li { display: flex; align-items: flex-start; gap: var(--sp-3); font-size: var(--fs-sm); color: rgba(255, 255, 255, .88); }
 .auth-points .ic { color: var(--gold-400); font-weight: 800; }
 
 /* ===================================================================
@@ -54,6 +57,8 @@
    qoraytiradi. O'rtasi — suratning eng chiroyli joyi — ochiq qoladi.
    =================================================================== */
 .auth-visual.has-photo {
+  /* Surat yuklanguncha ko'rinadigan fon — deyarli qora. Tema tokeni
+     emas: ustida rasm turadi. */
   background-color: #0B120F;
 }
 .auth-visual.has-photo::after {
@@ -95,9 +100,10 @@
 .auth-visual.has-photo p { text-shadow: 0 2px 12px rgba(0, 0, 0, .55); }
 
 .auth-eyebrow {
-  align-self: flex-start; padding: 5px 13px; border-radius: var(--radius-pill);
+  align-self: flex-start; padding: var(--sp-1) var(--sp-3); border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, .14); border: 1px solid rgba(224, 192, 90, .55);
-  color: #FBE9A8; font-size: 11.5px; font-weight: 800;
+  /* Doimiy och oltin — foni surat/gradient, temaga bog'liq emas (14.2). */
+  color: #FBE9A8; font-size: var(--fs-xs); font-weight: 800;
   letter-spacing: .09em; text-transform: uppercase;
   backdrop-filter: blur(6px);
 }
@@ -120,12 +126,6 @@
 
 /* SMS kod kiritish kataklari */
 .code-inputs { display: flex; gap: var(--sp-2); justify-content: center; }
-.code-inputs input {
-  width: 48px; height: 56px; text-align: center; color: var(--ink);
-  font-family: var(--font-mono); font-size: var(--fs-lg); font-weight: 700;
-  border: 1.5px solid var(--line); border-radius: var(--radius-s); background: var(--surface);
-}
-.code-inputs input:focus { outline: none; border-color: var(--theme-accent); box-shadow: 0 0 0 3px var(--theme-accent-dim); }
 
 @media (max-width: 860px) { .auth-wrap { grid-template-columns: 1fr; } .auth-visual { display: none; } }
 
@@ -138,7 +138,7 @@
   .auth-brand {
     display: inline-flex; align-items: center; gap: var(--sp-2);
     justify-self: center;
-    font-family: var(--font-display); font-weight: 700; font-size: 26px;
+    font-family: var(--font-display); font-weight: 700; font-size: var(--fs-xl);
     color: var(--ink); text-decoration: none;
   }
 }
@@ -169,16 +169,16 @@
   border: 1px solid var(--line);
 }
 .lang-switch button {
-  min-width: 38px; padding: 5px 11px;
+  min-width: 38px; padding: var(--sp-1) var(--sp-3);
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
-  font-size: 11.5px; font-weight: 800; letter-spacing: .04em;
+  font-size: var(--fs-xs); font-weight: 800; letter-spacing: .04em;
   color: var(--ink-faint); line-height: 1.4;
   transition: background var(--transition), color var(--transition);
 }
 .lang-switch button:hover { color: var(--ink); background: var(--surface); }
 .lang-switch button.active {
-  background: var(--gold-shine); color: #1A1405;
+  background: var(--gold-shine); color: var(--on-gold);
   box-shadow: var(--gold-glow);
 }
 
@@ -193,7 +193,7 @@
     backdrop-filter: blur(8px);
   }
   .lang-switch button { color: rgba(255, 255, 255, .82); }
-  .lang-switch button:hover { background: rgba(255, 255, 255, .18); color: #FFFFFF; }
+  .lang-switch button:hover { background: rgba(255, 255, 255, .18); color: var(--white); }
 }
 
 /* ===================================================================
@@ -208,13 +208,17 @@
 
 .btn-google {
   display: flex; align-items: center; justify-content: center; gap: var(--sp-3);
-  width: 100%; min-height: 48px; padding: 12px var(--sp-5);
+  /* Sahifaning BOSH amali — eng katta boshqaruv pog'onasida
+     (`--ctl-h-lg`). Ilgari 48 px edi: shkaladan tashqari qiymat, ya'ni
+     u ostidagi "Parol bilan kirish" tugmasi bilan ham, ustidagi matn
+     maydoni bilan ham tenglashmasdi. */
+  width: 100%; min-height: var(--ctl-h-lg); padding: 0 var(--sp-5);
   border-radius: var(--radius-pill);
   /* Google talabi: tugma OQ (yoki to'q ko'k) bo'lishi kerak. Sayt
      temasidan qat'i nazar shu ranglar qoladi — brend belgisi. */
   background: #FFFFFF; color: #1F1F1F;
   border: 1px solid #DADCE0;
-  font-weight: 600; font-size: 15px;
+  font-weight: 600; font-size: var(--fs-base);
   transition: box-shadow var(--transition), background var(--transition);
 }
 .btn-google:hover { background: #F8F9FA; box-shadow: var(--shadow); }
@@ -318,7 +322,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
+  padding: var(--sp-3) var(--sp-4);
   border-radius: var(--radius-m);
   /* Shishasimon yuza: orqadagi nur kartadan o'tib ko'rinadi. */
   background: rgba(255, 255, 255, .07);
@@ -330,11 +334,11 @@
   animation: scene-in .7s cubic-bezier(.2, .7, .3, 1) backwards,
              scene-float 9s ease-in-out infinite alternate;
 }
-.scene-card b { font-size: 17px; font-weight: 800; letter-spacing: -.01em; }
+.scene-card b { font-size: var(--fs-md); font-weight: 800; letter-spacing: -.01em; }
 
 /* Kartadagi "matn" — haqiqiy so'z emas, yorug' chiziqchalar. */
 .sc-line {
-  display: block; height: 6px; border-radius: 999px;
+  display: block; height: 6px; border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, .26);
 }
 .sc-lines { display: flex; flex-direction: column; gap: 6px; }
@@ -355,6 +359,8 @@
 .sc-check {
   display: inline-flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; border-radius: 50%;
+  /* Fon doimiy zumrad (temadan mustaqil), shuning uchun belgi rangi
+     ham doimiy to'q. */
   background: rgba(34, 165, 131, .9); color: #04140F;
 }
 
@@ -390,8 +396,8 @@
 }
 
 /* Kichik chiplar asosiy kartadan yengilroq — ko'z avval joyga tushadi. */
-.sc-date, .sc-guests, .sc-done { padding: 9px 12px; }
-.sc-date b, .sc-guests b { font-size: 15px; }
+.sc-date, .sc-guests, .sc-done { padding: var(--sp-2) var(--sp-3); }
+.sc-date b, .sc-guests b { font-size: var(--fs-base); }
 
 @keyframes scene-in {
   from { opacity: 0; transform: translateY(18px) scale(.96); }

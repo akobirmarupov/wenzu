@@ -44,10 +44,26 @@ const filters = {
 if ($("#q")) $("#q").value = filters.search;
 if ($("#guests")) $("#guests").value = filters.guests;
 
+/**
+ * Oshxona turi — tarjimadan.
+ *
+ * `CUISINES` dagi o'zbekcha yozuv zaxira bo'lib qoladi: lug'atga yangi
+ * tur qo'shilmagan bo'lsa ekranda "cuisine.xxx" degan texnik kalit
+ * emas, o'sha eski yozuv ko'rinadi.
+ */
+function cuisineLabel(item) {
+  const key = `cuisine.${item.value}`;
+  const text = t(key);
+  return text === key ? item.label : text;
+}
+
 if ($("#cuisine-chips")) {
   render(
     "#cuisine-chips",
-    [{ value: "", label: t("catalog.all") }, ...CUISINES]
+    [
+      { value: "", label: t("catalog.all") },
+      ...CUISINES.map((item) => ({ value: item.value, label: cuisineLabel(item) })),
+    ]
       .map((item) => `<button class="chip ${filters.cuisine === item.value ? "active" : ""}"
                         data-cuisine="${esc(item.value)}" type="button">${esc(item.label)}</button>`)
       .join("")
@@ -87,7 +103,7 @@ $("#near-me")?.addEventListener("click", () => {
     return;
   }
   if (!navigator.geolocation) {
-    toast.error("Brauzeringiz joylashuvni qo'llab-quvvatlamaydi.");
+    toast.error(t("catalog.geoUnsupported"));
     return;
   }
   navigator.geolocation.getCurrentPosition(
@@ -99,7 +115,7 @@ $("#near-me")?.addEventListener("click", () => {
       $("#near-me").classList.add("active");
       load();
     },
-    () => toast.error("Joylashuvga ruxsat berilmadi.")
+    () => toast.error(t("catalog.geoDenied"))
   );
 });
 

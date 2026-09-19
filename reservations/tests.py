@@ -8,6 +8,7 @@ Bron oqimining uchta yangi qoidasi uchun testlar:
 
 import datetime
 from decimal import Decimal
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -461,3 +462,150 @@ class MapLinkTest(TestCase):
         self.business.refresh_from_db()
         self.assertAlmostEqual(self.business.latitude, 41.5, places=4)
         self.assertAlmostEqual(self.business.longitude, 69.5, places=4)
+
+
+class AutoCompleteAndReviewPromptTests(TestCase):
+    """
+    Bron vaqti tugashi bilan yakunlanishi va sharh so'ralishi.
+
+    Nega muhim: reyting platformaning eng qimmat ma'lumoti, lekin u
+    faqat sharh yozilganda paydo bo'ladi. Ilgari bron ERTASI KUNI
+    yakunlanardi va soat 20:00 da joydan chiqqan odam o'sha kuni sharh
+    yoza olmasdi — ertasiga esa qaytib kelmasdi.
+
+    Testlarda vaqt ATAYLAB qotirilgan (`_at`). Aks holda natija testni
+    ishga tushirgan SOATGA bog'liq bo'lardi: kechasi 03:00 da yozilgan
+    "ikki soat oldin tugagan" bron aslida kechagi kunga tegishli
+    bo'lib qoladi va test tasodifan yiqiladi.
+    """
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="avto_egasi", password="StrongPass123!",
+            phone_number="+998901110022", full_name="Avto Egasi",
+        )
+        self.customer = User.objects.create_user(
+            username="avto_mijoz", password="StrongPass123!",
+            phone_number="+998901110033", full_name="Avto Mijoz",
+        )
+        self.business = make_venue(self.owner, name="Avto To'yxona")
+        self.hall = Hall.objects.create(business=self.business, name="Zal", people=200)
+        self.today = timezone.localdate()
+
+    def _at(self, hour, minute=0, day_offset=0):
+        """Mahalliy vaqt zonasidagi aniq payt — `timezone.now` o'rniga."""
+        naive = datetime.datetime.combine(
+            self.today + datetime.timedelta(days=day_offset),
+            datetime.time(hour, minute),
+        )
+        return timezone.make_aware(naive, timezone.get_current_timezone())
+
+    def _reservation(self, *, start, end, day_offset=0, status="confirmed"):
+        availability = Availability.objects.create(
+            business=self.business,
+            date=self.today + datetime.timedelta(days=day_offset),
+            start_time=start, end_time=end,
+        )
+        return Reservation.objects.create(
+            user=self.customer, business=self.business, hall=self.hall,
+            availability=availability, guests_count=50, status=status,
+            start_time=start, end_time=end,
+        )
+
+    def test_finished_booking_is_completed_and_review_is_requested(self):
+        """18:00–20:00 broni soat 21:00 da yakunlanadi va xabar boradi."""
+        from notifications.models import Notification
+        from reservations.tasks import complete_past_reservations_task
+
+        booking = self._reservation(start=datetime.time(18, 0), end=datetime.time(20, 0))
+
+        with patch("django.utils.timezone.now", return_value=self._at(21)):
+            count = complete_past_reservations_task()
+
+        booking.refresh_from_db()
+        self.assertEqual(count, 1)
+        self.assertEqual(booking.status, "completed")
+        self.assertTrue(
+            Notification.objects.filter(
+                user=self.customer, kind=Notification.KIND_REVIEW
+            ).exists(),
+            "Mijozga sharh so'rovi yuborilishi kerak",
+        )
+
+    def test_running_booking_is_left_alone(self):
+        """Soat 19:00 da, hali davom etayotgan bronga tegilmaydi."""
+        from reservations.tasks import complete_past_reservations_task
+
+        booking = self._reservation(start=datetime.time(18, 0), end=datetime.time(20, 0))
+
+        with patch("django.utils.timezone.now", return_value=self._at(19)):
+            complete_past_reservations_task()
+
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, "confirmed")
+
+    def test_night_booking_ends_next_day(self):
+        """
+        22:00–02:00 broni ERTASI kuni tugaydi.
+
+        Bu eng xatarli hol: soat bo'yicha "02:00 < 23:00" bo'lgani uchun
+        oddiy taqqoslash bronni boshlanishi bilanoq tugagan deb
+        hisoblab qo'yardi.
+        """
+        from reservations.tasks import complete_past_reservations_task
+
+        booking = self._reservation(start=datetime.time(22, 0), end=datetime.time(2, 0))
+
+        # Kechasi soat 23:00 — bron hali davom etyapti.
+        with patch("django.utils.timezone.now", return_value=self._at(23)):
+            complete_past_reservations_task()
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, "confirmed")
+
+        # Ertasiga soat 03:00 — tugagan.
+        with patch("django.utils.timezone.now", return_value=self._at(3, day_offset=1)):
+            complete_past_reservations_task()
+        booking.refresh_from_db()
+        self.assertEqual(booking.status, "completed")
+
+    def test_pending_review_endpoint_lists_only_unreviewed(self):
+        """Sharh yozilgan bron ro'yxatdan chiqib ketadi."""
+        from reviews.models import Review
+
+        first = self._reservation(
+            start=datetime.time(18, 0), end=datetime.time(20, 0),
+            day_offset=-1, status="completed",
+        )
+        second = self._reservation(
+            start=datetime.time(12, 0), end=datetime.time(14, 0),
+            day_offset=-1, status="completed",
+        )
+
+        client = APIClient()
+        client.force_authenticate(user=self.customer)
+
+        response = client.get("/api/reservations/pending-review/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            {item["id"] for item in response.data}, {str(first.id), str(second.id)}
+        )
+
+        Review.objects.create(
+            user=self.customer, business=self.business, reservation=first, rating=5,
+        )
+        response = client.get("/api/reservations/pending-review/")
+        self.assertEqual({item["id"] for item in response.data}, {str(second.id)})
+
+    def test_old_booking_is_not_asked_about(self):
+        """Bir oy oldingi tashrif haqida so'ralmaydi."""
+        self._reservation(
+            start=datetime.time(18, 0), end=datetime.time(20, 0),
+            day_offset=-30, status="completed",
+        )
+
+        client = APIClient()
+        client.force_authenticate(user=self.customer)
+        response = client.get("/api/reservations/pending-review/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.data), [])

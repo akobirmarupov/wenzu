@@ -28,8 +28,31 @@
   display: flex; flex-direction: column; gap: var(--sp-2);
 }
 .stat-card .label { font-size: var(--fs-xs); font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); }
+/* 30 px — bosh sahifadagi `.home-stat .value` bilan BIR XIL. Ilgari
+   u yerda 28 px turardi: ikkita bir xil vazifadagi "katta raqam"
+   kartochkasi ikki xil o'lchamda chizilardi. Tokenga o'tkazilmaydi —
+   `--fs-2xl` 34 px, ya'ni to'rt piksel kattaroq. */
 .stat-card .value { font-family: var(--font-display); font-size: 30px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
 .stat-card .value.accent { color: var(--theme-accent); }
+
+/* ===================================================================
+   Ikkinchi darajali ko'rsatkichlar tasmasi.
+
+   Boshqaruv sahifasida ikki qator kartochka bor: yuqorida to'rtta
+   ASOSIY raqam, ostida beshta qo'shimcha. Ularning eni tabiiy ravishda
+   har xil (to'rtta va beshta ustun), lekin raqamlari bir xil kattalikda
+   chizilardi — natijada ikki qator "bir xil narsa, sababsiz turli
+   enda" bo'lib, tartibsiz ko'rinardi.
+
+   Endi ikkinchi qator ataylab yengilroq: raqami kichikroq, ramkasi
+   sustroq. Ya'ni endi bu ierarxiya — tasodif emas.
+   =================================================================== */
+.stats-secondary .stat-card {
+  padding: var(--sp-4);
+  background: var(--surface-2);
+}
+.stats-secondary .stat-card .value { font-size: var(--fs-xl); }
+.stats-secondary .stat-card .label { font-size: var(--fs-2xs); }
 
 /* Ro'yxatdagi qator (bron, ariza) */
 .list-row {

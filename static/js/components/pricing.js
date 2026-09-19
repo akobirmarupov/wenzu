@@ -19,19 +19,28 @@
  * "menda nega boshqacha?" degan savol tug'dirardi.
  */
 import { api } from "../core/api.js";
+import { t } from "../core/i18n.js";
 import { esc, busy } from "../ui/dom.js";
 import { icon } from "../ui/icons.js";
 import { money } from "../ui/format.js";
 import { openModal, modal } from "../ui/modal.js";
 import { toast } from "../ui/toast.js";
 
-/** Har bir tarifga kiradigan imkoniyatlar — barchasida bir xil asos. */
-const BASE_FEATURES = [
-  "Platformada ko'rinish va qidiruvda chiqish",
-  "Onlayn bron qabul qilish",
-  "Menyu, xona va zallarni boshqarish",
-  "Mijoz sharhlari va reyting",
-];
+/**
+ * Har bir tarifga kiradigan imkoniyatlar — barchasida bir xil asos.
+ *
+ * Ro'yxatlar FUNKSIYA, konstanta emas: tarjima lug'ati `initI18n()`
+ * dan keyin tayyor bo'ladi, modul yuklangan paytda esa hali bo'sh —
+ * konstanta bo'lsa ekranda kalit nomlari qotib qolardi.
+ */
+function baseFeatures() {
+  return [
+    t("pricing.feature1"),
+    t("pricing.feature2"),
+    t("pricing.feature3"),
+    t("pricing.feature4"),
+  ];
+}
 
 /**
  * "Ariza tekshiruvda" ekranidagi matn.
@@ -53,27 +62,30 @@ export function pendingApprovalText(subscription) {
   const plan = subscription?.applied_plan;
   if (plan) {
     const duration = esc(plan.duration_label || `${plan.duration_months} oy`);
-    return `Administrator to'lovingizni tasdiqlagach obunangiz o'sha kundan
-            boshlab <b>${duration}</b>ga faollashadi va barcha bo'limlar ochiladi.
-            Muddat tugagach to'lov qilinmasa, obuna to'xtaydi.`;
+    return t("pricing.approvedNote", { duration });
   }
   if (subscription?.is_trial_application) {
     const days = subscription.trial_days ?? 7;
-    return `Tasdiqlangach <b>${days} kunlik bepul sinov</b> boshlanadi va
-            barcha bo'limlar ochiladi.`;
+    return t("pricing.trialApprovalNote", { days });
   }
-  return "Tasdiqlangach barcha bo'limlar ochiladi va joyingiz qidiruvda ko'rinadi.";
+  return t("pricing.genericApprovalNote");
 }
 
 /* `icon` — ikonka to'plamidagi NOM, tayyor belgi emas: chizish paytida
    SVG ga aylantiriladi va mavzuga mos rangni oladi. */
-const EXTRA_FEATURES = [
-  { icon: "bolt", title: "Tezkor qo'llab-quvvatlash", text: "Telegram orqali to'g'ridan-to'g'ri aloqa" },
-  { icon: "chart", title: "Statistika", text: "Bronlar, daromad va reyting bir joyda" },
-  { icon: "shield", title: "Ishonchli saqlash", text: "Ma'lumotlaringiz zaxiralanadi" },
-];
+function extraFeatures() {
+  return [
+    { icon: "bolt", title: t("pricing.extra1Title"), text: t("pricing.extra1Text") },
+    { icon: "chart", title: t("pricing.extra2Title"), text: t("pricing.extra2Text") },
+    { icon: "shield", title: t("pricing.extra3Title"), text: t("pricing.extra3Text") },
+  ];
+}
 
-const TYPE_LABEL = { restaurant: "Restoran", venue: "To'yxona" };
+function typeLabel(type) {
+  if (type === "venue") return t("common.venue");
+  if (type === "restaurant") return t("common.restaurant");
+  return "";
+}
 
 /* ===================================================================
    Chizish
@@ -82,15 +94,15 @@ const TYPE_LABEL = { restaurant: "Restoran", venue: "To'yxona" };
 function featureListHtml() {
   return `
     <div class="price-features">
-      <span class="price-features-head">${icon("sparkle")} Nimalar kiradi:</span>
+      <span class="price-features-head">${icon("sparkle")} ${esc(t("pricing.included"))}</span>
       <ul>
-        ${BASE_FEATURES.map((item) => `
+        ${baseFeatures().map((item) => `
           <li><span class="tick">${icon("check")}</span><span>${esc(item)}</span></li>`).join("")}
       </ul>
 
-      <span class="price-features-head">Qo'shimcha imkoniyatlar</span>
+      <span class="price-features-head">${esc(t("pricing.extras"))}</span>
       <ul class="extras">
-        ${EXTRA_FEATURES.map((item) => `
+        ${extraFeatures().map((item) => `
           <li>
             <span class="ic">${icon(item.icon)}</span>
             <span>
@@ -112,9 +124,9 @@ function featureListHtml() {
 function trialCardHtml(state, { trialUsed }) {
   // Holat yozuvi — tugma o'rniga ko'rsatiladigan hollarda.
   const label = {
-    awaiting: "Tasdiq kutilmoqda",
-    active: "Hozir faol",
-    used: "Ishlatilgan",
+    awaiting: t("pricing.stateAwaiting"),
+    active: t("pricing.stateActive"),
+    used: t("pricing.stateUsed"),
   }[state];
 
   // Sinovni TANLASH mumkinmi.
@@ -128,26 +140,26 @@ function trialCardHtml(state, { trialUsed }) {
     <article class="price-card ${
       state === "active" ? "current" : selectable ? "" : "muted-card"}">
       <div class="price-card-body">
-        <h3>Bepul <span class="tone">sinov</span></h3>
+        <h3>${t("pricing.trialTitle")}</h3>
         <p class="small muted">
-          ${selectable
-            ? "Boshlash uchun — hech qanday to'lovsiz. Har bir foydalanuvchiga bir marta."
+          ${esc(selectable
+            ? t("pricing.trialLead")
             : trialUsed && state === "guest"
-              ? "Siz bepul sinovdan allaqachon foydalangansiz."
-              : "Boshlash uchun — hech qanday to'lovsiz."}
+              ? t("pricing.trialUsedText")
+              : t("pricing.trialShort"))}
         </p>
 
         <div class="price-amount">
           <b>0</b>
-          <span>so'm / 7 kun</span>
+          <span>${esc(t("common.soum"))} / 7 ${esc(t("premium.days"))}</span>
         </div>
 
         ${selectable
           ? `<button class="btn btn-outline btn-block btn-lg" type="button" data-choose-trial>
-               Bepul sinovni tanlash
+               ${esc(t("pricing.trialChoose"))}
              </button>`
           : `<span class="price-state">${esc(
-              trialUsed && state === "guest" ? "Ishlatilgan" : label || "Ishlatilgan"
+              trialUsed && state === "guest" ? t("pricing.stateUsed") : label || t("pricing.stateUsed")
             )}</span>`}
       </div>
       ${featureListHtml()}
@@ -175,13 +187,13 @@ function planCardHtml(businessType, plans, { disabled, foreign, reason }) {
 
   return `
     <article class="price-card ${foreign ? "muted-card" : ""}" data-plan-card="${esc(businessType)}">
-      <span class="price-ribbon"${hasLong ? "" : ' hidden'}>Tavsiya etiladi</span>
+      <span class="price-ribbon"${hasLong ? "" : ' hidden'}>${esc(t("pricing.recommended"))}</span>
 
       <div class="price-card-body">
-        <h3>${esc(TYPE_LABEL[businessType] || "")} <span class="tone">obunasi</span></h3>
+        <h3>${t(businessType === "venue" ? "pricing.planTitleVenue" : "pricing.planTitleRestaurant")}</h3>
 
         ${sorted.length > 1 ? `
-          <div class="plan-toggle" role="group" aria-label="Muddat">
+          <div class="plan-toggle" role="group" aria-label="${esc(t("pricing.duration"))}">
             ${sorted.map((plan, index) => `
               <button type="button" data-duration="${plan.duration_months}"
                       class="${index === 0 ? "active" : ""}">
@@ -193,23 +205,23 @@ function planCardHtml(businessType, plans, { disabled, foreign, reason }) {
         ${sorted.map((plan, index) => `
           <div class="plan-variant ${index === 0 ? "active" : ""}" data-variant="${plan.duration_months}">
             <p class="small muted">
-              ${plan.duration_months > 1
-                ? `Uzoq muddat — oyiga ${money(plan.price_per_month, { withSuffix: false })} so'm.`
-                : "Oyma-oy to'lov, istalgan vaqtda to'xtatasiz."}
+              ${esc(plan.duration_months > 1
+                ? t("pricing.longTermNote", { price: money(plan.price_per_month) })
+                : t("pricing.monthlyNote"))}
             </p>
 
             <div class="price-amount">
               <b>${money(plan.price, { withSuffix: false })}</b>
-              <span>so'm / ${esc(plan.duration_label)}</span>
+              <span>${esc(t("common.soum"))} / ${esc(plan.duration_label)}</span>
             </div>
 
             ${plan.savings
-              ? `<span class="price-save">${money(plan.savings, { withSuffix: false })} so'm tejaysiz</span>`
+              ? `<span class="price-save">${esc(t("pricing.saveAmount", { amount: money(plan.savings) }))}</span>`
               : ""}
 
             <button class="btn ${plan.duration_months > 1 ? "btn-gold" : "btn-primary"} btn-block btn-lg"
                     type="button" data-choose-plan="${esc(plan.id)}" ${off ? "disabled" : ""}>
-              ${esc(plan.duration_label)}ni tanlash
+              ${esc(t("pricing.choosePlan", { duration: plan.duration_label }))}
             </button>
             ${foreign && reason ? `<span class="xs muted center">${esc(reason)}</span>` : ""}
           </div>`).join("")}
@@ -268,7 +280,7 @@ export function pricingHtml({ plans, status, pending, ownedType = null, trialUse
             // deb rad etardi, ya'ni tugma bosiladigan bo'lsa faqat
             // xato chiqarardi.
             foreign: Boolean(ownedType) && type !== ownedType,
-            reason: `Sizning biznesingiz — ${TYPE_LABEL[ownedType] || ""}`,
+            reason: t("pricing.foreignReason", { type: typeLabel(ownedType) }),
           }))
           .join("")}
       </div>
@@ -280,10 +292,10 @@ function pendingNoticeHtml(pending) {
     <div class="price-pending">
       <span class="ic" aria-hidden="true">⏳</span>
       <span>
-        <b>Arizangiz ko'rib chiqilmoqda</b>
+        <b>${esc(t("business.pendingTitle"))}</b>
         <span class="small">
           ${esc(pending.plan_label)} — ${money(pending.price)}.
-          To'lovni amalga oshiring va administrator tasdiqlashini kuting.
+          ${esc(t("pricing.pendingPay"))}
         </span>
       </span>
     </div>`;
@@ -328,7 +340,7 @@ export function bindPricing(root, { plans, telegram = "@akobir_marupov", onSent,
     card.querySelectorAll("[data-variant]").forEach((variant) =>
       variant.classList.toggle("active", variant.dataset.variant === months)
     );
-    // "Tavsiya etiladi" lentasi faqat uzoq muddat tanlanganda.
+    // Tavsiya lentasi faqat uzoq muddat tanlanganda.
     card.classList.toggle("best", Number(months) > 1);
   });
 
@@ -370,31 +382,27 @@ async function openRequestModal(plan, telegram, onSent) {
   const telegramUrl = `https://t.me/${handle}`;
 
   const node = openModal(
-    `<h2>Obunani faollashtirish</h2>
+    `<h2>${esc(t("pricing.activateTitle"))}</h2>
      <p class="muted small" style="margin-bottom:var(--sp-5)">
-       ${esc(TYPE_LABEL[plan.business_type] || "")} · ${esc(plan.duration_label)}
+       ${esc(typeLabel(plan.business_type))} · ${esc(plan.duration_label)}
      </p>
 
      <div class="notice">
-       <p><b>${icon("wave")} Assalomu alaykum!</b></p>
-       <p>Obunani faollashtirish uchun adminlarimiz bilan bog'laning.
-          Quyidagi tugmani bossangiz arizangiz <b>shu zahoti yuboriladi</b>
-          va Telegram ochiladi — u yerda to'lov bo'yicha kelishasiz.</p>
-       <p>Administrator to'lovni tasdiqlagach, obunangiz
-          <b>${esc(plan.duration_label)}</b>ga uzayadi va joyingiz
-          qidiruvda qayta ko'rinadi.</p>
+       <p><b>${icon("wave")} ${esc(t("common.greeting"))}</b></p>
+       <p>${t("pricing.activateText")}</p>
+       <p>${t("pricing.activateTerms", { duration: esc(plan.duration_label) })}</p>
      </div>
 
      <div class="total-box" style="margin-top:var(--sp-4)">
-       <div class="row"><span>Muddat</span><b>${esc(plan.duration_label)}</b></div>
+       <div class="row"><span>${esc(t("pricing.duration"))}</span><b>${esc(plan.duration_label)}</b></div>
        ${plan.duration_months > 1
-         ? `<div class="row"><span>Oyiga</span><b>${money(plan.price_per_month)}</b></div>` : ""}
-       <div class="row grand"><span>To'lov summasi</span><b>${money(plan.price)}</b></div>
+         ? `<div class="row"><span>${esc(t("pricing.perMonth"))}</span><b>${money(plan.price_per_month)}</b></div>` : ""}
+       <div class="row grand"><span>${esc(t("pricing.totalPay"))}</span><b>${money(plan.price)}</b></div>
      </div>
 
      <div class="field" style="margin-top:var(--sp-4)">
-       <label for="renew-note">Izoh (ixtiyoriy)</label>
-       <input class="input" id="renew-note" placeholder="Masalan: to'lov chekini yuboraman">
+       <label for="renew-note">${esc(t("pricing.note"))}</label>
+       <input class="input" id="renew-note" placeholder="${esc(t("pricing.notePlaceholder"))}">
      </div>
 
      ${/* BITTA tugma — ikki ish: ariza yuboriladi va Telegram ochiladi.
@@ -404,10 +412,10 @@ async function openRequestModal(plan, telegram, onSent) {
           admin bilan bog'lanmasdi. */""}
      <button class="btn btn-primary btn-block btn-lg" style="margin-top:var(--sp-4)"
              type="button" id="renew-submit">
-       ${icon("send")} Ariza yuborish va admin bilan bog'lanish
+       ${icon("send")} ${esc(t("pricing.sendAndContact"))}
      </button>
      <p class="xs muted center" style="margin-top:var(--sp-2)">
-       Bir bosishda ikkalasi ham bajariladi
+       ${esc(t("pricing.bothAtOnce"))}
      </p>`,
     { wide: true }
   );
@@ -437,7 +445,7 @@ async function openRequestModal(plan, telegram, onSent) {
       }
 
       modal.close();
-      toast.ok("Ariza yuborildi. Telegram orqali to'lovni kelishing.");
+      toast.ok(t("pricing.sentToast"));
       onSent?.();
     } catch (error) {
       // Ariza ketmadi — bo'sh oynani yopamiz, aks holda odam bo'm-bo'sh

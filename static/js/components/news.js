@@ -115,9 +115,19 @@ export async function renderNews({ stripSelector, gridSelector, sectionSelector,
 
   const strip = stripSelector ? document.querySelector(stripSelector) : null;
   if (strip) {
-    strip.innerHTML = items.length
-      ? items.slice(0, 5).map(stripHtml).join("")
-      : `<p class="small muted" style="padding:var(--sp-4) 0">—</p>`;
+    if (items.length) {
+      strip.innerHTML = items.slice(0, 5).map(stripHtml).join("");
+      const box = strip.closest("section, .panel");
+      if (box) box.hidden = false;
+    } else {
+      // Yangilik yo'q bo'lsa BUTUN kartochka yashiriladi.
+      //
+      // Ilgari uning ichida yolg'iz chiziqcha ("—") turardi: o'quvchi
+      // uchun bu ma'lumot emas, buzilgan blokdek ko'rinardi. Yangi
+      // platformada esa yangiliklar uzoq vaqt bo'lmaydi.
+      const box = strip.closest("section, .panel") || strip;
+      box.hidden = true;
+    }
   }
 
   const grid = gridSelector ? document.querySelector(gridSelector) : null;

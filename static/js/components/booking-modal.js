@@ -30,6 +30,7 @@
 import { api } from "../core/api.js";
 import { auth } from "../core/auth.js";
 import { ROUTES } from "../core/config.js";
+import { t } from "../core/i18n.js";
 import { openModal, modal } from "../ui/modal.js";
 import { toast } from "../ui/toast.js";
 import { esc, busy } from "../ui/dom.js";
@@ -105,9 +106,7 @@ async function ensureCanBook() {
   // Server ham rad etadi (`IsCustomer`); bu yerda sababni oldindan
   // aytamiz, aks holda odam formani to'ldirib, oxirida xato ko'rardi.
   if (user?.is_staff) {
-    toast.error(
-      "Platforma egasi bron qila olmaydi. Bronlarni boshqaruv panelidan ko'ring."
-    );
+    toast.error(t("booking.staffCannot"));
     return false;
   }
   // Aloqa raqami — joy egasi mehmonga qo'ng'iroq qilishi uchun.
@@ -162,7 +161,7 @@ function clickHour(hour) {
   } else {
     const end = clicked + 60;
     if (rangeIsBusy(state.startMin, end)) {
-      toast.error("Tanlangan oraliqda band vaqt bor.");
+      toast.error(t("booking.rangeBusy"));
       return;
     }
     state.endMin = end;
@@ -172,7 +171,7 @@ function clickHour(hour) {
 
 function hourGridHtml() {
   if (!state.isOpen) {
-    return `<p class="form-alert">Bu kun uchun ish jadvali ochilmagan. Boshqa sanani tanlang.</p>`;
+    return `<p class="form-alert">${esc(t("booking.closedDay"))}</p>`;
   }
   let cells = "";
   for (let hour = state.openHour; hour < state.closeHour; hour += 1) {
@@ -188,9 +187,9 @@ function hourGridHtml() {
   return `
     <div class="hour-grid">${cells}</div>
     <div class="hour-legend">
-      <span><i class="l-free"></i>Bo'sh</span>
-      <span><i class="l-sel"></i>Tanlangan</span>
-      <span><i class="l-busy"></i>Band</span>
+      <span><i class="l-free"></i>${esc(t("booking.free"))}</span>
+      <span><i class="l-sel"></i>${esc(t("booking.selected"))}</span>
+      <span><i class="l-busy"></i>${esc(t("booking.busy"))}</span>
     </div>`;
 }
 
@@ -223,20 +222,20 @@ function timePickerHtml() {
   return `
     <div class="field-row" style="margin-top:var(--sp-3)">
       <div class="field">
-        <label for="bk-start">Boshlanish</label>
+        <label for="bk-start">${esc(t("booking.start"))}</label>
         <select class="select" id="bk-start">${options(state.startMin, openMin, closeMin - STEP_MIN)}</select>
       </div>
       <div class="field">
-        <label for="bk-end">Tugash</label>
+        <label for="bk-end">${esc(t("booking.end"))}</label>
         <select class="select" id="bk-end">${options(state.endMin, start + STEP_MIN, closeMin)}</select>
       </div>
     </div>
     <p class="small muted">
       ${duration
-        ? `Tanlangan: <b>${fromMin(state.startMin)} – ${fromMin(state.endMin)}</b>
-           (${(duration / 60).toFixed(duration % 60 ? 1 : 0)} soat) ·
-           <button type="button" class="link-btn" data-reset-hours>tozalash</button>`
-        : "Vaqt oralig'ini xohlaganingizcha tanlashingiz mumkin — chegara yo'q."}
+        ? `${esc(t("booking.selected"))}: <b>${fromMin(state.startMin)} – ${fromMin(state.endMin)}</b>
+           (${(duration / 60).toFixed(duration % 60 ? 1 : 0)} ${esc(t("booking.hours"))}) ·
+           <button type="button" class="link-btn" data-reset-hours>${esc(t("booking.clear"))}</button>`
+        : esc(t("booking.durationHint"))}
     </p>`;
 }
 
@@ -354,8 +353,10 @@ function menuPickHtml(items, { max }) {
   // Paket tanlanmagan bo'lsa — menyu shunchaki istak ro'yxati.
   const required = state.type === "venue" && Boolean(state.dishCount);
   const title = required
-    ? `${state.dishCount} xil taomni tanlang — majburiy (${state.menuIds.length}/${max})`
-    : `Menyudan taom tanlash — ixtiyoriy (${state.menuIds.length} ta)`;
+    ? t("booking.pickDishesRequired", {
+        count: state.dishCount, picked: state.menuIds.length, max,
+      })
+    : t("booking.pickDishesOptional", { picked: state.menuIds.length });
 
   return `
     <label class="small strong" style="display:block;margin:var(--sp-5) 0 var(--sp-2)">${esc(title)}</label>
@@ -394,29 +395,29 @@ function restaurantFormHtml() {
     <p class="muted small">${esc(state.business.name)} · ${icon("clock")} ${timeLabel(state.business.open_time) || "—"}–${timeLabel(state.business.close_time) || "—"}</p>
 
     <div class="field" style="margin-top:var(--sp-5)">
-      <label for="bk-date">Sana</label>
+      <label for="bk-date">${esc(t("booking.date"))}</label>
       <input class="input" id="bk-date" type="date" value="${state.date}" min="${todayISO()}">
     </div>
 
-    <label class="small strong" style="display:block;margin:var(--sp-4) 0 var(--sp-2)">Bo'sh vaqtni tanlang</label>
+    <label class="small strong" style="display:block;margin:var(--sp-4) 0 var(--sp-2)">${esc(t("booking.selectTime"))}</label>
     ${hourGridHtml()}
     ${timePickerHtml()}
 
     <div class="field" style="margin-top:var(--sp-4)">
-      <label for="bk-guests">Mehmonlar soni (${state.room.capacity} kishigacha)</label>
+      <label for="bk-guests">${esc(t("booking.guests"))} (${esc(t("booking.upToPeople", { count: state.room.capacity }))})</label>
       <input class="input" id="bk-guests" type="number" min="1" max="${state.room.capacity}" value="${state.guests}">
     </div>
 
     ${menuPickHtml(state.menu, { max: menuLimit() })}
 
     <div class="field" style="margin-top:var(--sp-4)">
-      <label for="bk-note">Qo'shimcha istak (ixtiyoriy)</label>
+      <label for="bk-note">${esc(t("booking.note"))}</label>
       <textarea class="textarea" id="bk-note" rows="2"
-        placeholder="Masalan: deraza yonidagi stol">${esc(state.note)}</textarea>
+        placeholder="${esc(t("booking.notePlaceholder"))}">${esc(state.note)}</textarea>
     </div>
 
     <button class="btn btn-primary btn-block btn-lg" style="margin-top:var(--sp-5)"
-            data-next ${state.endMin === null ? "disabled" : ""}>Joyni band qilish</button>`;
+            data-next ${state.endMin === null ? "disabled" : ""}>${esc(t("booking.bookRoom"))}</button>`;
 }
 
 /**
@@ -439,20 +440,20 @@ function dishPickerHtml() {
   const skipChip = canSkip ? `
     <button type="button" class="dish-chip ${state.dishCount === null ? "active" : ""}"
             data-dish="0">
-      <b class="small">Taom kerak emas</b>
-      <div class="p">O'zim tashkil qilaman</div>
+      <b class="small">${esc(t("booking.noFood"))}</b>
+      <div class="p">${esc(t("booking.noFoodHint"))}</div>
     </button>` : "";
 
   const chips = state.pricing.map((row) => `
     <button type="button" class="dish-chip ${state.dishCount === row.dish_count ? "active" : ""}"
             data-dish="${row.dish_count}">
-      <b class="small">${row.dish_count} xil taom</b>
-      <div class="p">${money(row.price_per_person)} / kishi</div>
+      <b class="small">${esc(t("booking.dishKinds", { count: row.dish_count }))}</b>
+      <div class="p">${esc(t("booking.perPersonPrice", { price: money(row.price_per_person) }))}</div>
     </button>`).join("");
 
   return `
     <label class="small strong" style="display:block;margin:var(--sp-4) 0 var(--sp-2)">
-      Ovqat to'yxonadan bo'lsinmi? ${canSkip ? `<span class="muted">(ixtiyoriy)</span>` : ""}
+      ${esc(t("booking.foodFromVenue"))} ${canSkip ? `<span class="muted">${esc(t("booking.optional"))}</span>` : ""}
     </label>
     <div class="dish-row">${skipChip}${chips}</div>`;
 }
@@ -473,30 +474,28 @@ function venueTotalHtml() {
   if (rent === null && food === null) {
     return `
       <p class="small muted" style="margin-top:var(--sp-5)">
-        Bu to'yxona narxni saytda ko'rsatmagan — summa egasi bilan kelishiladi.
-        Bron so'rovini hozir yuborsangiz bo'ladi.
+        ${esc(t("booking.noPriceHint"))}
       </p>`;
   }
 
   const rows = [
     rent !== null
-      ? `<div class="row"><span>Bir kunlik ijara <span class="muted">(butun zal)</span></span>
+      ? `<div class="row"><span>${esc(t("booking.dayRent"))} <span class="muted">${esc(t("booking.wholeHall"))}</span></span>
            <b>${money(rent)}</b></div>` : "",
     food !== null
-      ? `<div class="row"><span>${state.dishCount} xil taom —
-           ${money(perPerson)} × ${state.guests || 0} kishi</span><b>${money(food)}</b></div>` : "",
+      ? `<div class="row"><span>${esc(t("booking.dishKinds", { count: state.dishCount }))} —
+           ${money(perPerson)} × ${esc(t("booking.peopleCount", { count: state.guests || 0 }))}</span><b>${money(food)}</b></div>` : "",
   ].join("");
 
   // Yig'indi qatori faqat IKKALA qism ham bo'lganda ma'noga ega —
   // bitta qatorni o'ziga o'zini qo'shib ko'rsatish ortiqcha shovqin.
   const grand = rent !== null && food !== null
-    ? `<div class="row grand"><span>Umumiy summa</span><b>${money(totalPrice())}</b></div>`
-    : `<div class="row grand"><span>Umumiy summa</span><b>${priceLabel(totalPrice())}</b></div>`;
+    ? `<div class="row grand"><span>${esc(t("booking.total"))}</span><b>${money(totalPrice())}</b></div>`
+    : `<div class="row grand"><span>${esc(t("booking.total"))}</span><b>${priceLabel(totalPrice())}</b></div>`;
 
   const hint = food === null && rent !== null
     ? `<p class="small muted" style="margin-top:var(--sp-2)">
-         Ijara butun zal uchun — mehmonlar soniga bog'liq emas.
-         Oshpaz va mahsulotni siz tashkil qilasiz.
+         ${esc(t("booking.rentHint"))}
        </p>`
     : "";
 
@@ -513,18 +512,18 @@ function venueFormHtml() {
 
   return `
     <h2>${esc(state.hall.name)}</h2>
-    <p class="muted small">${esc(state.business.name)} · ${state.hall.people} kishigacha</p>
+    <p class="muted small">${esc(state.business.name)} · ${esc(t("booking.upToPeople", { count: state.hall.people }))}</p>
 
     <div class="field" style="margin-top:var(--sp-5)">
-      <label for="bk-date">Sana (to'yxonada bir kunga bitta to'y)</label>
+      <label for="bk-date">${esc(t("booking.dateHall"))}</label>
       <input class="input" id="bk-date" type="date" value="${state.date}" min="${todayISO()}">
     </div>
-    ${dateBusy ? `<p class="form-alert">${icon("ban")} Bu kun band. Boshqa sanani tanlang.</p>` : ""}
+    ${dateBusy ? `<p class="form-alert">${icon("ban")} ${esc(t("booking.dateBusy"))}</p>` : ""}
 
     ${dishPickerHtml()}
 
     <div class="field" style="margin-top:var(--sp-4)">
-      <label for="bk-guests">Mehmonlar soni</label>
+      <label for="bk-guests">${esc(t("booking.guests"))}</label>
       <input class="input" id="bk-guests" type="number" min="1" max="${state.hall.people}" value="${state.guests}">
     </div>
 
@@ -534,11 +533,11 @@ function venueFormHtml() {
 
     ${state.dishCount && state.menuIds.length !== state.dishCount ? `
       <p class="form-alert" style="margin-top:var(--sp-4)">
-        Menyudan ${state.dishCount} xil taom tanlang — hozir ${state.menuIds.length} ta belgilangan.
+        ${esc(t("booking.dishesAlert", { count: state.dishCount, picked: state.menuIds.length }))}
       </p>` : ""}
 
     <button class="btn btn-primary btn-block btn-lg" style="margin-top:var(--sp-5)"
-            data-next ${dateBusy ? "disabled" : ""}>Zalni band qilish</button>`;
+            data-next ${dateBusy ? "disabled" : ""}>${esc(t("booking.bookHall"))}</button>`;
 }
 
 /**
@@ -557,29 +556,29 @@ function menuLimit() {
 function confirmHtml() {
   const isRestaurant = state.type === "restaurant";
   return `
-    <h2>Bronni tasdiqlang</h2>
+    <h2>${esc(t("booking.confirm"))}</h2>
     <div class="notice">
-      <p>${icon("wave")} Assalomu alaykum! ${isRestaurant ? "Stolni" : "Zalni"} band qilish uchun
-         "Ariza berish" tugmasini bosing.</p>
-      <p>Oldindan <b>${money(depositAmount())}</b> depozit to'lovini amalga oshirishingiz
-         kerak bo'ladi${isRestaurant ? " — bu summa ovqatlanganingizga qo'shiladi" : ""}.</p>
+      <p>${icon("wave")} ${esc(t(isRestaurant ? "booking.confirmHintRoom" : "booking.confirmHintHall"))}</p>
+      <p>${t(isRestaurant ? "booking.depositHintRoom" : "booking.depositHint", {
+           amount: `<b>${money(depositAmount())}</b>`,
+         })}</p>
     </div>
 
     <div class="total-box" style="margin-top:var(--sp-4)">
-      <div class="row"><span>Sana</span><b>${dateLabel(state.date)}</b></div>
+      <div class="row"><span>${esc(t("booking.date"))}</span><b>${dateLabel(state.date)}</b></div>
       ${isRestaurant
-        ? `<div class="row"><span>Vaqt</span><b>${fromMin(state.startMin)} – ${fromMin(state.endMin)}</b></div>`
+        ? `<div class="row"><span>${esc(t("booking.time"))}</span><b>${fromMin(state.startMin)} – ${fromMin(state.endMin)}</b></div>`
         : state.dishCount
-          ? `<div class="row"><span>Taom soni</span><b>${state.dishCount} xil</b></div>`
+          ? `<div class="row"><span>${esc(t("booking.dishCount"))}</span><b>${esc(t("booking.dishKindsShort", { count: state.dishCount }))}</b></div>`
           : ""}
-      <div class="row"><span>Mehmonlar</span><b>${state.guests} kishi</b></div>
+      <div class="row"><span>${esc(t("booking.guestsShort"))}</span><b>${esc(t("booking.peopleCount", { count: state.guests }))}</b></div>
       ${confirmPriceRowHtml(isRestaurant)}
-      <div class="row"><span>Depozit (oldindan)</span><b>${money(depositAmount())}</b></div>
+      <div class="row"><span>${esc(t("booking.deposit"))}</span><b>${money(depositAmount())}</b></div>
     </div>
 
     <div class="row row-2" style="margin-top:var(--sp-5)">
-      <button class="btn btn-outline" style="flex:1" data-back>${icon("chevronLeft")} Orqaga</button>
-      <button class="btn btn-primary" style="flex:2" data-submit>Ariza berish</button>
+      <button class="btn btn-outline" style="flex:1" data-back>${icon("chevronLeft")} ${esc(t("booking.back"))}</button>
+      <button class="btn btn-primary" style="flex:2" data-submit>${esc(t("booking.submit"))}</button>
     </div>`;
 }
 
@@ -594,15 +593,15 @@ function confirmPriceRowHtml(isRestaurant) {
 
   const total = totalPrice();
   if (total === null) {
-    return `<div class="row"><span>Umumiy summa</span><b>Egasi bilan kelishiladi</b></div>`;
+    return `<div class="row"><span>${esc(t("booking.total"))}</span><b>${esc(t("booking.priceOnRequest"))}</b></div>`;
   }
 
   const rent = dayRentPrice();
   const food = foodTotal();
   return [
-    rent !== null ? `<div class="row"><span>Bir kunlik ijara</span><b>${money(rent)}</b></div>` : "",
-    food !== null ? `<div class="row"><span>Taom (${state.guests} kishi)</span><b>${money(food)}</b></div>` : "",
-    `<div class="row grand"><span>Umumiy summa</span><b>${money(total)}</b></div>`,
+    rent !== null ? `<div class="row"><span>${esc(t("booking.dayRent"))}</span><b>${money(rent)}</b></div>` : "",
+    food !== null ? `<div class="row"><span>${esc(t("booking.foodFor", { count: state.guests }))}</span><b>${money(food)}</b></div>` : "",
+    `<div class="row grand"><span>${esc(t("booking.total"))}</span><b>${money(total)}</b></div>`,
   ].join("");
 }
 
@@ -612,19 +611,21 @@ function doneHtml() {
     : "@akobir_marupov";
   const handle = telegram.replace("@", "");
   return `
-    <h2>${icon("checkCircle")} Ariza yuborildi</h2>
+    <h2>${icon("checkCircle")} ${esc(t("booking.sent"))}</h2>
     <div class="notice">
-      <p>So'rovingiz qabul qilindi va hozircha <b>«kutilmoqda»</b> holatida.</p>
-      <p>Bronni yakuniy tasdiqlash uchun <b>${esc(telegram)}</b> administratoriga
-         Telegram orqali murojaat qiling va <b>${money(depositAmount())}</b> depozitni to'lang.</p>
+      <p>${t("booking.doneStatus", { status: `<b>«${esc(t("booking.statusPending"))}»</b>` })}</p>
+      <p>${t("booking.doneTelegram", {
+           handle: `<b>${esc(telegram)}</b>`,
+           amount: `<b>${money(depositAmount())}</b>`,
+         })}</p>
     </div>
     <a class="tg-line" style="margin-top:var(--sp-4)" href="https://t.me/${esc(handle)}"
        target="_blank" rel="noopener">
       <span class="ic">${icon("send")}</span>
-      <span>Telegram: ${esc(telegram)} — bosing va yozing</span>
+      <span>${esc(t("booking.telegramLine", { handle: telegram }))}</span>
     </a>
     <a class="btn btn-primary btn-block btn-lg" style="margin-top:var(--sp-5)"
-       href="${ROUTES.myBookings}">Bronlarimga o'tish</a>`;
+       href="${ROUTES.myBookings}">${esc(t("booking.myBookings"))}</a>`;
 }
 
 function bindEvents(container) {
@@ -659,7 +660,7 @@ function bindEvents(container) {
     const end = Number(event.target.value);
     const start = state.startMin ?? state.openHour * 60;
     if (rangeIsBusy(start, end)) {
-      toast.error("Tanlangan oraliqda band vaqt bor.");
+      toast.error(t("booking.rangeBusy"));
       return;
     }
     state.startMin = start;
@@ -698,7 +699,7 @@ function bindEvents(container) {
       } else {
         const max = menuLimit();
         if (state.menuIds.length >= max) {
-          toast.error(`Eng ko'pi ${max} ta taom tanlash mumkin.`);
+          toast.error(t("booking.maxDishes", { max }));
           return;
         }
         state.menuIds.push(id);
@@ -714,8 +715,9 @@ function bindEvents(container) {
     // xatoni oxirgi bosishda ko'rardi.
     if (state.type === "venue" && state.dishCount && state.menuIds.length !== state.dishCount) {
       toast.error(
-        `Menyudan ${state.dishCount} xil taom tanlang (hozir ${state.menuIds.length} ta). ` +
-        `Taom kerak bo'lmasa "Taom kerak emas" ni belgilang.`
+        t("booking.dishesToast", {
+          count: state.dishCount, picked: state.menuIds.length,
+        })
       );
       return;
     }

@@ -280,7 +280,3 @@ def _demote_if_no_approved_business(user):
     logger.info(f"Owner role reset to 'user': user_id={user.pk} (ariza rad etildi)")
 
 
-def trial_end_date():
-    from common.models import PlatformSettings
-
-    return timezone.now() + timedelta(days=PlatformSettings.get_solo().trial_days)

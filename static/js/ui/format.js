@@ -3,13 +3,9 @@
  * Butun sayt bo'ylab bir xil ko'rinish shu yerdan keladi.
  */
 import { STATUS_LABELS, STATUS_TONE, PLACEHOLDER_IMAGE } from "../core/config.js";
+import { t } from "../core/i18n.js";
 import { esc } from "./dom.js";
 import { icon, starRow } from "./icons.js";
-
-const MONTHS = [
-  "yanvar", "fevral", "mart", "aprel", "may", "iyun",
-  "iyul", "avgust", "sentyabr", "oktyabr", "noyabr", "dekabr",
-];
 
 /** 255000 → "255 000 so'm" */
 export function money(value, { withSuffix = true } = {}) {
@@ -17,15 +13,19 @@ export function money(value, { withSuffix = true } = {}) {
   const formatted = Math.round(number)
     .toString()
     .replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  return withSuffix ? `${formatted} so'm` : formatted;
+  return withSuffix ? `${formatted} ${t("common.soum")}` : formatted;
 }
 
-/** "2026-09-14" → "14-sentyabr, 2026" */
+/** "2026-09-14" → "14-sentyabr, 2026" (tartib tilga qarab o'zgaradi) */
 export function dateLabel(value) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
-  return `${date.getDate()}-${MONTHS[date.getMonth()]}, ${date.getFullYear()}`;
+  return t("months.dateFormat", {
+    d: date.getDate(),
+    month: t(`months.m${date.getMonth() + 1}`),
+    y: date.getFullYear(),
+  });
 }
 
 /** "19:00:00" → "19:00" */
@@ -74,13 +74,22 @@ export function stars(rating) {
 
 /** Holat kodidan tayyor "seal" nishoni. */
 export function statusSeal(status) {
-  const label = STATUS_LABELS[status] || status || "—";
   const tone = STATUS_TONE[status] || "seal-info";
-  return `<span class="seal ${tone}">${esc(label)}</span>`;
+  return `<span class="seal ${tone}">${esc(statusLabel(status))}</span>`;
 }
 
-export function statusLabel(status) {
-  return STATUS_LABELS[status] || status || "—";
+/**
+ * Holat kodini tarjimaga aylantiradi.
+ *
+ * Lug'atda kalit topilmasa `t()` kalitning o'zini qaytaradi — o'shanda
+ * eski o'zbekcha ro'yxatga (`STATUS_LABELS`) tushamiz, ya'ni ekranda
+ * "status.pending" degan texnik yozuv hech qachon ko'rinmaydi.
+ */
+function statusLabel(status) {
+  if (!status) return "—";
+  const key = `status.${status}`;
+  const text = t(key);
+  return text === key ? STATUS_LABELS[status] || status : text;
 }
 
 /** Rasm manzili — bo'sh bo'lsa zaxira rasm. */
@@ -90,7 +99,9 @@ export function imageUrl(value) {
 
 /** "restaurant" → "Restoran" */
 export function businessTypeLabel(type) {
-  return type === "venue" ? "To'yxona" : type === "restaurant" ? "Restoran" : "—";
+  if (type === "venue") return t("common.venue");
+  if (type === "restaurant") return t("common.restaurant");
+  return "—";
 }
 
 /* ===================================================================
@@ -119,10 +130,9 @@ const TRUST_TONE_CLASS = {
 export function trustSeal(trust, { compact = false } = {}) {
   if (!trust || trust.bits === undefined || trust.bits === null) return "";
   const tone = TRUST_TONE_CLASS[trust.tone] || "seal-info";
-  const label = compact
-    ? `${trust.bits} Bit`
-    : `${trust.bits} Bit · ${trust.level_display || ""}`;
-  return `<span class="seal ${tone} trust-seal" title="Ishonchlilik bali">${icon("shield")} ${esc(label.trim())}</span>`;
+  const bits = `${trust.bits} ${t("profile.bit")}`;
+  const label = compact ? bits : `${bits} · ${trust.level_display || ""}`;
+  return `<span class="seal ${tone} trust-seal" title="${esc(t("profile.trustTitle"))}">${icon("shield")} ${esc(label.trim())}</span>`;
 }
 
 /** 0–100 oralig'idagi ishonchlilik chizig'i (progress). */
@@ -151,15 +161,17 @@ export function timeLeftLabel(deadline) {
   if (Number.isNaN(left) || left <= 0) return "";
 
   const minutes = Math.ceil(left / 60000);
-  if (minutes < 60) return `${minutes} daqiqa`;
+  if (minutes < 60) return t("common.nMinutes", { n: minutes });
 
   const hours = Math.floor(minutes / 60);
   if (hours < 24) {
     const rest = minutes % 60;
-    return rest ? `${hours} soat ${rest} daqiqa` : `${hours} soat`;
+    const head = t("common.nHours", { n: hours });
+    return rest ? `${head} ${t("common.nMinutes", { n: rest })}` : head;
   }
 
   const days = Math.floor(hours / 24);
   const restHours = hours % 24;
-  return restHours ? `${days} kun ${restHours} soat` : `${days} kun`;
+  const head = t("common.nDays", { n: days });
+  return restHours ? `${head} ${t("common.nHours", { n: restHours })}` : head;
 }

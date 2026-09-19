@@ -1,8 +1,10 @@
 """Reservation modeli uchun API'lar — bron yaratish, ko'rish, bekor qilish."""
 
+import datetime
 import logging
 
 from django.db import transaction
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -214,6 +216,51 @@ class MyReservationListAPIView(APIView):
         )
 
 
+class PendingReviewAPIView(APIView):
+    """
+    GET /api/reservations/pending-review/ — sharh kutayotgan bronlar.
+
+    Vaqti tugagan, lekin hali bahoi qo'yilmagan bronlar. Sayt shu
+    ro'yxatga qarab sharh oynasini O'ZI ochadi: odam joydan chiqib,
+    saytga kirganda darrov "qanday o'tdi?" degan savolni ko'radi.
+    Ilgari sharh yozish uchun u "Bronlarim" ni ochib, kerakli bronni
+    topib, tugmasini bosishi kerak edi — amalda buni deyarli hech kim
+    qilmasdi va joylar sharhsiz qolardi.
+
+    Faqat SO'NGGI bronlar so'raladi: bir oy oldingi tashrif haqida
+    so'rash ham bezovta qiladi, ham javobi ishonchsiz bo'ladi.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    # Necha kun ichida tugagan bron uchun sharh so'raladi.
+    REVIEW_WINDOW_DAYS = 14
+    # Bir vaqtda nechta so'rov qaytadi. Odamga ketma-ket beshta oyna
+    # ko'rsatib bo'lmaydi — u birinchisidayoq yopib yuboradi.
+    LIMIT = 3
+
+    @extend_schema(responses=ReservationSerializer(many=True))
+    def get(self, request):
+        since = timezone.localdate() - datetime.timedelta(days=self.REVIEW_WINDOW_DAYS)
+
+        queryset = (
+            Reservation.objects.filter(
+                user=request.user,
+                status="completed",
+                availability__date__gte=since,
+            )
+            # `review` — OneToOne teskari bog'lanishi. Sharh yozilgan
+            # bronlar shu bilan chiqarib tashlanadi.
+            .filter(review__isnull=True)
+            .select_related("user", "business", "room", "hall", "availability")
+            .order_by("-availability__date", "-created_at")[: self.LIMIT]
+        )
+
+        return Response(
+            ReservationSerializer(queryset, many=True, context={"request": request}).data
+        )
+
+
 class ReservationDetailAPIView(APIView):
     """GET /api/reservations/{pk}/ — bitta bron (faqat egasi yoki biznes egasi)."""
 
@@ -361,6 +408,23 @@ class OwnerReservationStatusAPIView(APIView):
         new_status = serializer.validated_data["status"]
 
         with transaction.atomic():
+            # QULFLAB QAYTA O'QIYMIZ — yuqoridagi o'qish qulfsiz edi.
+            #
+            # Nega kerak: ayni damda mijoz o'z bronini bekor qilayotgan
+            # bo'lishi mumkin (`ReservationCancelAPIView` ni qarang — u
+            # allaqachon shunday qulf ishlatadi). Qulfsiz ikkala so'rov
+            # ham bronni ESKI holatida o'qib olardi va keyin ikkalasi
+            # ham yozardi: kim keyin yozsa — o'shaniki. Natijada mijoz
+            # "bekor qildim" degan javobni olib, ishonchlilik balidan
+            # ham ayrilib, bron esa "tasdiqlangan" bo'lib qolardi —
+            # ya'ni joy egasi kelmaydigan mijozni kutib o'tirardi.
+            #
+            # `select_related` bu yerda ATAYLAB yo'q: `room`/`hall`/
+            # `availability` NULL bo'lishi mumkin va ular LEFT JOIN
+            # bilan kelardi, PostgreSQL esa outer join'ning nullable
+            # tomoniga `FOR UPDATE` qo'yishga ruxsat bermaydi.
+            reservation = Reservation.objects.select_for_update().get(pk=reservation.pk)
+
             reservation.status = new_status
             # save() (update_fields bilan) post_save signalini ishga tushiradi —
             # to'yxona bo'lsa Availability.is_booked avtomatik moslashadi.

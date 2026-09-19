@@ -164,18 +164,6 @@ export function starRow(rating, opt = {}) {
   return html;
 }
 
-/** Ikonka + matn — qatorda tekis tursin uchun bitta o'ram. */
-export function iconLabel(name, text, opt = {}) {
-  return `<span class="icon-label">${icon(name, opt)}<span>${text}</span></span>`;
-}
-
-/** Ikonka nomi mavjudligini tekshirish (testlar va dinamik nomlar uchun). */
-export function hasIcon(name) {
-  return Object.prototype.hasOwnProperty.call(PATHS, name);
-}
-
-export const ICON_NAMES = Object.keys(PATHS);
-
 function escapeAttr(value) {
   return String(value).replace(/[&<>"]/g, (ch) => (
     { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]

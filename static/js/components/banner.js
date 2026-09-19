@@ -14,7 +14,7 @@
  * Banner umuman bo'lmasa, blok jimgina bo'sh qoladi (sahifa buzilmaydi).
  */
 import { api } from "../core/api.js";
-import { getLanguage } from "../core/i18n.js";
+import { getLanguage, t } from "../core/i18n.js";
 import { esc } from "../ui/dom.js";
 
 /** Rasm va matnli banner shuncha turadi. */
@@ -79,13 +79,26 @@ export async function renderBanner(selector, placement = "hero") {
   const container = document.querySelector(selector);
   if (!container) return;
 
+  // Banner bo'lmasa BLOKNING O'ZI yashiriladi.
+  //
+  // Ilgari faqat ichi bo'sh qolardi, lekin bo'limning yuqori va pastki
+  // to'ldirishi (`section-sm`) joyida turaverardi: sahifa o'rtasida
+  // 64 px lik sababsiz bo'shliq paydo bo'lardi. Bu ayniqsa yangi
+  // platformada ko'zga tashlanadi — hali hech qanday banner yo'q.
+  const hide = () => { container.hidden = true; };
+
   let banners = [];
   try {
     banners = await api.banners({ placement, lang: getLanguage() });
   } catch {
+    hide();
     return; // banner yuklanmasa sahifa baribir to'liq ishlaydi
   }
-  if (!banners.length) return;
+  if (!banners.length) {
+    hide();
+    return;
+  }
+  container.hidden = false;
 
   // Bitta banner — almashadigan narsa yo'q, video esa aylanaversin.
   if (banners.length === 1) {
@@ -97,7 +110,7 @@ export async function renderBanner(selector, placement = "hero") {
   dots.className = "banner-dots";
   dots.innerHTML = banners
     .map((_, index) => `<button type="button" class="${index === 0 ? "active" : ""}"
-      aria-label="Banner ${index + 1}"></button>`)
+      aria-label="${esc(t("common.slide", { n: index + 1 }))}"></button>`)
     .join("");
 
   let index = -1;

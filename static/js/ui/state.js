@@ -4,6 +4,7 @@
  * Har bir ro'yxat uchun bir xil ko'rinish: skeleton → ma'lumot yoki
  * bo'sh holat. Foydalanuvchi hech qachon bo'm-bo'sh oq ekranga qaramaydi.
  */
+import { t } from "../core/i18n.js";
 import { esc } from "./dom.js";
 import { icon } from "./icons.js";
 
@@ -30,30 +31,8 @@ export function errorState(message, { retryAction = "" } = {}) {
   return `
     <div class="empty-state">
       <div class="icon">${icon("alert")}</div>
-      <h3>Ma'lumotni yuklab bo'lmadi</h3>
+      <h3>${esc(t("common.loadFailed"))}</h3>
       <p class="small">${esc(message)}</p>
-      ${retryAction ? `<button class="btn btn-outline btn-sm" data-action="${esc(retryAction)}" style="margin-top:var(--sp-3)">Qayta urinish</button>` : ""}
+      ${retryAction ? `<button class="btn btn-outline btn-sm" data-action="${esc(retryAction)}" style="margin-top:var(--sp-3)">${esc(t("common.retry"))}</button>` : ""}
     </div>`;
-}
-
-/**
- * Ro'yxat yuklashning umumiy naqshi:
- * skeleton ko'rsat → so'rov yubor → chiz yoki xato ko'rsat.
- */
-export async function loadInto(container, { loader, render, skeleton, empty }) {
-  if (!container) return null;
-  container.innerHTML = skeleton || skeletonRows(4);
-  try {
-    const data = await loader();
-    const items = Array.isArray(data) ? data : data?.results;
-    if (Array.isArray(items) && items.length === 0 && empty) {
-      container.innerHTML = empty;
-      return data;
-    }
-    container.innerHTML = render(data);
-    return data;
-  } catch (error) {
-    container.innerHTML = errorState(error.message);
-    return null;
-  }
 }

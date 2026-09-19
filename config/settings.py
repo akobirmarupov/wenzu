@@ -28,6 +28,56 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1", cast=Csv(
 if DEBUG:
     ALLOWED_HOSTS = [*ALLOWED_HOSTS, "*"]
 
+# BO'SH `ALLOWED_HOSTS` — JIMGINA O'LIM.
+#
+# `.env` da `ALLOWED_HOSTS=` deb qiymatsiz qoldirilsa (yoki satr
+# tasodifan o'chib ketsa), `Csv()` bo'sh RO'YXAT qaytaradi — bu
+# "standart qiymatdan foydalan" degani EMAS, chunki kalitning o'zi
+# mavjud. DEBUG=False bo'lganda Django bunday holatda HAR BIR
+# so'rovni "Invalid HTTP_HOST header" deb 400 bilan rad etadi.
+#
+# Eng yomoni — sayt ko'tariladi, `check` o'tadi, health tekshiruvi
+# ham ba'zan o'tib ketadi, lekin foydalanuvchi uchun hamma narsa
+# o'lik. Sababi esa faqat so'rov loglarini ochib ko'rgandagina
+# ko'rinadi. Shuning uchun bunday sozlama bilan umuman ko'tarilmagan
+# ma'qul: xato deploy paytida, aniq matn bilan chiqsin.
+if not DEBUG and not ALLOWED_HOSTS:
+    from django.core.exceptions import ImproperlyConfigured
+
+    raise ImproperlyConfigured(
+        "ALLOWED_HOSTS bo'sh, DEBUG esa False. Bunday holatda sayt har bir "
+        "so'rovga 400 qaytaradi. `.env` da domenlarni ko'rsating, masalan: "
+        "ALLOWED_HOSTS=api.feasto.uz,feasto.uz"
+    )
+
+# ISHLAB CHIQISH KALITI BILAN PRODUCTIONGA CHIQIB BO'LMAYDI.
+#
+# Django o'zi yaratgan kalit `django-insecure-` bilan boshlanadi. U
+# ochiq matn sifatida repozitoriyga tushib ketishi oson va aynan
+# shuning uchun "insecure" deb belgilangan. Bu kalit sessiya
+# imzosini ham, parolni tiklash havolasini ham, JWT'ni ham imzolaydi:
+# uni bilgan odam istalgan foydalanuvchi nomidan token yasay oladi.
+#
+# `check --deploy` bu haqda OGOHLANTIRADI, lekin ogohlantirish deploy
+# paytida ko'zdan qochadi. Shuning uchun productionda bu — xato:
+# ilova ko'tarilmaydi va sababi aniq yoziladi.
+#
+# Yangi kalit:
+#   python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+#
+# DIQQAT: kalit almashtirilsa barcha mavjud sessiya va JWT bekor
+# bo'ladi — foydalanuvchilar qaytadan kirishi kerak. Shuning uchun uni
+# ISHGA TUSHIRISHDAN OLDIN almashtiring.
+if not DEBUG and (SECRET_KEY.startswith("django-insecure-") or len(SECRET_KEY) < 40):
+    from django.core.exceptions import ImproperlyConfigured
+
+    raise ImproperlyConfigured(
+        "SECRET_KEY ishlab chiqish uchun yaratilgan (yoki juda qisqa). "
+        "Productionda uzun tasodifiy kalit kerak. Yangisini yarating: "
+        'python -c "from django.core.management.utils import '
+        'get_random_secret_key; print(get_random_secret_key())"'
+    )
+
 AUTH_USER_MODEL = "account.User"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 ROOT_URLCONF = "config.urls"
@@ -487,6 +537,27 @@ LOG_DIR = BASE_DIR / "logs"
 LOG_DIR.mkdir(exist_ok=True)
 LOG_LEVEL = config("LOG_LEVEL", default="INFO")
 
+# KONSOL LOGI — productionda alohida, tinchroq daraja.
+#
+# Fayl logi xavfsiz: `RotatingFileHandler` 10 MB dan oshganda
+# aylantiradi, ya'ni disk egallashi yuqoridan cheklangan. Konsol esa
+# unday emas — gunicorn ostida `stdout` to'g'ridan-to'g'ri systemd
+# journald'ga (yoki Docker log drayveriga) oqadi va u yerda hech
+# qanday chegara yo'q. 10 000 foydalanuvchida har bir bron, har bir
+# bildirishnoma, har bir obuna hodisasi uchun INFO qatori yoziladi —
+# ustiga gunicorn'ning o'z `accesslog` i ham qo'shiladi. Bir necha
+# kunda bu disk to'lishiga olib keladi, disk to'lsa esa PostgreSQL
+# birinchi bo'lib yiqiladi.
+#
+# Shuning uchun productionda konsolga faqat WARNING va undan yuqorisi
+# chiqadi, to'liq INFO oqimi esa aylanadigan faylda qoladi — ya'ni
+# tekshirish uchun hamma narsa joyida turadi. Ishlab chiqishda
+# (DEBUG=True) hech narsa o'zgarmaydi: terminalda hammasi ko'rinadi.
+#
+# Kerak bo'lsa bitta o'zgaruvchi bilan qaytariladi:
+#   CONSOLE_LOG_LEVEL=INFO
+CONSOLE_LOG_LEVEL = config("CONSOLE_LOG_LEVEL", default="INFO" if DEBUG else "WARNING")
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -503,6 +574,7 @@ LOGGING = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
+            "level": CONSOLE_LOG_LEVEL,
             "formatter": "verbose",
             "filters": ["request_id"],
         },

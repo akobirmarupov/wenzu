@@ -11,6 +11,7 @@ from reservations.routes.availability import (
 from reservations.routes.reservation import (
     AdminReservationListAPIView,
     MyReservationListAPIView,
+    PendingReviewAPIView,
     OwnerReservationListAPIView,
     OwnerReservationStatusAPIView,
     ReservationCancelAPIView,
@@ -29,6 +30,7 @@ urlpatterns = [
     # --- mijoz ---
     path("reservations/", ReservationCreateAPIView.as_view(), name="reservation-create"),
     path("reservations/my/", MyReservationListAPIView.as_view(), name="reservation-my"),
+    path("reservations/pending-review/", PendingReviewAPIView.as_view(), name="reservation-pending-review"),
     path("reservations/<uuid:pk>/", ReservationDetailAPIView.as_view(), name="reservation-detail"),
     path("reservations/<uuid:pk>/cancel/", ReservationCancelAPIView.as_view(), name="reservation-cancel"),
 

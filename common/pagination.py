@@ -24,12 +24,6 @@ class StandardResultsPagination(PageNumberPagination):
 DefaultPagination = StandardResultsPagination
 
 
-class BusinessFeedCursorPagination(CursorPagination):
-    page_size = 15
-    ordering = "-created_at"
-    cursor_query_param = "cursor"
-
-
 class ReviewsPagination(StandardResultsPagination):
     """
     Vazifasi: bitta biznesning sharhlar (Review) ro'yxati uchun,

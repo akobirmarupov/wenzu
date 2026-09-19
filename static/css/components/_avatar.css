@@ -11,16 +11,29 @@
   background: var(--theme-accent); color: var(--on-accent);
   font-weight: 800; font-size: var(--fs-sm); line-height: 1;
 }
-.avatar img { width: 100%; height: 100%; object-fit: cover; }
+.avatar { position: relative; }
+/* Rasm bosh harflar USTIDA turadi; yuklanmasa o'zini olib tashlaydi
+   (`avatar.js`) va ostidagi harflar ko'rinadi. */
+.avatar img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%; object-fit: cover;
+}
+.avatar-initials { display: block; line-height: 1; }
 
-.avatar-sm { width: 28px; height: 28px; font-size: 11px; }
+.avatar-sm { width: 28px; height: 28px; font-size: var(--fs-2xs); }
 .avatar-lg { width: 64px; height: 64px; font-size: var(--fs-lg); }
+/* Bosh harflar doira o'lchamining ~1/3 qismi — shrift shkalasiga
+   emas, doiraga bog'langan. Shuning uchun tokenga o'tkazilmaydi. */
 .avatar-xl { width: 112px; height: 112px; font-size: 38px; }
 
 /* Oltin halqa */
 .avatar-ring {
   position: relative; display: inline-grid; place-items: center;
-  border-radius: 50%; padding: 4px;
+  border-radius: 50%; padding: var(--sp-1);
+  /* BREND GRADIENTI — tokenga o'tkazilmaydi. Bu yetti to'xtashli
+     aylanma o'tish: metall yaltirashi aynan to'xtashlar ketma-ketligidan
+     chiqadi, alohida tokenlar bilan yozilsa u o'qilmas bo'lib qolardi.
+     Ranglar `--gold-shine` dagi to'xtashlar bilan bir xil oilada. */
   background: conic-gradient(from 210deg,
     #8F6F1E 0deg, #E9CE72 70deg, #FFF6D4 120deg,
     #C9A227 190deg, #8F6F1E 260deg, #E0C05A 320deg, #8F6F1E 360deg);
@@ -33,16 +46,16 @@
 }
 .avatar-ring .avatar { position: relative; z-index: 1; }
 .avatar-ring.avatar-xl { padding: 5px; }
-.avatar-ring.avatar-lg { padding: 4px; }
+.avatar-ring.avatar-lg { padding: var(--sp-1); }
 .avatar-ring.avatar-sm { padding: 2px; }
 
 /* Rasm almashtirish tugmasi */
 .avatar-edit {
   position: absolute; right: -2px; bottom: -2px; z-index: 2;
-  width: 34px; height: 34px; border-radius: 50%;
+  width: var(--ctl-h-sm); height: var(--ctl-h-sm); border-radius: 50%;
   display: grid; place-items: center; cursor: pointer;
   background: var(--surface); border: 1.5px solid var(--line);
-  color: var(--ink-soft); font-size: 14px;
+  color: var(--ink-soft); font-size: var(--fs-sm);
   box-shadow: var(--shadow-sm);
   transition: all var(--transition);
 }
@@ -55,7 +68,9 @@
   position: absolute; right: 4px; top: 4px; z-index: 2;
   width: 16px; height: 16px; border-radius: 50%;
   border: 2.5px solid var(--surface);
-  display: grid; place-items: center; font-size: 8px; color: #fff;
+  /* Nuqta foni `--ok` yoki `--warn` — ikkala rang ham tungi rejimda
+     YORUG'lashadi. Qattiq oq belgi shunda ko'rinmay qolardi (1.8),
+     `--on-accent` esa temaga qarab almashadi: kunduzi oq (5.2),
+     tunda to'q (10.3). */
+  display: grid; place-items: center; font-size: 8px; color: var(--on-accent);
 }
-.avatar-status-ok { background: var(--ok); }
-.avatar-status-warn { background: var(--warn); }

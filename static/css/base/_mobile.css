@@ -70,20 +70,31 @@
      5. BARMOQ O'LCHAMI.
 
      Sichqoncha uchun 34 px yetarli, barmoq uchun emas: yonma-yon
-     turgan mayda tugmalar noto'g'ri bosiladi. 42 px — qulay eng
-     kichik o'lcham.
-     ----------------------------------------------------------------- */
-  .btn { padding: 12px 20px; min-height: 44px; }
-  .btn-sm { min-height: 38px; }
-  .icon-btn { width: 42px; height: 42px; }
+     turgan mayda tugmalar noto'g'ri bosiladi.
+
+     Oddiy `.btn` bu yerda QAYTA YOZILMAYDI — `--ctl-h` allaqachon
+     44 px va u kompyuterda ham, telefonda ham o'shanday qoladi.
+     Ilgari shu yerda `padding: 12px 20px; min-height: 44px` turardi
+     va ikkisi bir-biriga zid edi: ichki bo'shliq balandlikni 46 px ga
+     chiqarib, min-height ishlamay qolardi.
+
+     Kichik va ikonkali tugmalar esa 34 px dan to'liq o'lchamga
+     ko'tariladi: barmoq uchun 34 px kichik. */
+  .btn-sm { min-height: var(--ctl-h); }
+  .icon-btn { width: var(--ctl-h); height: var(--ctl-h); }
 
   /* Kartochkadagi tugmalar tor ekranda yonma-yon siqilib qolardi. */
   .row-2 > .btn, .row-3 > .btn { flex: 1; }
 
   /* Sarlavhalar telefonda biroz kichrayadi — aks holda uzun nom
-     ekranga sig'may, uch qatorga bo'linib ketardi. */
+     ekranga sig'may, uch qatorga bo'linib ketardi.
+
+     `h1.display` ilgari shu yerda ham, faylning quyi qismida ham
+     belgilangan edi. Ikkalasi bir xil kenglik chegarasida (560 px)
+     turgani uchun KEYINGISI ustun chiqardi va bu yerdagisi hech
+     qachon ishlamasdi — ya'ni sarlavha `--fs-2xl` emas, quyidagi
+     qiymatda chizilardi. Takroriy qator olib tashlandi. */
   .display.h2 { font-size: var(--fs-xl); }
-  h1.display  { font-size: var(--fs-2xl); }
 
   /* Modal — pastdan chiqadigan varaq ko'rinishida (`_modal.css` da
      560 px uchun allaqachon shunday). Ichidagi tugmalar tik tursin. */
@@ -156,10 +167,13 @@
      34 px barmoq uchun hali qulay, lekin qatorda joy ochiladi. */
   .topbar { min-height: var(--topbar-h); }
   .topbar-right { gap: 6px; }
+  /* Izoh 34 px deydi, kod esa 32 px yozardi — endi ikkalasi bitta
+     tokendan (`--ctl-h-sm`). Uchala boshqaruv bir xil balandlikda
+     bo'lgani uchun panel qatori tekis chiziqda turadi. */
   .topbar .icon-btn,
-  .topbar .notif-trigger { width: 32px; height: 32px; font-size: 14px; }
-  .topbar .lang-trigger { height: 32px; padding: 0 8px 0 6px; }
-  .topbar .notif-dot { min-width: 15px; height: 15px; font-size: 9px; }
+  .topbar .notif-trigger { width: var(--ctl-h-sm); height: var(--ctl-h-sm); font-size: var(--fs-sm); }
+  .topbar .lang-trigger { height: var(--ctl-h-sm); padding: 0 var(--sp-2) 0 6px; }
+  .topbar .notif-dot { min-width: 15px; height: 15px; font-size: var(--fs-2xs); }
 
   /* -----------------------------------------------------------------
      OCHILUVCHI OYNALAR EKRANDAN CHIQIB KETMASIN.
@@ -183,11 +197,11 @@
   .notif-body { max-height: min(58vh, 400px); }
   .notif-head { padding: var(--sp-2) var(--sp-3); }
   .notif-row { padding: var(--sp-2) var(--sp-3); gap: var(--sp-2); }
-  .notif-row .ic { width: 26px; height: 26px; font-size: 12px; }
+  .notif-row .ic { width: 26px; height: 26px; font-size: var(--fs-xs); }
 
   /* Til ro'yxati ham torroq — uch band uchun 186 px ortiqcha edi. */
   .lang-dropdown { min-width: 150px; }
-  .lang-dropdown button { padding: 7px 8px; }
+  .lang-dropdown button { padding: var(--sp-2); }
 }
 
 /* -------------------------------------------------------------------
@@ -263,6 +277,7 @@
      Matnli MAYDONLAR bundan mustasno — ular quyida 16 px da qoladi,
      aks holda iOS bosilganda sahifani kattalashtirib yuboradi. */
   :root {
+    --fs-2xs: 9.5px;
     --fs-xs: 11px;   --fs-sm: 12.5px; --fs-base: 14px;
     --fs-md: 15.5px; --fs-lg: 18px;   --fs-xl: 22px;  --fs-2xl: 27px;
   }
@@ -273,7 +288,7 @@
   .panel { padding: var(--sp-3); }
   .grid { gap: var(--sp-3); }
 
-  h1.display { font-size: 22px; }
+  h1.display { font-size: var(--fs-xl); }
   .display.h3 { font-size: var(--fs-md); }
   .lede { font-size: var(--fs-sm); }
   .catalog-head { margin-bottom: var(--sp-4); }
@@ -292,8 +307,8 @@
      tashlandi: platforma bitta shahar bilan chegaralanmaydi.) */
   .home-head { padding: var(--sp-4) 0 var(--sp-3); gap: var(--sp-3); }
   .home-head .lede { display: none; }
-  .home-head h1 { font-size: 21px; }
-  .home-tab { padding: 6px 14px; font-size: var(--fs-xs); }
+  .home-head h1 { font-size: var(--fs-xl); }
+  .home-tab { min-height: var(--ctl-h-sm); padding: 0 var(--sp-3); font-size: var(--fs-xs); }
 
   /* QIDIRUV — BITTA QATORDA.
      `flex-wrap: wrap` tufayli uchta element ikki qatorga bo'linib
@@ -302,10 +317,13 @@
      kengayib, tugmalarni siqib chiqarardi), "Yaqinimda" esa faqat
      nishonchaga qisqaradi. Uning matni ekran o'quvchisi uchun
      `data-i18n-label` da qoladi. */
-  .home-search { flex-wrap: nowrap; gap: 5px; padding: 5px; border-radius: var(--radius-m); }
-  .home-search .search { flex: 1; min-width: 0; }
-  .home-search .btn { min-height: 38px; padding: 0 12px; white-space: nowrap; }
-  .home-search #near-me { padding: 0 10px; }
+  .home-search { flex-wrap: nowrap; gap: var(--sp-1); padding: var(--sp-1); border-radius: var(--radius-m); }
+  /* Qatordagi uchala element BIR XIL balandlikda: maydon, "Yaqinimda"
+     chipi va "Qidirish" tugmasi. Ilgari ular 42 / 42 / 38 px edi. */
+  .home-search .search { flex: 1; min-width: 0; min-height: var(--ctl-h-sm); }
+  .home-search .btn,
+  .home-search .chip { min-height: var(--ctl-h-sm); padding: 0 var(--sp-3); white-space: nowrap; }
+  .home-search #near-me { padding: 0 var(--sp-3); }
   .home-search #near-me span { display: none; }
 
   /* Bo'lim sarlavhalari ham bir pog'ona pastga. */
@@ -324,10 +342,10 @@
      to'r chiqadi. */
   .dish-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); }
   .dish-wall > :nth-child(n+7) { display: none; }
-  .dish-tile .body { padding: 5px 7px 7px; }
-  .dish-tile .name { font-size: 11px; }
-  .dish-tile .place { font-size: 9.5px; }
-  .dish-tile .price { font-size: 11px; margin-top: 1px; }
+  .dish-tile .body { padding: var(--sp-1) var(--sp-2) var(--sp-2); }
+  .dish-tile .name { font-size: var(--fs-xs); }
+  .dish-tile .place { font-size: var(--fs-2xs); }
+  .dish-tile .price { font-size: var(--fs-xs); margin-top: 1px; }
 
   /* ---------------- katalog: BIR QATORDA IKKITA ----------------
      `.grid-auto` ning o'zi `minmax(270px, 1fr)` — 390 px li ekranda
@@ -345,7 +363,7 @@
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .biz-card .meta { font-size: 11px; gap: 4px; flex-wrap: nowrap; overflow: hidden; }
+  .biz-card .meta { font-size: var(--fs-xs); gap: var(--sp-1); flex-wrap: nowrap; overflow: hidden; }
   .biz-card .meta > span { white-space: nowrap; }
 
   /* Manzil qatori tor ustunda deyarli butunlay kesilardi va faqat
@@ -353,97 +371,45 @@
      xarita nishonchasi ortida. */
   .biz-card .card-body .addr { display: none; }
 
-  .biz-card .foot { margin-top: 4px; gap: 4px; flex-wrap: wrap; }
-  .biz-card .foot .rating { font-size: 11px; gap: 1px; }
+  .biz-card .foot { margin-top: var(--sp-1); gap: var(--sp-1); flex-wrap: wrap; }
+  .biz-card .foot .rating { font-size: var(--fs-xs); gap: 1px; }
   .biz-card .foot .tag,
-  .biz-card .foot .rank-tag { font-size: 10px; padding: 2px 7px; }
+  .biz-card .foot .rank-tag { font-size: var(--fs-2xs); padding: 2px var(--sp-2); }
   /* Ikki ustunda "350 kishigacha · 15 000 000 so'm dan" bitta qatorga
      sig'maydi va uch nuqta bilan kesilardi — aynan NARX ko'rinmay
      qolardi. Shuning uchun telefonda u o'raladi. */
   .biz-card .facts {
-    font-size: 10px; margin-top: 3px; line-height: 1.35;
+    font-size: var(--fs-2xs); margin-top: var(--sp-1); line-height: 1.35;
     white-space: normal; overflow: visible; text-overflow: clip;
   }
 
-  .biz-card-media .rating-badge { top: 6px; right: 6px; padding: 2px 7px; font-size: 10px; }
-  .biz-card-media .distance-badge { bottom: 6px; left: 6px; padding: 2px 7px; font-size: 10px; }
-  .biz-card-media .map-pin { top: 6px; right: 6px; width: 24px; height: 24px; }
+  /* Rasm ustidagi uchala nishon bir xil chetda va bir xil bo'shliqda —
+     ilgari 6 px va 7 px aralash yozilgan edi. */
+  .biz-card-media .rating-badge { top: var(--sp-2); right: var(--sp-2); padding: 2px var(--sp-2); font-size: var(--fs-2xs); }
+  .biz-card-media .distance-badge { bottom: var(--sp-2); left: var(--sp-2); padding: 2px var(--sp-2); font-size: var(--fs-2xs); }
+  .biz-card-media .map-pin { top: var(--sp-2); right: var(--sp-2); width: 24px; height: 24px; }
   .biz-card-media .map-pin svg { width: 12px; height: 12px; }
 
   /* Depozit nishoni tor ustunda ikki qatorga bo'linib ketmasin.
      (Tugmalarni tenglashtirish `_detail.css` da — u kompyuterda ham
      kerak, faqat telefonga tegishli emas.) */
-  .card-body .seal { font-size: 10px; padding: 2px 8px; }
+  .card-body .seal { font-size: var(--fs-2xs); padding: 2px var(--sp-2); }
 
   /* Bo'limlar qatori — tugmalar allaqachon sig'adi, lekin `overflow-x`
      tufayli ostida bo'sh aylantirgich chizig'i chiqib turardi. */
   .tabs { scrollbar-width: none; margin-bottom: var(--sp-4); }
   .tabs::-webkit-scrollbar { display: none; }
-  .tab { padding: 10px 12px; }
+  .tab { padding: var(--sp-3); }
 
-  /* ---------------- profil sarlavhasi ----------------
-     Rasm CHAPDA, dumaloq va kichik; ma'lumot o'ngda. Ilgari bu blok
-     kompyuterdagi uch ustunli tartibni meros olardi va telefonda
-     ism rasm yonidagi tor ustunga tiqilib, uch qatorga bo'linardi. */
-  .profile-cover { padding: var(--sp-4); border-radius: var(--radius-m); }
-  .profile-head {
-    flex-direction: row; align-items: center; text-align: left;
-    gap: var(--sp-3); flex-wrap: wrap;
-  }
-  .profile-avatar .avatar-xl { width: 62px; height: 62px; font-size: 22px; }
-  .profile-avatar .avatar-ring.avatar-xl { padding: 3px; }
-  .avatar-edit { width: 24px; height: 24px; font-size: 11px; }
+  /* ---------------- profil ----------------
+     Profil sahifasining telefon ko'rinishi endi o'z faylida
+     (`pages/_profile.css`, eng oxiridagi `@media` bloki): muqova,
+     ma'lumot kataklari va bo'limlar tasmasi bitta joyda tursin.
 
-  .profile-identity { align-items: flex-start; flex: 1; gap: 3px; }
-  .profile-identity h1 { font-size: 19px; }
-  .profile-identity .handle { font-size: 11px; }
-  .profile-badges { justify-content: flex-start; gap: 5px; margin-top: 4px; }
-  .profile-badge { font-size: 10px; padding: 3px 9px; }
-
-  /* Uchinchi ustun — "a'zo bo'lgan sana" va "rasmni o'chirish".
-     Telefonda IKKALASI HAM yo'q:
-       · sana pastdagi "Shaxsiy ma'lumotlar" ramkasida aynan shu
-         holicha takrorlanadi;
-       · rasmni o'chirish esa kamdan-kam kerak bo'ladigan amal va
-         sarlavhaning yarmini egallab turardi. Rasmni ALMASHTIRISH
-         qoladi — u rasm ustidagi kichik kamera tugmasi orqali. */
-  .profile-head > .stack:last-child { display: none; }
-
-  .profile-stats {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: var(--sp-2); margin-top: var(--sp-4); padding-top: var(--sp-3);
-  }
-  /* Kataklar TEPADAN tekislanadi: nomi ikki qatorga bo'lingani
-     qo'shnilarini pastga surib yubormasin. */
-  .profile-stat { align-items: center; text-align: center; justify-content: flex-start; }
-  .profile-stat .value { font-size: 19px; }
-  .profile-stat .label { font-size: 8.5px; letter-spacing: .02em; line-height: 1.2; }
-
-  /* ---------------- ma'lumot qatorlari ----------------
-     Nom chapda, qiymat o'ngda — bitta qatorda. Tik joylashuv har bir
-     qatorni ikkiga bo'lib, ramkani ikki barobar uzaytirardi.
-
-     Nomlar kichraytirilgani uchun ular endi sig'adi: "Telefon raqami"
-     11 px da ~70 px joy oladi va qolgan ~250 px qiymatga qoladi. */
-  .info-row { gap: var(--sp-3); padding: var(--sp-2) 0; }
-  .info-row .k { font-size: 11px; flex-shrink: 0; }
-  .info-row .v { font-size: var(--fs-sm); min-width: 0; }
-
-  /* ISHONCHLILIK qatori — istisno: unda nishon, chiziq va izoh bor,
-     ya'ni uchta element. Ular o'ng chetdagi tor ustunga sig'may,
-     bir-birining ustiga chiqib ketardi. Shuning uchun faqat shu qator
-     tik joylashadi. */
-  .info-row:has(.trust-cell) { flex-direction: column; align-items: flex-start; gap: 4px; }
-  .trust-cell { align-items: flex-start; text-align: left; }
-  /* Butun kenglikdagi chiziq ajratuvchi chiziqqa o'xshab qolardi. */
-  .trust-bar { width: 150px; }
-
-  /* ---------------- bo'lim menyusi ----------------
-     Profilda bo'lim bittagina bo'lsa (tasdiqlangan joy egasida
-     shunday: faqat "Ma'lumotlarim"), menyu hech qayerga olib
-     bormaydi — u shunchaki butun kenglikdagi tugma bo'lib turadi va
-     ekrandan joy oladi. Ikki va undan ortiq bo'limda esa qoladi. */
-  #profile-menu:not(:has(button ~ button)) { display: none; }
+     Ilgari bu yerda ~70 qator qoida bor edi — eski, ustunli tartib
+     uchun yozilgan (`.profile-cover`, `.profile-head`, `.info-row`,
+     `#profile-menu`). Ular endi mavjud bo'lmagan sinflarga ishora
+     qilardi, ya'ni hech narsaga ta'sir qilmay turardi. */
 
   /* ---------------- statistika kartochkalari ----------------
      `_layout.css` telefonda `.grid-3` va `.grid-4` ni BITTA ustunga
@@ -455,18 +421,21 @@
      Raqamga esa kenglik kerak emas — ikki ustun yetarli va to'rtala
      ko'rsatkich bir qarashda ko'rinadi. */
   .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .stat-card { padding: var(--sp-3); gap: 4px; }
-  .stat-card .label { font-size: 9.5px; letter-spacing: .04em; line-height: 1.25; }
-  .stat-card .value { font-size: 22px; }
+  .stat-card { padding: var(--sp-3); gap: var(--sp-1); }
+  .stat-card .label { font-size: var(--fs-2xs); letter-spacing: .04em; line-height: 1.25; }
+  .stat-card .value { font-size: var(--fs-xl); }
 
   /* Bosh sahifadagi uchta ko'rsatkich — bir qatorda uchtasi.
      `auto-fit, minmax(130px, ...)` telefonda ikkitani sig'dirib,
      uchinchisini yolg'iz qatorga tushirardi va yonida bo'sh joy
      qolardi. Uchta raqamga 390 px yetarli. */
   .home-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); }
+  /* `.stat-card` bilan AYNAN bir xil o'lchamlar. Ilgari bu ikki
+     kartochka telefonda 21/8.5 va 22/9.5 px edi — bir sahifada
+     yonma-yon turganda farq ko'zga tashlanardi. */
   .home-stat { padding: var(--sp-3); }
-  .home-stat .value { font-size: 21px; }
-  .home-stat .label { font-size: 8.5px; letter-spacing: .03em; }
+  .home-stat .value { font-size: var(--fs-xl); }
+  .home-stat .label { font-size: var(--fs-2xs); letter-spacing: .03em; }
 
   /* Sahifa sarlavhasi — tugma pastga tushib, butun kenglikni olsin. */
   .page-head { gap: var(--sp-3); margin-bottom: var(--sp-4); }
@@ -483,8 +452,8 @@
   .panel-head { flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-3); }
 
   /* ---------------- qisqa yo'l kartochkalari ---------------- */
-  .shortcut-card { padding: var(--sp-3); gap: 3px; }
-  .shortcut-card .ic { font-size: 20px; }
+  .shortcut-card { padding: var(--sp-3); gap: var(--sp-1); }
+  .shortcut-card .ic { font-size: var(--fs-lg); }
   .shortcut-card b { font-size: var(--fs-sm); }
   .shortcut-card .go { top: var(--sp-3); right: var(--sp-3); }
   .shortcut-panel::after { top: var(--sp-3); right: var(--sp-8); }
@@ -496,8 +465,8 @@
   .list-row { padding: var(--sp-3) 0; gap: var(--sp-2); }
   .list-row .stack { min-width: 0 !important; }
   .list-row b { font-size: var(--fs-sm); }
-  .list-row .small { font-size: 11px; }
-  .list-row .xs { font-size: 10px; }
+  .list-row .small { font-size: var(--fs-xs); }
+  .list-row .xs { font-size: var(--fs-2xs); }
   .list-row-actions { gap: 6px; }
 
   /* Mijoz kartochkasi (egasining bronlar ekrani) — rasm kichrayadi. */
@@ -511,9 +480,9 @@
      ham, nishonchani ham qulay o'lchamda saqlashga yetadi: pastki
      menyu eng ko'p bosiladigan joy, uni maydalash noto'g'ri bo'lardi. */
   :root { --tabbar-h: 52px; }
-  .tabbar-item { padding: 6px 2px 5px; gap: 3px; }
-  .tabbar-item .ic { font-size: 18px; }
-  .tabbar-item .lb { font-size: 10px; }
+  .tabbar-item { padding: 6px 2px 5px; gap: var(--sp-1); }
+  .tabbar-item .ic { font-size: var(--fs-lg); }
+  .tabbar-item .lb { font-size: var(--fs-2xs); }
 }
 
 /* Juda tor ekran (≤ 380 px): rasmlar yana bir pog'ona pasayadi. */

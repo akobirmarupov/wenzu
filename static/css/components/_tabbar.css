@@ -36,15 +36,15 @@
   .tabbar-item {
     position: relative;
     display: flex; flex-direction: column; align-items: center;
-    justify-content: center; gap: 3px;
+    justify-content: center; gap: var(--sp-1);
     /* 52px — barmoq uchun qulay eng kichik balandlik. */
     min-height: var(--tabbar-h); padding: 7px 2px 6px;
     color: var(--ink-faint); text-align: center;
     transition: color var(--transition);
   }
-  .tabbar-item .ic { font-size: 19px; line-height: 1; }
+  .tabbar-item .ic { font-size: var(--fs-lg); line-height: 1; }
   .tabbar-item .lb {
-    font-size: 10.5px; font-weight: 700; letter-spacing: .01em;
+    font-size: var(--fs-2xs); font-weight: 700; letter-spacing: .01em;
     /* Uzun nom ("Bronlarim") tor ekranda qo'shni kataklarni
        siqib qo'ymasligi uchun bir qatorda kesiladi. */
     max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;

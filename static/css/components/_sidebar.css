@@ -5,6 +5,11 @@
    ko'z bilan darrov ajralib turishi kerak.
    =================================================================== */
 .side-nav.panel {
+  /* Panel menyusi HAR IKKI temada ham qorong'i — shuning uchun
+     undagi matn ranglari tokenga o'tkazilmaydi: ular tema bilan birga
+     o'zgarsa, qorong'i fonda qorong'i yozuv chiqib qolardi. #C8DCD2
+     `--emerald-900` ustida 7.7, tungi paneldagi #0C1522 ustida 12.8
+     kontrast beradi. */
   background: var(--emerald-900);
   border-right-color: rgba(255, 255, 255, .08);
   color: #C8DCD2;
@@ -14,19 +19,19 @@
   :root:not([data-theme="light"]) .side-nav.panel { background: #0C1522; border-right-color: var(--line); }
 }
 
-.side-nav.panel .brand { color: #FFFFFF; }
+.side-nav.panel .brand { color: var(--white); }
 .side-nav.panel .brand-sub { color: rgba(255, 255, 255, .48); }
 .side-nav.panel .nav-group-label { color: rgba(255, 255, 255, .42); }
 .side-nav.panel .nav-item { color: #C8DCD2; }
-.side-nav.panel .nav-item:hover { background: rgba(255, 255, 255, .08); color: #FFFFFF; }
+.side-nav.panel .nav-item:hover { background: rgba(255, 255, 255, .08); color: var(--white); }
 .side-nav.panel .nav-item.active { background: var(--theme-accent); color: var(--on-accent); }
 .side-nav.panel .side-nav-bottom { border-top-color: rgba(255, 255, 255, .10); }
 
 .role-pill {
   align-self: flex-start; margin: 0 var(--sp-3) var(--sp-4);
-  padding: 4px 12px; border-radius: var(--radius-pill);
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--radius-pill);
   background: var(--theme-accent); color: var(--on-accent);
-  font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
 }
 
 /* Obuna tugaganda chiqadigan bloklash bloki */

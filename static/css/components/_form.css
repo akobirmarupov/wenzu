@@ -1,4 +1,17 @@
-/* Formalar */
+/* ===================================================================
+   Formalar.
+
+   Matn maydoni, qidiruv qatori va filtr chipi tugma bilan BIR XIL
+   balandlikda (`--ctl-h`). Ilgari ular uchtasi uch xil edi: maydon
+   ~48 px, chip va qidiruv ~42 px, tugma ~47 px. Bitta qatorda turgan
+   "qidiruv + Yaqinimda + Qidirish" uchligi shu sababli zinapoyaga
+   o'xshab ko'rinardi.
+
+   Balandlikni endi `min-height` beradi, ichki bo'shliq esa gorizontal.
+   Matn MAYDONI bundan mustasno emas: u ham bitta qatorli, faqat
+   `.textarea` ko'p qatorli bo'lgani uchun o'z vertikal bo'shlig'ini
+   saqlab qoladi.
+   =================================================================== */
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field > label {
   font-size: var(--fs-sm); font-weight: 700; color: var(--ink-soft);
@@ -6,11 +19,15 @@
 .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-4); }
 
 .input, .select, .textarea {
-  width: 100%; padding: 11px 14px;
+  width: 100%; padding: var(--sp-3) var(--sp-4);
   background: var(--surface); color: var(--ink);
   border: 1.5px solid var(--line); border-radius: var(--radius-s);
   transition: border-color var(--transition), box-shadow var(--transition);
 }
+/* Bir qatorli maydonlar tugma bilan tenglashadi. `.textarea` bu
+   qoidaga kirmaydi — unda balandlikni `rows` beradi. */
+.input, .select { min-height: var(--ctl-h); padding-block: 0; }
+
 .input::placeholder, .textarea::placeholder { color: var(--ink-faint); }
 .input:focus, .select:focus, .textarea:focus {
   outline: none;
@@ -18,8 +35,6 @@
   box-shadow: 0 0 0 3px var(--theme-accent-dim);
 }
 .input[aria-invalid="true"], .textarea[aria-invalid="true"] { border-color: var(--danger); }
-
-.field-error { font-size: var(--fs-xs); color: var(--danger); font-weight: 600; }
 .field-hint  { font-size: var(--fs-xs); color: var(--ink-faint); }
 
 /* Yuklangan rasmning hozirgi holati — fayl maydoni ostida.
@@ -41,20 +56,33 @@
 .search {
   display: flex; align-items: center; gap: var(--sp-2);
   background: var(--surface); border: 1.5px solid var(--line);
-  border-radius: var(--radius-pill); padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  min-height: var(--ctl-h); padding: 0 var(--sp-4);
   flex: 1 1 240px; min-width: 0;
 }
 .search input { flex: 1; border: 0; outline: none; background: none; min-width: 0; }
 
-/* Filtr chipi */
+/* Filtr chipi.
+
+   `inline-flex` ataylab: chip `<button>` da ham, `<label>` da ham
+   ishlatiladi. `<label>` — oddiy matn elementi, unda `min-height`
+   mazmunni markazga tortmasdi va ichidagi nishoncha yozuvdan pastga
+   osilib qolardi. */
 .chip {
-  padding: 8px 16px; border-radius: var(--radius-pill);
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  min-height: var(--ctl-h); padding: 0 var(--sp-4);
+  border-radius: var(--radius-pill);
   border: 1.5px solid var(--line); background: var(--surface);
   font-size: var(--fs-sm); font-weight: 700; color: var(--ink-soft);
+  white-space: nowrap;
   transition: all var(--transition);
 }
 .chip:hover { border-color: var(--theme-accent); color: var(--theme-accent); }
-.chip.active { background: var(--theme-accent); border-color: var(--theme-accent); color: var(--white); }
+/* Matn `--white` emas, `--on-accent`: tungi rejimda aksent YORUG'
+   zumradga (#22A583) aylanadi va ustidagi oq yozuv 3.1 kontrast
+   berardi. `--on-accent` temaga qarab almashadi — kunduzi oq, tunda
+   deyarli qora. */
+.chip.active { background: var(--theme-accent); border-color: var(--theme-accent); color: var(--on-accent); }
 
 .filter-bar { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
 
@@ -64,4 +92,3 @@
   background: var(--danger-dim); color: var(--danger);
   font-size: var(--fs-sm); font-weight: 600;
 }
-.form-alert-ok { background: var(--ok-dim); color: var(--ok); }

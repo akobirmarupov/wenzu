@@ -7,13 +7,19 @@
 }
 .toast {
   background: var(--ink); color: var(--ground);
-  padding: 12px 20px; border-radius: var(--radius-pill);
+  padding: var(--sp-3) var(--sp-5); border-radius: var(--radius-pill);
   font-size: var(--fs-sm); font-weight: 600;
   box-shadow: var(--shadow-lg);
   animation: toast-in .22s cubic-bezier(.2, .8, .3, 1);
   max-width: min(90vw, 460px);
 }
-.toast-ok   { background: var(--ok); color: var(--white); }
-.toast-bad  { background: var(--danger); color: var(--white); }
+/* Matn `--white` emas, `--on-accent`. `--ok` va `--danger` tungi
+   rejimda YORUG' variantga o'tadi (#3FBE86, #EA7A85) va o'sha fonda
+   oq yozuv 2.4-2.8 kontrast berardi, ya'ni xabar amalda o'qilmasdi.
+   `--on-accent` — "to'yingan rangli fon ustidagi matn" ma'nosini
+   beradigan yagona tokenimiz: kunduzi oq, tunda deyarli qora.
+   Tekshiruv: kunduzi 5.9 / 7.4, tunda 8.0 / 6.9. */
+.toast-ok   { background: var(--ok); color: var(--on-accent); }
+.toast-bad  { background: var(--danger); color: var(--on-accent); }
 @keyframes toast-in { from { opacity: 0; transform: translateY(10px); } }
 .toast.leaving { opacity: 0; transition: opacity .2s ease; }

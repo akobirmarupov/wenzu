@@ -17,9 +17,21 @@ const SIZES = { sm: "avatar-sm", md: "", lg: "avatar-lg", xl: "avatar-xl" };
 export function avatarHtml(user, { size = "md", ring = false } = {}) {
   const sizeClass = SIZES[size] ?? "";
   const label = user?.initials || initials(user?.full_name);
+
+  // Bosh harflar HAR DOIM chiziladi, rasm esa ularning USTIGA qo'yiladi.
+  //
+  // Nega shunday: rasm fayli yo'qolishi mumkin — server almashadi,
+  // ombor tozalanadi, havola eskiradi. Ilgari bunday holatda brauzer
+  // rasm o'rniga `alt` matnini, ya'ni odamning TO'LIQ ISMINI doira
+  // ichiga sig'dirishga urinardi: doiradan toshib ketgan, kesilgan
+  // yozuv chiqardi. Endi rasm yuklanmasa o'zini olib tashlaydi va
+  // ostidagi bosh harflar ko'rinadi — ya'ni ko'rinish hech qachon
+  // buzilmaydi. `alt` ataylab bo'sh: yonida ism allaqachon yozilgan,
+  // skrinrider uni ikki marta o'qimasligi kerak.
   const inner = user?.avatar
-    ? `<img src="${esc(user.avatar)}" alt="${esc(user?.full_name || "")}" loading="lazy">`
-    : `<span>${esc(label)}</span>`;
+    ? `<span class="avatar-initials">${esc(label)}</span>` +
+      `<img src="${esc(user.avatar)}" alt="" loading="lazy" onerror="this.remove()">`
+    : `<span class="avatar-initials">${esc(label)}</span>`;
 
   const avatar = `<span class="avatar ${sizeClass}">${inner}</span>`;
   return ring ? `<span class="avatar-ring ${sizeClass}">${avatar}</span>` : avatar;

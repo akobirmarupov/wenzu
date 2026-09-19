@@ -30,7 +30,7 @@
 .side-nav .brand .brand-mark { width: 30px; height: 30px; }
 
 /* Yuqori panel (telefonda ko'rinadi) — biroz kichikroq. */
-.topbar-brand { gap: 7px; }
+.topbar-brand { gap: var(--sp-2); }
 .topbar-brand .brand-mark { width: 26px; height: 26px; }
 
 /* Kirish sahifasi — rasm ustidagi oq matn yonida. */

@@ -5,6 +5,7 @@
  * bosganda yopish va sahifa orqasi aylanmasligi. Har bir modalda buni
  * qaytadan yozish — unutilgan tafsilotlar manbai.
  */
+import { t } from "../core/i18n.js";
 import { icon } from "./icons.js";
 
 let current = null;
@@ -52,7 +53,7 @@ export function openModal(html, { wide = false, onClose, onMount } = {}) {
   overlay.className = "overlay";
   overlay.innerHTML = `
     <div class="modal ${wide ? "modal-wide" : ""}" role="dialog" aria-modal="true">
-      <button class="modal-close" type="button" data-modal-close aria-label="Yopish">${icon("close")}</button>
+      <button class="modal-close" type="button" data-modal-close aria-label="${t("common.close")}">${icon("close")}</button>
       ${html}
     </div>`;
 
@@ -77,14 +78,14 @@ export function openModal(html, { wide = false, onClose, onMount } = {}) {
 export const modal = { open: openModal, close };
 
 /** Tasdiqlash oynasi — `confirm()` o'rniga. */
-export function confirmDialog({ title, message, confirmText = "Tasdiqlash", danger = false }) {
+export function confirmDialog({ title, message, confirmText = t("common.confirm"), danger = false }) {
   return new Promise((resolve) => {
     let answered = false;
     const node = openModal(
       `<h2>${title}</h2>
        <p class="muted">${message}</p>
        <div class="row row-2" style="margin-top:var(--sp-6)">
-         <button class="btn btn-outline" style="flex:1" data-modal-close type="button">Bekor qilish</button>
+         <button class="btn btn-outline" style="flex:1" data-modal-close type="button">${t("common.cancel")}</button>
          <button class="btn ${danger ? "btn-danger" : "btn-primary"}" style="flex:1" data-confirm type="button">${confirmText}</button>
        </div>`,
       {

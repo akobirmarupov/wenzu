@@ -1,4 +1,10 @@
-/* Sahifa poyloqi */
+/* Sahifa poyloqi.
+
+   Foni har ikki temada ham to'q zumrad, shuning uchun matn rangi ham
+   doimiy: #AFC6BB `--emerald-900` ustida 7.8 kontrast beradi. Agar
+   bu yerda `--ink-soft` ishlatilsa, u tungi rejimda yorug'lashib,
+   o'zgarmagan to'q fonda ham ishlardi-yu, lekin kunduzi kulrang matn
+   yashil fonda 2.x ga tushib ketardi. */
 .footer { background: var(--emerald-900); color: #AFC6BB; margin-top: var(--sp-16); }
 .footer-grid {
   display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--sp-8);

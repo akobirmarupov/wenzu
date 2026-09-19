@@ -51,9 +51,9 @@
 .modal p { color: var(--ink-soft); }
 .modal-close {
   position: absolute; top: var(--sp-4); right: var(--sp-4); z-index: 2;
-  width: 32px; height: 32px; border-radius: 50%;
+  width: var(--ctl-h-sm); height: var(--ctl-h-sm); border-radius: 50%;
   display: grid; place-items: center;
-  background: var(--surface-2); color: var(--ink-soft); font-size: 15px;
+  background: var(--surface-2); color: var(--ink-soft); font-size: var(--fs-base);
   border: 1px solid var(--line);
 }
 .modal-close:hover { background: var(--ink); color: var(--surface); }
@@ -77,15 +77,18 @@
    ham bir xil o'qiladi. */
 .tg-line {
   display: flex; align-items: center; gap: var(--sp-2);
+  /* TELEGRAM rangi — brend belgisi, tokenga o'tkazilmaydi va temaga
+     qarab o'zgarmaydi: odam uni rangidan tanib turishi kerak. Ikkala
+     to'xtash ham to'q, ustidagi oq matn 5.5 dan yuqori kontrast beradi. */
   background: linear-gradient(120deg, #1B7FA8 0%, #2AA0CC 100%);
-  color: #FFFFFF;
+  color: var(--white);
   border-radius: var(--radius-s); padding: var(--sp-3) var(--sp-4);
   font-weight: 700; font-size: var(--fs-sm);
   box-shadow: var(--shadow-sm);
   transition: filter var(--transition), transform var(--transition);
 }
 .tg-line:hover { filter: brightness(1.08); transform: translateY(-1px); }
-.tg-line .ic { font-size: 17px; }
+.tg-line .ic { font-size: var(--fs-md); }
 
 /* Yig'indi qutisi (narx hisobi) */
 .total-box {
@@ -126,7 +129,7 @@
 .pick-row .tick {
   width: 22px; height: 22px; border-radius: 50%;
   border: 1.5px solid var(--line); background: var(--surface);
-  display: grid; place-items: center; font-size: 12px; font-weight: 800;
+  display: grid; place-items: center; font-size: var(--fs-xs); font-weight: 800;
   color: transparent;
 }
 .pick-row.checked .tick {
@@ -156,4 +159,42 @@
 :root[data-theme="dark"] .modal { background: #111B2B; background: var(--surface); }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .modal { background: #111B2B; background: var(--surface); }
+}
+
+/* ===================================================================
+   Baho tanlash — beshta yulduz.
+
+   Yulduzlar KATTA (30px): bu oynadagi asosiy amal va barmoq bilan
+   ham aniq bosiladigan bo'lishi kerak (tavsiya etilgan eng kichik
+   nishon 44px, shuning uchun tugmaning o'zi kattaroq).
+
+   Tanlanmagan yulduz — sust chiziq rangida, tanlangani oltin. Ikkala
+   holat ham TO'LDIRILGAN shakl: bo'sh konturdan to'ldirilganga
+   o'tish ko'zga sakrab tashlanadi, rang o'zgarishi esa yumshoq.
+   =================================================================== */
+.rating-picker {
+  display: flex;
+  gap: var(--sp-1);
+}
+.rating-star {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-s);
+  color: var(--line);
+  cursor: pointer;
+  transition: color var(--transition), transform var(--transition);
+}
+.rating-star:hover { transform: translateY(-2px); }
+.rating-star.is-on { color: var(--gold-mark); }
+
+/* Tanlangan bahoning izohi ("Ajoyib") — yulduzlar ostida, tinch. */
+.rating-caption {
+  display: block;
+  min-height: 1.2em;          /* matn paydo bo'lganda oyna sakramasin */
+  margin-top: var(--sp-2);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--ink-soft);
 }

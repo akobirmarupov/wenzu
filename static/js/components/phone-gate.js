@@ -18,8 +18,9 @@
  */
 import { api } from "../core/api.js";
 import { auth } from "../core/auth.js";
+import { t } from "../core/i18n.js";
 import { modal } from "../ui/modal.js";
-import { busy } from "../ui/dom.js";
+import { busy, esc } from "../ui/dom.js";
 import { toast } from "../ui/toast.js";
 
 const PHONE_PATTERN = /^\+998\d{9}$/;
@@ -27,11 +28,18 @@ const PHONE_PATTERN = /^\+998\d{9}$/;
 // Raqam NEGA kerakligi har joyda boshqacha. Umumiy "raqamingizni
 // kiriting" degan matn odamni shubhaga soladi: "nega endi, men
 // shunchaki tarif tanlayapman-ku?". Aniq sabab esa savolni yopadi.
-const REASONS = {
-  booking: "Joy egasi bronni tasdiqlash uchun shu raqamga qo'ng'iroq qiladi.",
-  application: "Administrator arizangizni ko'rib chiqib, shu raqamga bog'lanadi.",
-  subscription: "Administrator to'lovni shu raqam orqali siz bilan kelishadi.",
+//
+// Funksiya, konstanta emas: tarjima lug'ati `initI18n()` dan keyin
+// tayyor bo'ladi, modul yuklangan paytda esa hali bo'sh.
+const REASON_KEYS = {
+  booking: "phone.reasonBooking",
+  application: "phone.reasonApplication",
+  subscription: "phone.reasonSubscription",
 };
+
+function reasonText(reason) {
+  return t(REASON_KEYS[reason] || REASON_KEYS.booking);
+}
 
 /**
  * Raqam bo'lsa darhol `true` qaytaradi, bo'lmasa oyna ochib so'raydi.
@@ -48,25 +56,25 @@ export function ensurePhone(reason = "booking") {
     let saved = false;
 
     const node = modal.open(`
-      <h2 class="display h3">Aloqa raqamingiz</h2>
+      <h2 class="display h3">${esc(t("phone.title"))}</h2>
       <p class="muted small">
-        ${REASONS[reason] || REASONS.booking}
-        Bir marta yoziladi — boshqa so'ralmaydi.
+        ${esc(reasonText(reason))}
+        ${esc(t("phone.once"))}
       </p>
 
       <form class="stack stack-4" id="phone-form" style="margin-top:var(--sp-5)" novalidate>
         <div class="form-alert" id="phone-error" hidden></div>
 
         <div class="field">
-          <label for="gate-phone">Telefon raqami</label>
+          <label for="gate-phone">${esc(t("auth.phone"))}</label>
           <input class="input" id="gate-phone" name="phone_number" type="tel"
                  inputmode="tel" autocomplete="tel" placeholder="+998901234567"
                  value="+998" required>
-          <span class="field-hint">SMS yuborilmaydi — raqam faqat kerakli odamga ko'rinadi.</span>
+          <span class="field-hint">${esc(t("phone.noSms"))}</span>
         </div>
 
         <button class="btn btn-primary btn-block" type="submit" id="phone-save">
-          Saqlash va davom etish
+          ${esc(t("phone.save"))}
         </button>
       </form>`, {
       onClose: () => {
@@ -91,7 +99,7 @@ export function ensurePhone(reason = "booking") {
 
       const phone = input.value.replace(/[\s()-]/g, "");
       if (!PHONE_PATTERN.test(phone)) {
-        errorBox.textContent = "Raqam +998 bilan boshlanib, 9 ta raqamdan iborat bo'lsin.";
+        errorBox.textContent = t("phone.invalid");
         errorBox.hidden = false;
         input.focus();
         return;
@@ -105,14 +113,14 @@ export function ensurePhone(reason = "booking") {
         await auth.refreshUser();
         saved = true;
         modal.close();
-        toast.ok("Raqam saqlandi.");
+        toast.ok(t("phone.saved"));
         resolve(true);
       } catch (error) {
         // Raqam boshqa hisobda ham bo'lishi mumkin — bu xato emas.
         // Bu yerga faqat format xatosi yoki tarmoq uzilishi tushadi.
         errorBox.textContent =
           error.fieldError?.("phone_number") ||
-          "Raqamni saqlab bo'lmadi. Qaytadan urinib ko'ring.";
+          t("phone.failed");
         errorBox.hidden = false;
       } finally {
         done();

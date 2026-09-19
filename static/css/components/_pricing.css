@@ -42,9 +42,9 @@
 .price-card.best .price-ribbon { display: block; }
 .price-ribbon {
   position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%);
-  padding: 4px 14px; border-radius: var(--radius-pill);
-  background: var(--gold-shine); color: #1A1405;
-  font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--radius-pill);
+  background: var(--gold-shine); color: var(--on-gold);
+  font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
   box-shadow: var(--gold-glow); white-space: nowrap;
 }
 
@@ -63,23 +63,31 @@
 
 .price-amount { display: flex; flex-direction: column; gap: 2px; margin-top: var(--sp-2); }
 .price-amount b {
+  /* Kartochkadagi ASOSIY narx — shkaladan tashqari va shunday qolishi
+     kerak: `--fs-2xl` (34 px) bilan ham, `--fs-xl` (26 px) bilan ham
+     to'rt pikseldan ko'p farq qiladi, ya'ni eng yaqin tokenga
+     "yaxlitlash" uni tanib bo'lmaydigan darajada o'zgartirardi.
+     Bu raqam kartochkaning bosh yozuvi — u ko'zga birinchi tushishi
+     kerak. */
   font-family: var(--font-display); font-size: 38px; font-weight: 600; line-height: 1;
   color: var(--ink); font-variant-numeric: tabular-nums;
 }
 .price-amount span { font-size: var(--fs-sm); color: var(--ink-faint); }
 
 .price-save {
-  align-self: flex-start; padding: 4px 11px; border-radius: var(--radius-pill);
+  align-self: flex-start; padding: var(--sp-1) var(--sp-3); border-radius: var(--radius-pill);
   background: var(--ok-dim); color: var(--ok);
   font-size: var(--fs-xs); font-weight: 700;
 }
 .price-state {
-  align-self: flex-start; padding: 8px 16px; border-radius: var(--radius-pill);
+  align-self: flex-start;
+  min-height: var(--ctl-h-sm); display: inline-flex; align-items: center;
+  padding: 0 var(--sp-4); border-radius: var(--radius-pill);
   background: var(--surface-2); border: 1px solid var(--line);
   color: var(--ink-soft); font-size: var(--fs-sm); font-weight: 700;
 }
 .price-card.current .price-state {
-  background: var(--theme-accent-dim); border-color: var(--theme-accent); color: var(--theme-accent);
+  background: var(--theme-accent-dim); border-color: var(--theme-accent); color: var(--on-accent-dim);
 }
 
 /* --- tafsilotlar --- */
@@ -90,7 +98,7 @@
   background: var(--surface-2);
 }
 .price-features-head {
-  font-size: 10.5px; font-weight: 800; letter-spacing: .09em;
+  font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .09em;
   text-transform: uppercase; color: var(--ink-faint);
 }
 .price-features ul { display: flex; flex-direction: column; gap: var(--sp-2); }
@@ -100,7 +108,7 @@
 }
 .price-features .tick { color: var(--ok); font-weight: 800; flex-shrink: 0; }
 .price-features .extras li { gap: var(--sp-3); }
-.price-features .extras .ic { font-size: 15px; flex-shrink: 0; width: 20px; }
+.price-features .extras .ic { font-size: var(--fs-base); flex-shrink: 0; width: 20px; }
 .price-features .extras b { display: block; color: var(--ink); font-size: var(--fs-sm); }
 .price-features .extras span span { display: block; }
 
@@ -111,7 +119,7 @@
   border: 1px solid var(--warn); border-radius: var(--radius-m);
   background: var(--warn-dim); color: var(--ink);
 }
-.price-pending .ic { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.price-pending .ic { font-size: var(--fs-lg); line-height: 1; flex-shrink: 0; }
 .price-pending b { display: block; margin-bottom: 2px; }
 .price-pending .small { color: var(--ink-soft); }
 
@@ -139,23 +147,23 @@
 .plan-toggle button {
   flex: 1;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 8px 12px; border-radius: var(--radius-pill);
+  padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-pill);
   font-size: var(--fs-sm); font-weight: 700; color: var(--ink-faint);
   white-space: nowrap;
   transition: background var(--transition), color var(--transition);
 }
 .plan-toggle button:hover { color: var(--ink); background: var(--surface); }
 .plan-toggle button.active {
-  background: var(--gold-shine); color: #1A1405;
+  background: var(--gold-shine); color: var(--on-gold);
   box-shadow: var(--gold-glow);
 }
 /* Uzoq muddatdagi tejash — chipning o'zida ko'rinsin */
 .plan-toggle .cut {
-  padding: 1px 7px; border-radius: var(--radius-pill);
+  padding: 1px var(--sp-2); border-radius: var(--radius-pill);
   background: var(--ok-dim); color: var(--ok);
-  font-size: 10.5px; font-weight: 800;
+  font-size: var(--fs-2xs); font-weight: 800;
 }
-.plan-toggle button.active .cut { background: rgba(26, 20, 5, .16); color: #1A1405; }
+.plan-toggle button.active .cut { background: rgba(26, 20, 5, .16); color: var(--on-gold); }
 
 /* Variantlar — faqat tanlangani ko'rinadi */
 .plan-variant { display: none; flex-direction: column; gap: var(--sp-3); }

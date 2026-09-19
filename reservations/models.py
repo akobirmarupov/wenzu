@@ -296,6 +296,44 @@ class Reservation(BaseModel):
             return timezone.make_aware(naive, timezone.get_current_timezone())
         return naive
 
+    def event_ends_at(self):
+        """
+        Tadbirning TUGASH payti — to'liq sana va vaqt.
+
+        Nega kerak: bron tugashi bilan ikki narsa yuz beradi — bron
+        "yakunlangan" holatiga o'tadi va mijozdan sharh so'raladi.
+        Ilgari bu faqat ERTASI KUNI, tungi vazifa ishlaganda bo'lardi:
+        soat 20:00 da kechki ovqatdan chiqqan odam sharh yozmoqchi
+        bo'lsa, tizim "bron hali yakunlanmagan" derdi va u ertasigacha
+        kutishi kerak edi. Amalda esa u ertasiga qaytib kelmasdi.
+
+        Restoranda bu mijoz tanlagan tugash soati (masalan 21:00).
+        To'yxonada soat tanlanmaydi — jadvaldagi kun tugashi olinadi.
+
+        Jadval yozuvi bo'lmasa `None`: bunday bron eskirgan yoki qo'lda
+        yaratilgan, uni vaqt bo'yicha yakunlab bo'lmaydi.
+        """
+        availability = self.availability
+        if availability is None:
+            return None
+
+        end = self.end_time or availability.end_time
+        if end is None:
+            return None
+
+        naive = datetime.datetime.combine(availability.date, end)
+
+        # Tungi oraliq: 22:00 dan 02:00 gacha bo'lgan bron ERTASI kuni
+        # tugaydi. Aks holda tugash payti boshlanishdan oldin bo'lib
+        # qolardi va bron boshlanishi bilanoq "yakunlangan" bo'lardi.
+        start = self.start_time or availability.start_time
+        if start is not None and end <= start:
+            naive += datetime.timedelta(days=1)
+
+        if timezone.is_naive(naive):
+            return timezone.make_aware(naive, timezone.get_current_timezone())
+        return naive
+
     def cancel_deadline(self):
         """
         Bekor qilishning oxirgi muddati — bron qilingan payt bilan tadbir

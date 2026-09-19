@@ -64,8 +64,8 @@ export async function renderDishWall(selector, dotsSelector) {
   }
   if (!items.length) {
     container.innerHTML = emptyState(
-      "Hozircha taom qo'shilmagan",
-      "Restoranlar menyusini kiritgach, taomlar shu yerda ko'rinadi.",
+      t("home.noDishes"),
+      t("home.noDishesText"),
       icon("restaurant", { size: 40 })
     );
     return;
@@ -146,8 +146,8 @@ export async function renderFeastList(selector, { limit = 8 } = {}) {
     container.innerHTML = items.length
       ? `<div class="feast-list">${items.map(feastRowHtml).join("")}</div>`
       : emptyState(
-          "To'yxona menyusi hali bo'sh",
-          "To'yxonalar taom ro'yxatini kiritgach, shu yerda chiqadi.",
+          t("home.noFeast"),
+          t("home.noFeastText"),
           icon("party", { size: 40 })
         );
   } catch (error) {

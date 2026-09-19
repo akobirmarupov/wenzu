@@ -26,10 +26,18 @@
   {# Har bir sahifa o'z modulini shu blokda ulaydi #}
   {% block scripts %}{% endblock %}
 
-  {# Telefonga o'rnatish va oflayn rejim — HAMMA sahifada bir xil #}
+  {# Telefonga o'rnatish, oflayn rejim va tashrifdan keyingi sharh
+     so'rovi — HAMMA sahifada bir xil ishlaydi.
+
+     Sharh so'rovi shu yerda, chunki u sahifaga bog'liq emas: odam
+     saytning qayeriga kirsa ham, vaqti tugagan broni bo'lsa savol
+     beriladi. Modulning o'zi tekshiradi — kirmagan foydalanuvchida
+     yoki sharh kutayotgan bron bo'lmasa hech narsa qilmaydi. #}
   <script type="module">
     import { initPwa } from "{% static 'js/core/pwa.js' %}?v={{ asset_version }}";
+    import { initReviewPrompt } from "{% static 'js/components/review-prompt.js' %}?v={{ asset_version }}";
     initPwa();
+    initReviewPrompt();
   </script>
 </body>
 </html>

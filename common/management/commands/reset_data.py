@@ -72,20 +72,32 @@ MODELS_IN_ORDER = (
     Session,
 )
 
-# Foydalanuvchi yuklaydigan fayllar shu papkalarga tushadi. `_demo_cache`
-# ham shu yerda — u demo suratlar keshi edi, endi kerak emas.
-MEDIA_DIRS = (
-    "_demo_cache",
-    "avatars",
-    "banners",
-    "business_covers",
-    "business_photos",
-    "halls",
-    "news",
-    "restaurant_menu",
-    "review_photos",
-    "rooms",
-)
+
+def upload_dirs():
+    """
+    Fayl yuklanadigan papkalar RO'YXATI — modellarning o'zidan.
+
+    Ilgari bu ro'yxat qo'lda yozilgan edi va tabiiy ravishda eskirdi:
+    `venue_menu/` qo'shilganda ro'yxatga tushmay qoldi, natijada
+    tozalashdan keyin ham 30 MB fayl qolib ketdi. Endi ro'yxat
+    modellardagi `upload_to` dan yig'iladi — yangi maydon qo'shilsa
+    o'zi paydo bo'ladi.
+    """
+    from django.apps import apps
+    from django.db.models import FileField
+
+    names = set()
+    for model in apps.get_models():
+        for field in model._meta.get_fields():
+            if isinstance(field, FileField) and isinstance(field.upload_to, str):
+                # "banners/video/" → eng yuqori papka: "banners"
+                top = field.upload_to.strip("/").split("/")[0]
+                if top:
+                    names.add(top)
+
+    # Demo suratlar keshi — modelga bog'lanmagan, lekin joy egallaydi.
+    names.add("_demo_cache")
+    return sorted(names)
 
 
 class Command(BaseCommand):
@@ -151,7 +163,7 @@ class Command(BaseCommand):
         root = Path(settings.MEDIA_ROOT)
         if not root.exists():
             return
-        for name in MEDIA_DIRS:
+        for name in upload_dirs():
             target = root / name
             if target.exists():
                 shutil.rmtree(target, ignore_errors=True)

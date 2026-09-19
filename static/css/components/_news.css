@@ -19,13 +19,15 @@
 .news-card .foot { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: var(--sp-2); }
 
 .news-cat {
-  align-self: flex-start; padding: 3px 10px; border-radius: var(--radius-pill);
-  font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  align-self: flex-start; padding: var(--sp-1) var(--sp-3); border-radius: var(--radius-pill);
+  font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
 }
 .news-cat-news   { background: var(--info-dim);   color: var(--info); }
 .news-cat-tip    { background: var(--ok-dim);     color: var(--ok); }
 .news-cat-event  { background: var(--gold-100);   color: var(--gold-ink); }
-.news-cat-update { background: var(--theme-accent-dim); color: var(--theme-accent-dark); }
+/* `--theme-accent-dark` emas, `--on-accent-dim`: tungi rejimda fon ham,
+   matn ham qorong'i bo'lib, yorliq ko'rinmay qolardi (2.6). */
+.news-cat-update { background: var(--theme-accent-dim); color: var(--on-accent-dim); }
 
 .news-pinned { position: relative; }
 .news-pinned::before {

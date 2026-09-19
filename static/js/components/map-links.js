@@ -111,9 +111,10 @@ export function mapPinHtml(business) {
   const links = business?.map_links || {};
   const href = links.custom || links.google;
   if (!href) return "";
+  const label = esc(t("detail.openInMap"));
   return `
     <button type="button" class="map-pin" data-map-url="${esc(href)}"
-            title="Xaritada ochish" aria-label="Xaritada ochish">${PIN_ICON}</button>`;
+            title="${label}" aria-label="${label}">${PIN_ICON}</button>`;
 }
 
 /**

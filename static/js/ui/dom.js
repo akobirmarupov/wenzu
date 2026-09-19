@@ -17,32 +17,7 @@ export function esc(value) {
     .replace(/'/g, "&#39;");
 }
 
-/** `onclick="fn('...')"` ichiga qo'yiladigan matn uchun. */
-export function escAttr(value) {
-  return esc(value).replace(/\n/g, " ");
-}
-
 export const $ = (selector, root = document) => root.querySelector(selector);
-export const $$ = (selector, root = document) => Array.from(root.querySelectorAll(selector));
-
-/** Element yasash — sinf, atribut va bolalari bilan. */
-export function el(tag, props = {}, children = []) {
-  const node = document.createElement(tag);
-  Object.entries(props).forEach(([key, value]) => {
-    if (key === "class") node.className = value;
-    else if (key === "html") node.innerHTML = value;
-    else if (key === "text") node.textContent = value;
-    else if (key.startsWith("on") && typeof value === "function") {
-      node.addEventListener(key.slice(2).toLowerCase(), value);
-    } else if (value !== null && value !== undefined && value !== false) {
-      node.setAttribute(key, value);
-    }
-  });
-  (Array.isArray(children) ? children : [children])
-    .filter(Boolean)
-    .forEach((child) => node.append(child));
-  return node;
-}
 
 /** Konteynerni HTML bilan to'ldirish (avval tozalab). */
 export function render(target, html) {

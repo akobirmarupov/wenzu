@@ -33,14 +33,19 @@
 
 .home-tabs { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
 .home-tab {
-  padding: 8px 18px; border-radius: var(--radius-pill);
+  /* Tur tugmalari — asosiy boshqaruv, shuning uchun to'liq balandlikda
+     (`--ctl-h`). Ilgari 8/18 px bo'shliq bilan ~40 px chiqardi va tagida
+     turgan qidiruv qatoridan (~42 px) past bo'lib ko'rinardi. */
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--ctl-h); padding: 0 var(--sp-4);
+  border-radius: var(--radius-pill);
   border: 1.5px solid var(--line); background: var(--surface);
   font-weight: 700; font-size: var(--fs-sm); color: var(--ink-soft);
   transition: all var(--transition);
 }
 .home-tab:hover { border-color: var(--theme-accent); color: var(--theme-accent); }
 .home-tab.active {
-  background: var(--gold-shine); border-color: transparent; color: #1A1405;
+  background: var(--gold-shine); border-color: transparent; color: var(--on-gold);
   box-shadow: var(--gold-glow);
 }
 
@@ -55,13 +60,15 @@
   display: flex; flex-direction: column; gap: 2px;
 }
 .home-stat .value {
-  font-family: var(--font-display); font-size: 28px; font-weight: 600;
+  /* 30 px — `.stat-card .value` bilan bir xil. Ikkalasi ham "katta
+     raqam" kartochkasi; ilgari bu yerda 28, u yerda 30 px turardi. */
+  font-family: var(--font-display); font-size: 30px; font-weight: 600;
   line-height: 1; font-variant-numeric: tabular-nums;
   background: var(--gold-shine);
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .home-stat .label {
-  font-size: 10.5px; font-weight: 800; letter-spacing: .09em;
+  font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .09em;
   text-transform: uppercase; color: var(--ink-faint);
 }
 
@@ -76,15 +83,16 @@
   width: 36px; height: 36px; border-radius: 50%;
   display: grid; place-items: center;
   font-family: var(--font-mono); font-weight: 700;
-  background: var(--gold-shine); color: #1A1405;
+  background: var(--gold-shine); color: var(--on-gold);
   box-shadow: var(--gold-glow);
 }
 
 /* Biznes ochish chaqirig'i */
 .cta-band {
   position: relative; overflow: hidden;
+  /* Brend gradienti — banner bilan bir oilada, tokenga bo'linmaydi. */
   background: linear-gradient(120deg, var(--emerald-800) 0%, var(--emerald-900) 60%, #061F1A 100%);
-  color: #FFFFFF; border-radius: var(--radius-l); padding: var(--sp-10);
+  color: var(--white); border-radius: var(--radius-l); padding: var(--sp-10);
   display: flex; align-items: center; gap: var(--sp-8); flex-wrap: wrap;
 }
 :root[data-theme="dark"] .cta-band {
@@ -99,4 +107,6 @@
 .cta-band h2 { font-size: var(--fs-xl); }
 .cta-band h2 em { font-style: italic; background: var(--gold-shine);
   -webkit-background-clip: text; background-clip: text; color: transparent; }
+/* Doimiy och yashil-kulrang: foni (gradient) temaga qarab o'zgarmaydi,
+   shuning uchun matn ham o'zgarmaydi. Kontrast 13.1. */
 .cta-band p { color: #D5E4DD; max-width: 48ch; margin-top: var(--sp-2); }

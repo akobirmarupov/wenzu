@@ -1,14 +1,24 @@
 {% extends "layouts/public.html" %}
 {% load static %}
 
-{% block content %}
-<div class="container section-sm">
-  <section class="profile-cover" id="profile-cover"></section>
+{% comment %}
+  Profil sahifasi uch qatlamdan iborat:
 
-  <div class="profile-body">
-    <nav class="profile-menu" id="profile-menu" aria-label="Profil bo'limlari"></nav>
-    <div id="profile-content"></div>
-  </div>
+    1. `profile-id`      — kim ekanligi: rasm, ism, nishonlar, amallar;
+    2. `profile-tabs`    — bo'limlar (gorizontal, telefonda suriladi);
+    3. `profile-content` — tanlangan bo'lim.
+
+  Ilgari bo'limlar chapdagi baland kartochkada turardi va uning ostida
+  katta bo'sh maydon qolardi — uch banddan iborat menyu uchun butun
+  ustunni band qilish isrof edi. Gorizontal tasma bir qatorda joylashadi
+  va telefonda ham aynan shu ko'rinishda qoladi.
+{% endcomment %}
+
+{% block content %}
+<div class="container section-sm profile-page">
+  <header class="profile-id" id="profile-id"></header>
+  <nav class="profile-tabs" id="profile-tabs" aria-label="Profil bo'limlari"></nav>
+  <div id="profile-content"></div>
 </div>
 {% endblock %}
 

@@ -1,7 +1,7 @@
 # Feasto — Backend
 
 Restoran va to'yxonalarni onlayn qidirish, filtrlash va bron qilish platformasi.
-Django 5 + DRF + PostgreSQL + Redis + Celery.
+Django 5.2 (LTS) + DRF + PostgreSQL + Redis + Celery.
 
 ---
 
@@ -86,6 +86,19 @@ celery -A config worker -l info
 celery -A config beat   -l info
 ```
 
+**Beat SHART.** Muntazam vazifalar unga bog'liq:
+
+| Vazifa | Qachon | Nima qiladi |
+|---|---|---|
+| `complete_past_reservations_task` | har 15 daqiqada | vaqti tugagan bronni yakunlaydi va mijozdan sharh so'raydi |
+| `check_expired_subscriptions_task` | har kuni 03:00 | muddati o'tgan obunani yopadi |
+| `notify_expiring_subscriptions_task` | har kuni 09:00 | tugayotgan obuna haqida egasiga eslatma |
+
+Beat ishlamasa bronlar "yakunlangan" holatiga o'tmaydi va sharh
+qoldirib bo'lmaydi — ya'ni reyting to'planmaydi. Beat FAQAT BITTA
+nusxada ishlashi kerak: ikkita beat har kungi vazifani ikki marta
+bajaradi.
+
 Loyihada demo/sinov ma'lumoti YO'Q: bazaga nima kiritilsa, o'sha haqiqiy
 ma'lumot. Sinov ma'lumotlari to'planib qolgan bo'lsa, bir buyruq bilan
 tozalanadi (super-admin, sozlamalar va tarif rejalari saqlanib qoladi):
@@ -166,10 +179,13 @@ Biznes qidiruvi filtrlari birga ishlaydi:
 python manage.py test
 ```
 
-37 ta test, 3 ta faylda:
+212 ta test. Asosiylari:
 
-- `common/tests.py` — uchdan-uchgacha oqim: ro'yxatdan o'tish → SMS →
+- `common/tests.py` — uchdan-uchgacha oqim: ro'yxatdan o'tish →
   ariza → trial → xona/menyu → bron → tasdiq → sharh → admin tasdig'i.
+- `reservations/tests.py` — narx hisobi, bekor qilish oynasi, ishonchlilik
+  bali va **bron vaqti tugashi bilan avtomatik yakunlanishi** (tungi
+  22:00–02:00 oralig'i ham tekshiriladi).
 - `common/test_security.py` — IDOR, rol chegaralari, SMS brute-force,
   enumeratsiya, obuna bloklash, bron mantiqidagi teshiklar.
 - `common/test_performance.py` — N+1 tekshiruvi, kesh, va eng muhimi

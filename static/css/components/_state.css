@@ -4,7 +4,7 @@
   padding: var(--sp-12) var(--sp-6); text-align: center;
   color: var(--ink-soft); grid-column: 1 / -1;
 }
-.empty-state .icon { font-size: 34px; opacity: .5; }
+.empty-state .icon { font-size: var(--fs-2xl); opacity: .5; }
 .empty-state h3 { font-size: var(--fs-md); color: var(--ink); }
 
 /* Skeleton — ma'lumot kelguncha sahifa "sakramasligi" uchun */

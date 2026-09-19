@@ -12,8 +12,10 @@
    bilan bir xil kenglikda tursin va kartochkalar qatorida sakramasin. */
 .rank-tag {
   display: inline-flex; align-items: center; gap: 2px;
-  padding: 3px 10px; border-radius: var(--radius-pill);
-  background: var(--theme-accent-dim); color: var(--theme-accent-dark);
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--radius-pill);
+  /* `--theme-accent-dark` emas: tungi rejimda to'q aksent qorong'i
+     fonda 2.6 kontrast berardi va o'rin nishoni ko'rinmay qolardi. */
+  background: var(--theme-accent-dim); color: var(--on-accent-dim);
   font-size: var(--fs-xs); font-weight: 800;
   font-variant-numeric: tabular-nums; white-space: nowrap;
 }
@@ -22,7 +24,7 @@
    Ular reyting qatoridan PASTDA — kartochkaning asosiy yozuvi nom va
    o'rin bo'lib qolishi kerak. */
 .biz-card .facts {
-  margin-top: 4px; font-size: var(--fs-xs); color: var(--ink-soft);
+  margin-top: var(--sp-1); font-size: var(--fs-xs); color: var(--ink-soft);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .biz-card-media { position: relative; }
@@ -32,10 +34,10 @@
    reyting umuman ko'rinmay qolardi. */
 .biz-card-media .rating-badge {
   position: absolute; top: var(--sp-3); right: var(--sp-3);
-  display: inline-flex; align-items: center; gap: 4px;
+  display: inline-flex; align-items: center; gap: var(--sp-1);
   background: rgba(255,255,255,.94); color: var(--ink-on-light);
   border-radius: var(--radius-pill);
-  padding: 3px 10px; font-size: var(--fs-xs); font-weight: 800;
+  padding: var(--sp-1) var(--sp-3); font-size: var(--fs-xs); font-weight: 800;
   box-shadow: 0 1px 4px rgba(0,0,0,.18);
 }
 .biz-card-media .rating-badge .star,
@@ -43,6 +45,6 @@
 .biz-card-media .distance-badge {
   position: absolute; bottom: var(--sp-3); left: var(--sp-3);
   background: rgba(11,59,46,.85); color: var(--white);
-  border-radius: var(--radius-pill); padding: 3px 10px;
+  border-radius: var(--radius-pill); padding: var(--sp-1) var(--sp-3);
   font-size: var(--fs-xs); font-weight: 700;
 }

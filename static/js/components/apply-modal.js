@@ -12,6 +12,7 @@
 import { api } from "../core/api.js";
 import { auth } from "../core/auth.js";
 import { ROUTES } from "../core/config.js";
+import { t } from "../core/i18n.js";
 import { openModal, modal } from "../ui/modal.js";
 import { esc, busy } from "../ui/dom.js";
 import { icon } from "../ui/icons.js";
@@ -32,37 +33,36 @@ function openSentScreen({ message, telegram, onDone }) {
   const handle = telegram.replace("@", "");
 
   const node = openModal(
-    `<h2>${icon("checkCircle")} Arizangiz yuborildi</h2>
+    `<h2>${icon("checkCircle")} ${esc(t("apply.sentTitle"))}</h2>
      <div class="notice">
        <p>${esc(message)}</p>
      </div>
 
      <p class="small" style="margin-top:var(--sp-5)">
-       Administrator bilan hoziroq bog'lanasizmi? Bu tasdiqni tezlashtiradi.
+       ${esc(t("apply.contactNow"))}
      </p>
 
      <a class="tg-line" style="margin-top:var(--sp-3)"
         href="https://t.me/${esc(handle)}" target="_blank" rel="noopener"
         data-modal-close>
        <span class="ic">${icon("send")}</span>
-       <span>Ha, admin bilan bog'lanaman (${esc(telegram)})</span>
+       <span>${esc(t("apply.contactYes", { handle: telegram }))}</span>
      </a>
 
      <button class="btn btn-outline btn-block" style="margin-top:var(--sp-3)"
              type="button" id="apply-later">
-       Keyinroq bog'lanaman
+       ${esc(t("apply.later"))}
      </button>
 
      <p class="xs muted center" style="margin-top:var(--sp-3)">
-       Admin manzili profilingizdagi "Obuna va Premium" bo'limining
-       tepasida turadi — istalgan paytda topasiz.
+       ${esc(t("apply.adminWhere"))}
      </p>`,
     { wide: true }
   );
 
   node.querySelector("#apply-later").addEventListener("click", () => {
     modal.close();
-    toast.ok("Arizangiz yuborildi. Admin manzili shu bo'limda turadi.");
+    toast.ok(t("apply.sentToast"));
     onDone?.();
   });
 
@@ -80,7 +80,6 @@ function openSentScreen({ message, telegram, onDone }) {
  */
 export async function openApplyModal(type, { plan = null, onSent } = {}) {
   const isRestaurant = type === "restaurant";
-  const label = isRestaurant ? "Restoran" : "To'yxona";
 
   // `plan` bo'sh — BEPUL SINOV arizasi. Reja berilgan bo'lsa — pullik.
   const isTrial = !plan;
@@ -113,29 +112,28 @@ export async function openApplyModal(type, { plan = null, onSent } = {}) {
   // bir xil matn turardi va pul to'laydigan odam ustiga yana bepul kun
   // kutardi.
   const notice = isTrial
-    ? `<p><b>${trialDays} kun mutlaqo bepul</b> — hech qanday to'lovsiz.
-          Administrator arizangizni tasdiqlagach sinov boshlanadi.</p>
-       <p class="xs muted">Bepul sinov har bir foydalanuvchiga bir marta beriladi.</p>`
-    : `<p>Tanlangan tarif — <b>${esc(plan.duration_label)}</b>,
-          <b>${money(plan.price)}</b>.</p>
-       <p>To'lovni Telegram orqali amalga oshirasiz. Administrator tasdiqlagach
-          obunangiz <b>o'sha kundan boshlab</b> ${esc(plan.duration_label)}ga
-          faollashadi.</p>`;
+    ? `<p>${t("apply.trialNotice", { days: trialDays })}</p>
+       <p class="xs muted">${esc(t("apply.trialOnce"))}</p>`
+    : `<p>${t("apply.planNotice", {
+            plan: esc(plan.duration_label),
+            price: esc(money(plan.price)),
+          })}</p>
+       <p>${t("apply.planNoticeTerms", { plan: esc(plan.duration_label) })}</p>`;
 
   const node = openModal(
-    `<h2>${label} ochish</h2>
+    `<h2>${esc(t(isRestaurant ? "business.openRestaurant" : "business.openVenue"))}</h2>
 
      <form class="stack stack-4" id="apply-form" novalidate>
        <div class="form-alert" id="apply-error" hidden></div>
 
        <div class="field">
-         <label for="business_name">${label} nomi</label>
+         <label for="business_name">${esc(t(isRestaurant ? "apply.restaurantName" : "apply.venueName"))}</label>
          <input class="input" id="business_name" name="business_name" required
-                placeholder="${isRestaurant ? "Masalan: Bahor Taomxonasi" : "Masalan: Navro'z Saroyi"}">
+                placeholder="${esc(t(isRestaurant ? "apply.restaurantPlaceholder" : "apply.venuePlaceholder"))}">
        </div>
 
        <div class="notice">
-         <p>${icon("wave")} Assalomu alaykum!</p>
+         <p>${icon("wave")} ${esc(t("common.greeting"))}</p>
          ${notice}
        </div>
 
@@ -144,7 +142,7 @@ export async function openApplyModal(type, { plan = null, onSent } = {}) {
             arizani yubormasdan to'g'ri Telegramga o'tib ketardi —
             adminda esa hech qanday ariza ko'rinmasdi. */""}
        <button class="btn btn-primary btn-block btn-lg" type="submit" id="apply-submit">
-         Arizani yuborish
+         ${esc(t("apply.submit"))}
        </button>
      </form>`,
     { wide: true }
@@ -159,7 +157,7 @@ export async function openApplyModal(type, { plan = null, onSent } = {}) {
 
     const businessName = form.business_name.value.trim();
     if (!businessName) {
-      errorBox.textContent = `${label} nomini kiriting.`;
+      errorBox.textContent = t(isRestaurant ? "apply.restaurantRequired" : "apply.venueRequired");
       errorBox.hidden = false;
       return;
     }
@@ -202,24 +200,22 @@ export async function openTypePicker({ plan = null, onSent } = {}) {
   if (!(await ensurePhone("application"))) return;
 
   const node = openModal(
-    `<h2>Bepul sinov</h2>
+    `<h2>${esc(t("premium.trial"))}</h2>
      <div class="notice">
-       <p>${icon("wave")} Assalomu alaykum!</p>
-       <p><b>7 kun mutlaqo bepul</b> — hech qanday to'lovsiz. Administrator
-          arizangizni tasdiqlagach sinov boshlanadi.</p>
-       <p class="xs muted">Bepul sinov har bir foydalanuvchiga bir marta
-          beriladi. Muddat tugagach pullik tariflardan birini tanlaysiz.</p>
+       <p>${icon("wave")} ${esc(t("common.greeting"))}</p>
+       <p>${t("apply.trialNotice", { days: 7 })}</p>
+       <p class="xs muted">${esc(t("apply.trialOnce"))} ${esc(t("apply.trialThen"))}</p>
      </div>
 
-     <p class="small strong" style="margin-top:var(--sp-5)">Nima ochmoqchisiz?</p>
+     <p class="small strong" style="margin-top:var(--sp-5)">${esc(t("apply.whatOpen"))}</p>
      <div class="biz-choice" style="margin-top:var(--sp-3)">
        <button class="opt" type="button" data-pick-type="restaurant">
          <div class="ic">${icon("restaurant", { size: 28 })}</div>
-         <h3 class="display h4" style="margin-top:var(--sp-2)">Restoran</h3>
+         <h3 class="display h4" style="margin-top:var(--sp-2)">${esc(t("common.restaurant"))}</h3>
        </button>
        <button class="opt" type="button" data-pick-type="venue">
          <div class="ic">${icon("party", { size: 28 })}</div>
-         <h3 class="display h4" style="margin-top:var(--sp-2)">To'yxona</h3>
+         <h3 class="display h4" style="margin-top:var(--sp-2)">${esc(t("common.venue"))}</h3>
        </button>
      </div>`,
     { wide: true }

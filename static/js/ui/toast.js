@@ -2,6 +2,8 @@
  * Qisqa xabarnomalar.
  * `alert()` o'rniga — u sahifani bloklaydi va mobil ilovada xunuk ko'rinadi.
  */
+import { t } from "../core/i18n.js";
+
 const DURATION = 3400;
 
 function root() {
@@ -38,7 +40,7 @@ export const toast = {
    * log'dan aynan shu so'rovni topish uchun.
    */
   fromError(error) {
-    show(error?.message || "Xatolik yuz berdi.", "toast-bad");
+    show(error?.message || t("common.error"), "toast-bad");
     if (error?.requestId) console.warn("request_id:", error.requestId);
   },
 };

@@ -34,7 +34,7 @@
   font-size: var(--fs-sm); font-weight: 700; color: var(--ink);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.dish-tile .place { font-size: 11px; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dish-tile .place { font-size: var(--fs-2xs); color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .dish-tile .price {
   font-size: var(--fs-sm); font-weight: 800; margin-top: 2px;
   background: var(--gold-shine); -webkit-background-clip: text; background-clip: text; color: transparent;
@@ -44,7 +44,7 @@
 @media (max-width: 640px) { .dish-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* Qaysi "sahifa" ko'rsatilayotganini bildiruvchi chiziqchalar */
-.wall-dots { display: flex; gap: 5px; }
+.wall-dots { display: flex; gap: var(--sp-1); }
 .wall-dots span { width: 20px; height: 3px; border-radius: 2px; background: var(--line); transition: background var(--transition); }
 .wall-dots span.active { background: var(--gold-shine); }
 
@@ -64,7 +64,7 @@
 .feast-row .info .place { font-size: var(--fs-xs); color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .feast-row .amount { text-align: right; display: flex; flex-direction: column; gap: 1px; }
 .feast-row .amount b { font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
-.feast-row .amount span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em; color: var(--ink-faint); }
+.feast-row .amount span { font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-faint); }
 .feast-row img {
   width: 88px; height: 64px; border-radius: var(--radius-s);
   object-fit: cover; background: var(--surface-2);

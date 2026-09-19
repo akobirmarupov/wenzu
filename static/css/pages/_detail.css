@@ -30,7 +30,9 @@
   position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
   width: 40px; height: 40px; border-radius: 50%;
   display: grid; place-items: center;
-  background: rgba(10, 17, 28, .55); color: #FFFFFF; font-size: 24px; line-height: 1;
+  /* Rasm ustidagi parda — tema tokeni emas: foni surat, ya'ni u har
+     doim nomalum rangda. Shuning uchun parda ham, matn ham qattiq. */
+  background: rgba(10, 17, 28, .55); color: var(--white); font-size: var(--fs-xl); line-height: 1;
   backdrop-filter: blur(4px);
   transition: background var(--transition);
 }
@@ -39,13 +41,13 @@
 .detail-gallery .g-nav.next { right: var(--sp-3); }
 .detail-gallery .g-count {
   position: absolute; right: var(--sp-4); bottom: var(--sp-4); z-index: 2;
-  padding: 4px 12px; border-radius: var(--radius-pill);
-  background: rgba(10, 17, 28, .60); color: #FFFFFF;
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--radius-pill);
+  background: rgba(10, 17, 28, .60); color: var(--white);
   font-size: var(--fs-xs); font-variant-numeric: tabular-nums;
 }
 
 .detail-gallery .thumbs {
-  display: flex; gap: var(--sp-2); overflow-x: auto; padding-bottom: 4px;
+  display: flex; gap: var(--sp-2); overflow-x: auto; padding-bottom: var(--sp-1);
   scrollbar-width: thin;
 }
 .detail-gallery .thumb {
@@ -69,7 +71,7 @@
 /* Sarlavha ostidagi "Yo'nalish" havolasi — qatordagi qolgan yozuvlar
    bilan bir xil o'lchamda, lekin bosilishi bilinib tursin. */
 .detail-meta .meta-link {
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; gap: var(--sp-1);
   color: var(--theme-accent); font-weight: 700; text-decoration: none;
   border-bottom: 1px solid transparent; transition: border-color var(--transition);
 }
@@ -78,10 +80,15 @@
 
 .tabs { display: flex; gap: var(--sp-1); border-bottom: 1px solid var(--line); margin-bottom: var(--sp-6); overflow-x: auto; }
 .tab {
-  padding: 12px 18px; font-weight: 700; font-size: var(--fs-sm); color: var(--ink-soft);
+  padding: var(--sp-3) var(--sp-5); font-weight: 700; font-size: var(--fs-sm); color: var(--ink-soft);
   border-bottom: 3px solid transparent; white-space: nowrap;
 }
-.tab.active { color: var(--emerald-800); border-bottom-color: var(--emerald-600); }
+/* Rang `--emerald-800` edi va TUNGI REJIMDA butunlay buzilardi: bu
+   token tungi blokda qayta belgilanmaydi, ya'ni #0C4438 bo'lib qoladi
+   va qorong'i yuzada atigi 1.6 kontrast beradi — faol bo'lim yozuvi
+   deyarli ko'rinmasdi. `--theme-accent` ikkala temada ham almashadi
+   (kunduzi 4.95, tunda 6.1) va panel rangiga ham moslashadi. */
+.tab.active { color: var(--theme-accent); border-bottom-color: var(--theme-accent); }
 
 /* Xona/zal kartochkasidagi "Band qilish" tugmasi.
 
@@ -108,14 +115,14 @@
   position: absolute; top: var(--sp-2); right: var(--sp-2);
   width: 24px; height: 24px; border-radius: 50%;
   background: var(--theme-accent); color: var(--on-accent);
-  display: none; place-items: center; font-size: 13px; font-weight: 800;
+  display: none; place-items: center; font-size: var(--fs-sm); font-weight: 800;
 }
 .menu-item.checked .check { display: grid; }
 
 /* Soat gridi — bron oynasi */
 .hour-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; margin-bottom: var(--sp-3); }
 .hour-cell {
-  padding: 10px 4px; border-radius: var(--radius-s); text-align: center;
+  padding: var(--sp-3) var(--sp-1); border-radius: var(--radius-s); text-align: center;
   font-size: var(--fs-sm); font-weight: 700; font-variant-numeric: tabular-nums;
   border: 1.5px solid var(--line); background: var(--surface); cursor: pointer;
   transition: all var(--transition);
@@ -124,7 +131,7 @@
 .hour-cell.sel { background: var(--theme-accent); border-color: var(--theme-accent); color: var(--on-accent); }
 .hour-cell.busy { background: var(--danger-dim); border-color: var(--danger-dim); color: var(--danger); cursor: not-allowed; }
 .hour-legend { display: flex; gap: var(--sp-4); flex-wrap: wrap; font-size: var(--fs-xs); color: var(--ink-soft); margin-bottom: var(--sp-2); }
-.hour-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.hour-legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: var(--sp-1); vertical-align: -1px; }
 .hour-legend .l-free { background: var(--surface); border: 1.5px solid var(--line); }
 .hour-legend .l-sel  { background: var(--theme-accent); }
 .hour-legend .l-busy { background: var(--danger-dim); border: 1.5px solid var(--danger); }
@@ -168,7 +175,10 @@
 }
 
 .biz-profile {
-  position: sticky; top: calc(62px + var(--sp-4));
+  /* 62 px qo'lda yozilgan edi — bu yuqori panelning balandligi, ya'ni
+     `--topbar-h` ning nusxasi. Panel balandligi o'zgarsa (telefonda
+     52 px) yopishgan kartochka noto'g'ri joyda to'xtardi. */
+  position: sticky; top: calc(var(--topbar-h) + var(--sp-4));
   display: flex; flex-direction: column; gap: var(--sp-4);
   padding: var(--sp-5);
   border: 1px solid var(--line); border-radius: var(--radius-l);
@@ -186,10 +196,10 @@
   font-size: var(--fs-md); color: var(--ink);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.biz-profile-head .rating { display: flex; align-items: center; gap: 5px; font-size: var(--fs-xs); }
+.biz-profile-head .rating { display: flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-xs); }
 
 .biz-profile-label {
-  font-size: 10.5px; font-weight: 800; letter-spacing: .09em;
+  font-size: var(--fs-2xs); font-weight: 800; letter-spacing: .09em;
   text-transform: uppercase; color: var(--ink-faint);
 }
 
@@ -211,11 +221,13 @@
   transition: border-color var(--transition), transform var(--transition);
 }
 .biz-contact:hover { border-color: var(--theme-accent); transform: translateX(2px); }
-.biz-contact .ic { font-size: 18px; flex-shrink: 0; }
+.biz-contact .ic { font-size: var(--fs-md); flex-shrink: 0; }
 .biz-contact b { display: block; font-size: var(--fs-sm); color: var(--ink); }
 .biz-contact .small { display: block; color: var(--ink-faint); font-size: var(--fs-xs); }
+/* TELEGRAM rangi — brend belgisi (`_modal.css` dagi `.tg-line` bilan
+   bir xil), tokenga o'tkazilmaydi va temaga qarab o'zgarmaydi. */
 .biz-contact.tg { background: linear-gradient(120deg, #1B7FA8 0%, #2AA0CC 100%); border-color: transparent; }
-.biz-contact.tg b, .biz-contact.tg .small { color: #FFFFFF; }
+.biz-contact.tg b, .biz-contact.tg .small { color: var(--white); }
 .biz-contact.tg .small { color: rgba(255, 255, 255, .82); }
 
 /* --- yopiq aloqa (kirmagan foydalanuvchi) --- */
@@ -231,7 +243,7 @@
 :root[data-theme="dark"] .biz-locked,
 :root:not([data-theme="light"]) .biz-locked { background: var(--surface-2); }
 .biz-locked:hover { background: var(--surface); }
-.biz-locked .ic { font-size: 20px; flex-shrink: 0; }
+.biz-locked .ic { font-size: var(--fs-lg); flex-shrink: 0; }
 .biz-locked b { display: block; font-size: var(--fs-sm); }
 .biz-locked .small { display: block; color: var(--ink-soft); font-size: var(--fs-xs); margin-top: 2px; }
 .biz-locked .go { margin-left: auto; color: var(--gold-ink); font-weight: 800; }

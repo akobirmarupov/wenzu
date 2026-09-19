@@ -61,8 +61,8 @@ function galleryHtml() {
                src="${esc(src)}" alt="${esc(business.name)}"
                loading="${index === 0 ? "eager" : "lazy"}" decoding="async">`).join("")}
         ${photos.length > 1 ? `
-          <button class="g-nav prev" type="button" data-gallery="-1" aria-label="Oldingi">${icon("chevronLeft", { size: 22 })}</button>
-          <button class="g-nav next" type="button" data-gallery="1" aria-label="Keyingi">${icon("chevronRight", { size: 22 })}</button>
+          <button class="g-nav prev" type="button" data-gallery="-1" aria-label="${esc(t("detail.prevPhoto"))}">${icon("chevronLeft", { size: 22 })}</button>
+          <button class="g-nav next" type="button" data-gallery="1" aria-label="${esc(t("detail.nextPhoto"))}">${icon("chevronRight", { size: 22 })}</button>
           <span class="g-count"><b id="g-current">1</b> / ${photos.length}</span>` : ""}
       </div>
       ${photos.length > 1 ? `
@@ -223,7 +223,7 @@ function menuHtml() {
   // Turkumlar bo'yicha guruhlaymiz — uzun ro'yxat shunday o'qiladi.
   const groups = new Map();
   business.menu.forEach((item) => {
-    const key = item.category_display || "Boshqa";
+    const key = item.category_display || t("common.other");
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(item);
   });
@@ -253,9 +253,9 @@ function pricingHtml() {
   const rents = (business.halls || []).filter((hall) => hall.all_price != null);
   const rentNote = rents.length
     ? `<p class="small strong" style="margin-bottom:var(--sp-2)">
-         ${esc(t("detail.dayRent"))} alohida to'lanadi —
-         ${money(Math.min(...rents.map((hall) => Number(hall.all_price))))} dan boshlab.
-         Taom tanlash ixtiyoriy.
+         ${esc(t("detail.rentNote", {
+           price: money(Math.min(...rents.map((hall) => Number(hall.all_price)))),
+         }))}
        </p>` : "";
 
   return `

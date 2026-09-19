@@ -92,6 +92,9 @@ export const api = {
   reservations: {
     create: (data) => http.post("/reservations/", data),
     mine: (params) => http.get("/reservations/my/", params),
+    // Vaqti tugagan, lekin hali bahosi qo'yilmagan bronlar — sharh
+    // oynasi shu ro'yxatga qarab o'zi ochiladi.
+    pendingReview: () => http.get("/reservations/pending-review/"),
     detail: (id) => http.get(`/reservations/${id}/`),
     cancel: (id) => http.patch(`/reservations/${id}/cancel/`),
   },

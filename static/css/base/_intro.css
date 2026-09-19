@@ -55,6 +55,9 @@
 
 .intro-word {
   font-family: var(--font-display);
+  /* Brend ekrani — o'lcham 64 px li belgiga qarab tanlangan, matn
+     shkalasiga emas. Eng yaqin token (`--fs-2xl`, 34 px) to'rt piksel
+     katta va belgi bilan muvozanatni buzardi. */
   font-size: 30px;
   font-weight: 600;
   letter-spacing: -.01em;

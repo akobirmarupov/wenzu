@@ -43,17 +43,14 @@ function panelRedirectHtml(subscription) {
     <div class="panel">
       <div class="panel-head">
         <div class="stack stack-1">
-          <h2 class="display h3">Obuna panelingizda</h2>
-          <span class="small muted">
-            Tarif tanlash, muddatni uzaytirish, to'lovlar tarixi va
-            administrator manzili — hammasi shu yerda.
-          </span>
+          <h2 class="display h3">${esc(t("premium.panelRedirectTitle"))}</h2>
+          <span class="small muted">${esc(t("premium.panelRedirectText"))}</span>
         </div>
       </div>
       <a class="card card-link shortcut-card" href="/panel/obuna/" style="max-width:340px">
         <span class="ic">${icon(isVenue ? "venue" : "seat")}</span>
         <b>${esc(t(isVenue ? "nav.panelVenue" : "nav.panelRestaurant"))}</b>
-        <span class="small muted">Obuna bo'limiga o'tish</span>
+        <span class="small muted">${esc(t("premium.goToSubscription"))}</span>
         <span class="go">${icon("chevronRight")}</span>
       </a>
     </div>`;
@@ -76,11 +73,9 @@ function rejectedHtml(subscription) {
     <div class="price-pending" style="border-color:var(--danger);background:var(--danger-dim)">
       <span class="ic">${icon("ban", { className: "ico-danger" })}</span>
       <span>
-        <b>Arizangiz rad etildi</b>
+        <b>${esc(t("premium.rejectedTitle"))}</b>
         <span class="small">
-          Sababini ${esc(telegram)} bilan aniqlashtiring va arizani
-          <b>qayta yuboring</b> — quyidan tarifni tanlang. Joyingizdagi
-          ma'lumotlar saqlanib qoladi.
+          ${t("premium.rejectedText", { telegram: esc(telegram) })}
         </span>
       </span>
     </div>
@@ -88,10 +83,8 @@ function rejectedHtml(subscription) {
     <div class="panel" style="margin-top:var(--sp-5)">
       <div class="panel-head">
         <div class="stack stack-1">
-          <h2 class="display h3">Arizani qayta yuborish</h2>
-          <span class="small muted">
-            Tarifni tanlang — ariza administratorga qaytadan ketadi.
-          </span>
+          <h2 class="display h3">${esc(t("premium.reapplyTitle"))}</h2>
+          <span class="small muted">${esc(t("premium.reapplyLead"))}</span>
         </div>
       </div>
       <div id="premium-pricing">
@@ -112,10 +105,10 @@ function awaitingHtml(subscription) {
     <div class="price-pending">
       <span class="ic">${icon("clock")}</span>
       <span>
-        <b>Arizangiz administrator tekshiruvida</b>
+        <b>${esc(t("premium.awaitingTitle"))}</b>
         <span class="small">
           ${pendingApprovalText(subscription)}
-          Tezlashtirish uchun ${esc(telegram)} ga yozing.
+          ${esc(t("premium.speedUp", { telegram }))}
         </span>
       </span>
     </div>
@@ -151,25 +144,22 @@ function awaitingHtml(subscription) {
  */
 function adminHtml() {
   const links = [
-    { href: "/boshqaruv/obunalar/", icon: "gem", title: "Obunalar",
-      text: "Arizalarni tasdiqlash, muddat va to'lovlar" },
-    { href: "/boshqaruv/arizalar/", icon: "document", title: "Biznes arizalari",
-      text: "Yangi restoran va to'yxonalarni tasdiqlash" },
-    { href: "/boshqaruv/bizneslar/", icon: "building", title: "Bizneslar",
-      text: "Ochish, tahrirlash, bloklash va o'chirish" },
-    { href: "/boshqaruv/tolovlar/", icon: "card", title: "To'lovlar",
-      text: "Qo'lda kelgan to'lovlar tarixi" },
+    { href: "/boshqaruv/obunalar/", icon: "gem", title: t("panel.subscriptions"),
+      text: t("premium.linkSubscriptionsText") },
+    { href: "/boshqaruv/arizalar/", icon: "document", title: t("panel.applications"),
+      text: t("premium.linkApplicationsText") },
+    { href: "/boshqaruv/bizneslar/", icon: "building", title: t("panel.businesses"),
+      text: t("premium.linkBusinessesText") },
+    { href: "/boshqaruv/tolovlar/", icon: "card", title: t("panel.payments"),
+      text: t("premium.linkPaymentsText") },
   ];
 
   return `
     <div class="panel">
       <div class="panel-head">
         <div class="stack stack-1">
-          <h2 class="display h3">Obunalarni boshqarish</h2>
-          <span class="small muted">
-            Platforma egasi obuna sotib olmaydi — uni yaratadi, tasdiqlaydi
-            va bekor qiladi. Quyidagi bo'limlar shu ish uchun.
-          </span>
+          <h2 class="display h3">${esc(t("premium.manageTitle"))}</h2>
+          <span class="small muted">${esc(t("premium.manageLead"))}</span>
         </div>
       </div>
       <div class="grid grid-auto-sm">
@@ -217,7 +207,7 @@ function guestHtml(settings, user) {
           <h2 class="display h3">${esc(t("premium.plansTitle"))}</h2>
           <span class="small muted">
             ${esc(t("premium.guestText"))}
-            Tarifni tanlang — o'sha zahoti biznes ochish arizasi boshlanadi.
+            ${esc(t("premium.guestPickPlan"))}
           </span>
         </div>
         <span class="premium-plan premium-plan-trial">
