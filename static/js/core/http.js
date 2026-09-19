@@ -110,9 +110,19 @@ async function send(path, { method = "GET", params, body, auth = true, isForm = 
   }
 
   // Token eskirgan — yangilab, so'rovni bir marta qaytaramiz.
-  if (response.status === 401 && auth && retry && storage.getRefresh()) {
-    const fresh = await refreshAccessToken();
-    if (fresh) return send(path, { method, params, body, auth, isForm: sendsForm, retry: false });
+  //
+  // Yangilash tokeni YO'Q bo'lsa ham shu yo'lga tushamiz. Ilgari
+  // bunday holat umuman qaralmasdi: brauzerda faqat eskirgan access
+  // token qolgan odam (server almashdi, ma'lumot tozalandi, token
+  // qora ro'yxatga tushdi) hech qayerga yo'naltirilmasdi — sahifa
+  // shunchaki bo'sh qolib, "hech narsa ochilmayapti" bo'lardi.
+  // Endi saqlangan ma'lumot tozalanadi va odam kirish sahifasiga
+  // olib boriladi, ya'ni holat o'z-o'zidan tuzaladi.
+  if (response.status === 401 && auth && retry) {
+    if (storage.getRefresh()) {
+      const fresh = await refreshAccessToken();
+      if (fresh) return send(path, { method, params, body, auth, isForm: sendsForm, retry: false });
+    }
     storage.clear();
     if (!window.location.pathname.startsWith(ROUTES.login)) {
       window.location.href = `${ROUTES.login}?next=${encodeURIComponent(window.location.pathname)}`;

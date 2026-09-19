@@ -78,6 +78,25 @@ class GoogleStartAPIView(APIView):
     throttle_classes = [LoginThrottle]
 
     def get(self, request):
+        # Kirish oqimi HAR DOIM yangi sessiya kaliti bilan boshlanadi.
+        #
+        # Ikki sababdan:
+        #
+        # 1. XAVFSIZLIK. Sessiya kaliti kirishdan oldin ham, keyin ham
+        #    bir xil qolsa, begona odam qurbonga o'z kalitini "taqib"
+        #    (session fixation), u kirgach o'sha sessiyadan
+        #    foydalanishi mumkin edi.
+        #
+        # 2. ISHONCHLILIK. Sessiyalar `cached_db` bilan saqlanadi:
+        #    nusxasi ham bazada, ham Redis'da. Ikkisi ajralib qolsa
+        #    (baza zaxiradan tiklandi, `clearsessions` ishladi,
+        #    ma'lumot tozalandi) Django sessiyani keshdan yuklaydi,
+        #    saqlashda esa bazada yangilanadigan qator topilmaydi va
+        #    butun so'rov `SessionInterrupted` bilan yiqiladi — odam
+        #    saytga umuman kira olmay qoladi. `cycle_key()` esa yangi
+        #    yozuv YARATADI, ya'ni bunday holat o'z-o'zidan tuzaladi.
+        request.session.cycle_key()
+
         state = secrets.token_urlsafe(24)
         request.session["google_state"] = state
         # Kirishdan keyin qayerga qaytish — foydalanuvchi ketayotgan

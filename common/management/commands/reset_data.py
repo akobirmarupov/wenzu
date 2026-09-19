@@ -24,6 +24,7 @@ import shutil
 from pathlib import Path
 
 from django.conf import settings
+from django.core.cache import cache
 from django.contrib.admin.models import LogEntry
 from django.contrib.auth import get_user_model
 from django.contrib.sessions.models import Session
@@ -150,6 +151,22 @@ class Command(BaseCommand):
                     self.stdout.write(f"  ✓ {model._meta.label}: {deleted}")
             deleted, _ = doomed_users.delete()
             self.stdout.write(f"  ✓ account.User: {deleted}")
+
+        # KESHNI HAM TOZALAYMIZ — bu ixtiyoriy emas.
+        #
+        # Sessiyalar `cached_db` bilan ishlaydi: yozuv ham bazada, ham
+        # Redis'da turadi. Faqat bazadagisini o'chirsak, Redis'dagi
+        # nusxa qoladi va Django sessiyani "mavjud" deb yuklaydi —
+        # keyin uni saqlamoqchi bo'lganda esa bazada yangilanadigan
+        # qator topilmaydi va butun so'rov `SessionInterrupted` bilan
+        # yiqiladi. Brauzerida eski cookie qolgan har bir odam saytga
+        # kira olmay qoladi, xato esa tozalashdan ancha keyin chiqadi
+        # va sababini topish qiyin bo'ladi.
+        #
+        # Biznes ro'yxatlari keshi ham shu yerda ketadi — ular endi
+        # mavjud bo'lmagan joylarni ko'rsatib turardi.
+        cache.clear()
+        self.stdout.write("  ✓ kesh tozalandi (sessiyalar va ro'yxatlar)")
 
         if not options["keep_media"]:
             self._clear_media()

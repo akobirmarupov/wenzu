@@ -16,7 +16,7 @@ edi.
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 User = get_user_model()
@@ -313,3 +313,79 @@ class SharedPhoneNumberTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.first.refresh_from_db()
         self.assertEqual(self.first.phone_number, "+998901112222")
+
+
+class StaleSessionTests(TestCase):
+    """
+    Keshda qolib ketgan, bazada esa yo'q sessiya saytni yiqitmasligi kerak.
+
+    Bu haqiqiy xato edi. Sessiyalar `cached_db` bilan saqlanadi: nusxasi
+    ham bazada, ham Redis'da turadi. Ma'lumot tozalanganda (yoki baza
+    zaxiradan tiklanganda, yoki `clearsessions` ishlaganda) bazadagi
+    qator ketadi, keshdagisi qoladi. Shundan keyin Django sessiyani
+    "mavjud" deb keshdan yuklaydi, saqlamoqchi bo'lganda esa bazada
+    yangilanadigan qator topilmaydi va BUTUN so'rov `SessionInterrupted`
+    bilan yiqiladi — brauzerida eski cookie qolgan odam saytga umuman
+    kira olmaydi.
+
+    Eng yomoni, xato tozalashdan ancha keyin chiqadi va sababi
+    ko'rinmaydi: odam shunchaki "kirish ishlamayapti" deydi.
+    """
+
+    def setUp(self):
+        # Kirish cheklovi (throttle) hisoblagichi KESHDA turadi va
+        # testlar orasida saqlanib qoladi: shu faylning boshqa
+        # testlari kvotani to'ldirsa, bu test 429 oladi va tekshirmoqchi
+        # bo'lgan narsasiga umuman yetib bormaydi.
+        from django.core.cache import cache
+
+        cache.clear()
+
+    def _stale_session_key(self):
+        """Keshda bor, bazada yo'q sessiya yasaydi."""
+        from django.contrib.sessions.backends.cached_db import SessionStore
+        from django.contrib.sessions.models import Session
+
+        store = SessionStore()
+        store["probe"] = "1"
+        store.create()
+        key = store.session_key
+
+        # Faqat BAZADAGI yozuvni o'chiramiz — kesh tegilmaydi.
+        Session.objects.all().delete()
+        return key
+
+    @override_settings(GOOGLE_CLIENT_ID="test-client-id.apps.googleusercontent.com")
+    def test_login_start_works_with_stale_session(self):
+        from django.conf import settings as django_settings
+
+        key = self._stale_session_key()
+        self.client.cookies[django_settings.SESSION_COOKIE_NAME] = key
+
+        response = self.client.get("/api/auth/google/start/")
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("accounts.google.com", response["Location"])
+
+    @override_settings(GOOGLE_CLIENT_ID="test-client-id.apps.googleusercontent.com")
+    def test_login_start_rotates_session_key(self):
+        """
+        Kirish oqimi yangi sessiya kaliti bilan boshlanadi.
+
+        Session fixation himoyasi: begona odam qurbonga o'z kalitini
+        taqib qo'yib, u kirgandan keyin o'sha sessiyadan foydalana
+        olmasligi kerak.
+        """
+        from django.conf import settings as django_settings
+        from django.contrib.sessions.backends.cached_db import SessionStore
+
+        store = SessionStore()
+        store["probe"] = "1"
+        store.create()
+        old_key = store.session_key
+
+        self.client.cookies[django_settings.SESSION_COOKIE_NAME] = old_key
+        self.client.get("/api/auth/google/start/")
+
+        new_key = self.client.cookies[django_settings.SESSION_COOKIE_NAME].value
+        self.assertNotEqual(new_key, old_key)
