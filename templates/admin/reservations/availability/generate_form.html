@@ -1,0 +1,208 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static unfold %}
+
+{% block breadcrumbs %}
+    <div class="px-4 lg:px-8 mb-6">
+        <div class="breadcrumbs flex flex-wrap gap-1.5 leading-none text-sm">
+            <a class="text-font-subtle-light dark:text-font-subtle-dark hover:underline" href="{% url 'admin:index' %}">{% trans "Home" %}</a>
+            <span class="text-font-subtle-light dark:text-font-subtle-dark">/</span>
+            <a class="text-font-subtle-light dark:text-font-subtle-dark hover:underline" href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+            <span class="text-font-subtle-light dark:text-font-subtle-dark">/</span>
+            <a class="text-font-subtle-light dark:text-font-subtle-dark hover:underline" href="{% url 'admin:reservations_availability_changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+            <span class="text-font-subtle-light dark:text-font-subtle-dark">/</span>
+            <span>{% trans "Add" %}</span>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <form method="post" novalidate id="availability_generate_form">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            {% include "unfold/helpers/messages/errornote.html" with errors=form.non_field_errors %}
+        {% endif %}
+
+        <fieldset class="fieldset group border border-base-200 mb-6 rounded-default shadow-xs p-4 dark:border-base-800 *:last:mb-0">
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4">
+                {% include "unfold/helpers/field.html" with field=form.business %}
+                <div id="room-field-wrapper">
+                    {% include "unfold/helpers/field.html" with field=form.room %}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-x-4">
+                {% include "unfold/helpers/field.html" with field=form.start_time %}
+                {% include "unfold/helpers/field.html" with field=form.end_time %}
+                {% include "unfold/helpers/field.html" with field=form.year %}
+            </div>
+
+            <div class="form-field flex flex-col group mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block font-semibold text-important">
+                        {% trans "Oylar" %}<span class="text-red-600 dark:text-red-500">*</span>
+                    </label>
+                    <div class="flex gap-2">
+                        <button type="button" id="months-select-all"
+                            class="text-xs font-medium text-primary-600 hover:underline dark:text-primary-500">
+                            Barchasini tanlash
+                        </button>
+                        <span class="text-font-subtle-light dark:text-font-subtle-dark">·</span>
+                        <button type="button" id="months-clear-all"
+                            class="text-xs font-medium text-primary-600 hover:underline dark:text-primary-500">
+                            Tozalash
+                        </button>
+                    </div>
+                </div>
+
+                <div id="months-grid" class="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+                    {% for value, label in month_choices %}
+                        <label class="month-chip cursor-pointer select-none text-center text-sm font-medium rounded-default border border-base-200 px-2 py-2.5 dark:border-base-700 transition-colors">
+                            <input type="checkbox" name="months" value="{{ value }}" class="sr-only"
+                                {% if value|stringformat:"s" in selected_months %}checked{% endif %}>
+                            {{ label }}
+                        </label>
+                    {% endfor %}
+                </div>
+
+                {% if form.months.errors %}
+                    {% include "unfold/helpers/form_errors.html" with errors=form.months.errors %}
+                {% endif %}
+
+                <div class="leading-relaxed mt-2 text-xs text-font-subtle-light dark:text-font-subtle-dark">
+                    Tanlangan har bir oyning <strong>barcha kunlari</strong> uchun yuqoridagi start/end time bilan
+                    bo'sh vaqt yaratiladi. Allaqachon mavjud (masalan band qilingan) kunlar qayta yozilmaydi.
+                </div>
+            </div>
+
+            <div class="border-t border-base-200 flex justify-between items-center -mx-4 pt-4 px-4 dark:border-base-800">
+                <a href="{% url 'admin:reservations_availability_changelist' %}"
+                   class="font-medium text-sm text-font-subtle-light hover:underline dark:text-font-subtle-dark">
+                    {% trans "Cancel" %}
+                </a>
+                <div class="flex gap-2">
+                    {% component "unfold/components/button.html" with submit=1 name="_addanother" variant="default" %}
+                        Saqlash va yana qo'shish
+                    {% endcomponent %}
+                    {% component "unfold/components/button.html" with submit=1 name="_save" %}
+                        Saqlash
+                    {% endcomponent %}
+                </div>
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+<style>
+    .month-chip.is-active {
+        border-color: var(--color-primary-600, #10b981);
+        background-color: rgba(16, 185, 129, 0.12);
+        color: var(--color-primary-600, #10b981);
+    }
+</style>
+
+<script id="availability-businesses-data" type="application/json">{{ businesses_data_json|safe }}</script>
+<script>
+(function () {
+    var businessesData = JSON.parse(document.getElementById("availability-businesses-data").textContent);
+    var TYPE_RESTAURANT = "{{ type_restaurant }}";
+
+    var businessSelect = document.getElementById("id_business");
+    var roomSelect = document.getElementById("id_room");
+    var roomWrapper = document.getElementById("room-field-wrapper");
+    var startTimeInput = document.getElementById("id_start_time");
+    var endTimeInput = document.getElementById("id_end_time");
+
+    var DEFAULT_HOURS = {
+        restaurant: { start: "08:00", end: "23:00" },
+        venue: { start: "05:00", end: "00:00" }
+    };
+
+    function populateRooms(businessId, selectedRoomId) {
+        roomSelect.innerHTML = "";
+        var placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "---------";
+        roomSelect.appendChild(placeholder);
+
+        var data = businessesData[businessId];
+        if (!data) return;
+
+        data.rooms.forEach(function (room) {
+            var opt = document.createElement("option");
+            opt.value = room.id;
+            opt.textContent = room.name;
+            if (selectedRoomId && String(room.id) === String(selectedRoomId)) {
+                opt.selected = true;
+            }
+            roomSelect.appendChild(opt);
+        });
+    }
+
+    function applyDefaultHours(type) {
+        var hours = DEFAULT_HOURS[type];
+        if (!hours) return;
+        if (!startTimeInput.value) startTimeInput.value = hours.start;
+        if (!endTimeInput.value) endTimeInput.value = hours.end;
+    }
+
+    function syncBusinessType(preserveRoom) {
+        var businessId = businessSelect.value;
+        var data = businessesData[businessId];
+
+        if (!data) {
+            roomWrapper.classList.add("hidden");
+            return;
+        }
+
+        if (data.type === TYPE_RESTAURANT) {
+            roomWrapper.classList.remove("hidden");
+            populateRooms(businessId, preserveRoom ? roomSelect.value : null);
+        } else {
+            roomWrapper.classList.add("hidden");
+            roomSelect.innerHTML = "";
+        }
+
+        applyDefaultHours(data.type);
+    }
+
+    if (businessSelect) {
+        businessSelect.addEventListener("change", function () {
+            syncBusinessType(false);
+        });
+        // Sahifa birinchi ochilganda (masalan xatolik bo'lib qayta render bo'lganda)
+        syncBusinessType(true);
+    }
+
+    // Oy chip'lari
+    var chipInputs = document.querySelectorAll(".month-chip input[type=checkbox]");
+    chipInputs.forEach(function (input) {
+        var chip = input.closest(".month-chip");
+        var sync = function () { chip.classList.toggle("is-active", input.checked); };
+        sync();
+        input.addEventListener("change", sync);
+    });
+
+    var selectAllBtn = document.getElementById("months-select-all");
+    var clearAllBtn = document.getElementById("months-clear-all");
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener("click", function () {
+            chipInputs.forEach(function (input) {
+                input.checked = true;
+                input.dispatchEvent(new Event("change"));
+            });
+        });
+    }
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener("click", function () {
+            chipInputs.forEach(function (input) {
+                input.checked = false;
+                input.dispatchEvent(new Event("change"));
+            });
+        });
+    }
+})();
+</script>
+{% endblock %}

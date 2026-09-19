@@ -1,0 +1,30 @@
+{% extends "layouts/public.html" %}
+{% load static %}
+
+{% block content %}
+<section class="section container">
+  <div class="catalog-head">
+    <div>
+      <span class="eyebrow" id="result-count" data-i18n="common.loading"></span>
+      <h1 class="display h1" data-i18n="catalog.restaurantsTitle">Restoranlar</h1>
+      <p class="lede small" data-i18n="catalog.restaurantsLead"></p>
+    </div>
+  </div>
+
+  <div class="filter-bar" style="margin-bottom:var(--sp-6)">
+    <label class="search">
+      <span aria-hidden="true"><svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></span>
+      <input id="q" data-i18n-placeholder="catalog.searchPlaceholder" data-i18n-label="home.search">
+    </label>
+    <div class="row row-2 row-wrap" id="cuisine-chips"></div>
+    <button class="chip" id="near-me" type="button"><svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg> <span data-i18n="home.nearMe"></span></button>
+  </div>
+
+  <div class="grid grid-auto" id="list"></div>
+  <div id="pager"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/public/catalog.js' %}" data-type="restaurant"></script>
+{% endblock %}

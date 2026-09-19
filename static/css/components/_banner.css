@@ -1,0 +1,188 @@
+/* ===================================================================
+   Reklama / e'lon banneri.
+
+   Hozircha reklama yo'q — loyiha haqidagi ma'lumot turadi. Admin
+   panelda rasm yoki video qo'ysa, shu yerda o'sha chiqadi.
+
+   Uch holat, uchtasi ham boshqacha tuzilishda:
+     matn  — butun bannerni matn egallaydi
+     rasm  — rasm fon, matn ustida (qorong'i parda bilan)
+     video — matn CHAPDA, video O'NGDA to'liq ko'rinib turadi
+             (video fon qilinsa, ustidagi parda uni ko'rsatmay qo'yardi)
+   =================================================================== */
+.banner {
+  position: relative; overflow: hidden;
+  border-radius: var(--radius-l);
+  background: linear-gradient(135deg, var(--emerald-900) 0%, #0C4438 55%, #061F1A 100%);
+  color: #FFFFFF;
+  /* Banner LENTA, alohida sahifa emas.
+
+     Ilgari 268 px edi va matn uzun bo'lganda undan ham o'sib ketardi —
+     ekranning yarmini egallab, ostidagi mazmunni pastga surib yuborardi.
+     Reklamaning vazifasi e'tibor tortish, sahifani egallash emas. */
+  min-height: 190px;
+  display: flex;
+}
+:root[data-theme="dark"] .banner {
+  background: linear-gradient(135deg, #0D1A2C 0%, #10273B 55%, #071019 100%);
+  border: 1px solid var(--line);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .banner {
+    background: linear-gradient(135deg, #0D1A2C 0%, #10273B 55%, #071019 100%);
+    border: 1px solid var(--line);
+  }
+}
+
+/* Oltin nur — bannerga "qimmat" ko'rinish beradi */
+.banner::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+  background: radial-gradient(circle at 82% 18%, rgba(224, 192, 90, .26), transparent 48%);
+}
+
+/* ---------- rasmli banner: rasm fon ---------- */
+.banner-media { position: absolute; inset: 0; z-index: 0; }
+.banner-media img, .banner-media video { width: 100%; height: 100%; object-fit: cover; }
+.banner-media::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(100deg, rgba(6, 31, 26, .93) 0%, rgba(6, 31, 26, .70) 42%, rgba(6, 31, 26, .12) 84%);
+}
+:root[data-theme="dark"] .banner-media::after {
+  background: linear-gradient(100deg, rgba(4, 10, 18, .95) 0%, rgba(4, 10, 18, .76) 42%, rgba(4, 10, 18, .14) 84%);
+}
+
+.banner-body {
+  position: relative; z-index: 1;
+  padding: var(--sp-5) var(--sp-8);
+  display: flex; flex-direction: column; justify-content: center; gap: var(--sp-2);
+  max-width: 660px;
+}
+
+/* ---------- SUBTITLE (tepadagi kichik yozuv) ----------
+
+   Avval bu yozuv `background-clip: text` + `color: transparent` bilan
+   chizilardi. Agar gradient qandaydir sababga ko'ra qo'llanmasa (inline
+   `--gold-shine`, eski brauzer, tezkor qayta chizish) matn TO'LIQ
+   ko'rinmay qolardi — foydalanuvchi shuni "subtitle yo'q" deb ko'rdi.
+   Endi rang QATTIQ oltin: hech qanday shartga bog'liq emas. */
+.banner-eyebrow {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  padding: 4px 11px; border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(224, 192, 90, .55);
+  font-size: 10.5px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase;
+  color: #FBE9A8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .45);
+  max-width: 100%;
+}
+.banner-eyebrow span { color: inherit; }
+.banner-eyebrow::before {
+  content: "✦"; font-size: 11px; color: #FFD873; letter-spacing: 0;
+}
+
+.banner h2 { font-size: clamp(20px, 2.1vw, 26px); line-height: 1.2; color: #FFFFFF; }
+.banner h2 em { font-style: italic; background: var(--gold-shine);
+  -webkit-background-clip: text; background-clip: text; color: transparent; }
+/* Matn IKKI QATORGA cheklangan.
+
+   Mazmuni admin paneldan keladi va uning uzunligiga chegara yo'q —
+   uzun tavsif bannerni ikki barobar cho'zib yuborardi.
+
+   Nega aynan ikki qator, va nega shrift KICHRAYTIRILMAYDI: bannerni
+   yupqalashtirishning ikki yo'li bor — matnni maydalash yoki uni
+   qisqartirish. Birinchisida yozuvlar bir-biriga siqilib, o'qish
+   qiyinlashadi. Shuning uchun shrift o'z o'lchamida qoladi (15 px,
+   qator oralig'i keng), qisqarish esa qator soni hisobiga bo'ladi.
+   Davomi tugma ortida. */
+.banner p {
+  color: #D9E7E0; max-width: 62ch; font-size: var(--fs-base); line-height: 1.55;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+:root[data-theme="dark"] .banner p { color: #BFD0E1; }
+
+.banner-actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-1); }
+/* Bannerdagi tugma sahifadagi asosiy tugmalardan katta bo'lmasin —
+   u reklama, chaqiruv emas. */
+.banner-actions .btn-lg { padding: 10px 22px; min-height: 40px; font-size: var(--fs-sm); }
+
+/* ---------- videoli banner ----------
+
+   Video FON emas: chapda matn, o'ngda videoning o'zi to'liq ko'rinadi.
+   Shunday qilinmasa qorong'i parda ostida video deyarli bilinmasdi. */
+.banner-video { min-height: 250px; }
+.banner-video .banner-body { max-width: none; flex: 1 1 42%; padding-right: var(--sp-8); }
+.banner-video .banner-media {
+  position: relative; inset: auto; flex: 1 1 58%;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--sp-5) var(--sp-6) var(--sp-5) 0;
+}
+.banner-video .banner-media::after { content: none; }
+.banner-video .banner-media video {
+  width: 100%; height: 100%; max-height: 240px;
+  object-fit: contain;                     /* kadr kesilmasin — to'liq ko'rinsin */
+  border-radius: var(--radius-m);
+  background: #04090F;
+  box-shadow: 0 18px 44px -18px rgba(0, 0, 0, .8);
+}
+
+/* Bir nechta banner bo'lsa — nuqtali navigatsiya */
+.banner-dots { position: absolute; bottom: var(--sp-5); right: var(--sp-6); display: flex; gap: 6px; z-index: 3; }
+.banner-dots button {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255, 255, 255, .38); transition: all var(--transition);
+}
+.banner-dots button.active { width: 22px; border-radius: var(--radius-pill); background: var(--gold-shine); }
+
+@media (max-width: 860px) {
+  .banner-video { flex-direction: column; min-height: 0; }
+  .banner-video .banner-body { padding: var(--sp-5) var(--sp-4) var(--sp-3); }
+  .banner-video .banner-media { padding: 0 var(--sp-4) var(--sp-5); width: 100%; }
+  .banner-video .banner-media video { max-height: 200px; }
+}
+
+/* -------------------------------------------------------------------
+   TELEFON.
+
+   Rasmli banner telefonda eng katta muammo edi: matn (sarlavha + uzun
+   tavsif + tugma) tik joylashib, banner ekranning YARMIDAN ko'pini
+   egallardi. Reklama shu qadar joy olsa, ostidagi taomlar va joylar
+   umuman ko'rinmay qolardi.
+
+   Yechim uchta o'lchamda:
+     · balandlik chegarasi olib tashlanadi (`min-height: 0`) — banner
+       endi o'z mazmuniga qarab qisqaradi;
+     · tavsif IKKI qatorga cheklanadi (kompyuterda uchta);
+     · yozuvlar bir pog'ona kichrayadi, lekin o'qilarli qoladi —
+       sarlavha 17 px, tavsif 12 px.
+   ------------------------------------------------------------------- */
+@media (max-width: 560px) {
+  .banner { min-height: 0; border-radius: var(--radius-m); }
+  .banner-body { padding: var(--sp-4); gap: 6px; }
+
+  .banner-eyebrow {
+    padding: 3px 9px; font-size: 9px; letter-spacing: .05em; gap: 4px;
+  }
+  .banner-eyebrow::before { font-size: 9px; }
+
+  .banner h2 { font-size: 17px; line-height: 1.2; }
+  .banner p { font-size: 12px; line-height: 1.45; -webkit-line-clamp: 2; }
+
+  .banner-actions { margin-top: 4px; }
+  .banner-actions .btn-lg { padding: 8px 16px; min-height: 34px; font-size: 12px; }
+
+  .banner-dots { bottom: var(--sp-2); right: var(--sp-3); }
+  .banner-dots button { width: 6px; height: 6px; }
+  .banner-dots button.active { width: 16px; }
+
+  /* Video banner ham pasayadi, lekin kadr TO'LIQ ko'rinib qolaveradi —
+     `object-fit: contain` o'z joyida. */
+  .banner-video .banner-media video { max-height: 168px; }
+}
+
+/* Oraliq kenglik (planshet / aylantirilgan telefon). */
+@media (min-width: 561px) and (max-width: 720px) {
+  .banner-body { padding: var(--sp-5); }
+  .banner { min-height: 170px; }
+  .banner-dots { bottom: var(--sp-3); right: var(--sp-4); }
+}

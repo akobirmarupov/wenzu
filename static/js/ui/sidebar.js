@@ -1,0 +1,155 @@
+/**
+ * Panel yon menyusi (biznes egasi va super-admin).
+ *
+ * Menyu bandlari ROLGA qarab quriladi — restoran egasida "Xonalar",
+ * to'yxona egasida "Zallar", adminda butunlay boshqa ro'yxat. Bu farq
+ * shu faylda bir marta belgilangan, sahifalar bu haqda bilmaydi.
+ */
+import { t } from "../core/i18n.js";
+import { bindFeedbackLinks } from "../components/feedback-modal.js";
+import { $, esc } from "./dom.js";
+import { icon } from "./icons.js";
+
+// Bandlardagi `icon` — `icons.js` dagi ikonka NOMI, chizish `itemHtml` da.
+const OWNER_COMMON = [
+  { href: "/panel/", icon: "grid", label: () => t("panel.overview") },
+  { href: "/panel/bronlar/", icon: "calendar", label: () => t("panel.bookings"), badge: "pending" },
+];
+const OWNER_RESTAURANT = [{ href: "/panel/xonalar/", icon: "seat", label: () => t("panel.rooms") }];
+const OWNER_VENUE = [{ href: "/panel/zallar/", icon: "venue", label: () => t("panel.halls") }];
+const OWNER_TAIL = [
+  { href: "/panel/menyu/", icon: "restaurant", label: () => t("panel.menu") },
+  { href: "/panel/jadval/", icon: "calendarDays", label: () => t("panel.schedule") },
+  { href: "/panel/sharhlar/", icon: "star", iconFill: true, label: () => t("panel.reviews") },
+];
+const OWNER_ACCOUNT = [
+  { href: "/panel/obuna/", icon: "gem", label: () => t("panel.subscription") },
+  { href: "/panel/sozlamalar/", icon: "settings", label: () => t("panel.settings") },
+];
+
+const ADMIN_MAIN = [
+  { href: "/boshqaruv/", icon: "grid", label: () => t("panel.overview") },
+  { href: "/boshqaruv/arizalar/", icon: "document", label: () => t("panel.applications"), badge: "applications" },
+];
+const ADMIN_MANAGE = [
+  { href: "/boshqaruv/foydalanuvchilar/", icon: "users", label: () => t("panel.users") },
+  { href: "/boshqaruv/bizneslar/", icon: "building", label: () => t("panel.businesses") },
+  { href: "/boshqaruv/bronlar/", icon: "calendar", label: () => t("panel.allBookings") },
+  { href: "/boshqaruv/obunalar/", icon: "gem", label: () => t("panel.subscriptions") },
+  { href: "/boshqaruv/tolovlar/", icon: "card", label: () => t("panel.payments") },
+];
+const ADMIN_CONTENT = [
+  { href: "/boshqaruv/kontent/", icon: "megaphone", label: () => t("panel.content") },
+  { href: "/boshqaruv/sozlamalar/", icon: "settings", label: () => t("panel.settings") },
+];
+
+/**
+ * Foydalanuvchi PLATFORMA EGASIMI.
+ *
+ * Faqat `is_staff` ga qaraydi — biznesi bor-yo'qligiga EMAS.
+ *
+ * Ilgari `is_staff && !business` edi va biznesi ham bor xodim boshqaruv
+ * sahifalarida turib, yon menyuda "RESTORAN EGASI" va "Xonalar / Menyu"
+ * bandlarini ko'rardi. Ya'ni ekran bir panelniki, menyu boshqasiniki
+ * bo'lib qolardi.
+ *
+ * Endi rol yagona hal qiluvchi: platforma egasi — boshqaruv menyusi,
+ * biznes egasi — biznes menyusi. Server ham xuddi shunday ajratadi
+ * (`IsBusinessRole` xodimni biznes endpointlariga kiritmaydi).
+ */
+export function isAdminUser(user) {
+  return Boolean(user?.is_staff);
+}
+
+function panelFor(user) {
+  if (isAdminUser(user)) return "admin";
+  return user?.business?.type === "venue" ? "venue" : "restaurant";
+}
+
+function roleLabel(user) {
+  if (isAdminUser(user)) return t("panel.roleAdmin");
+  return user?.business?.type === "venue" ? t("panel.roleVenue") : t("panel.roleRestaurant");
+}
+
+function itemHtml(item, path) {
+  const active = item.href === path;
+  return `
+    <a class="nav-item ${active ? "active" : ""}" href="${item.href}">
+      <span class="ic">${icon(item.icon, { fill: item.iconFill })}</span>
+      <span>${esc(item.label())}</span>
+      ${item.badge ? `<span class="count-pill" data-badge="${item.badge}" hidden>0</span>` : ""}
+    </a>`;
+}
+
+function groupHtml(label, items, path) {
+  return `
+    <div class="nav-group-label">${esc(label)}</div>
+    ${items.map((item) => itemHtml(item, path)).join("")}`;
+}
+
+/** Yon menyuni chizadi va panel aksentini o'rnatadi. */
+export function initSidebar(user) {
+  const sidebar = $("#sidebar");
+  if (!sidebar || !user) return user;
+
+  sidebar.classList.add("panel");
+  document.documentElement.setAttribute("data-panel", panelFor(user));
+
+  const path = window.location.pathname;
+  const admin = isAdminUser(user);
+
+  const body = admin
+    ? `${ADMIN_MAIN.map((item) => itemHtml(item, path)).join("")}
+       ${groupHtml(t("panel.groupManage"), ADMIN_MANAGE, path)}
+       ${groupHtml(t("panel.groupContent"), ADMIN_CONTENT, path)}`
+    : `${OWNER_COMMON.map((item) => itemHtml(item, path)).join("")}
+       ${groupHtml(t("panel.groupPlace"),
+         [...(user.business?.type === "venue" ? OWNER_VENUE : OWNER_RESTAURANT), ...OWNER_TAIL], path)}
+       ${groupHtml(t("panel.groupAccount"), OWNER_ACCOUNT, path)}`;
+
+  // Pastda: saytga qaytish va profil.
+  //
+  // "Chiqish" ATAYLAB bu yerda yo'q — u profil sahifasining ichida.
+  // Har sahifada ko'rinib turgan chiqish tugmasi tasodifan bosiladi,
+  // hisob bilan bog'liq amal esa hisob sahifasida turishi to'g'ri.
+  sidebar.innerHTML = `
+    <a class="brand" href="/"><img class="brand-mark" src="/static/images/brand/feasto-mark.svg" alt="" width="28" height="28">Feasto</a>
+    <span class="role-pill">${esc(roleLabel(user))}</span>
+    ${body}
+    <div class="side-nav-bottom">
+      <button type="button" class="nav-feedback" data-feedback>
+        <span class="ic">${icon("bulb")}</span>
+        <span>${esc(t("feedback.link"))}</span>
+      </button>
+      <a class="nav-item" href="/"><span class="ic">${icon("globe")}</span><span>${esc(t("nav.home"))}</span></a>
+      <a class="nav-item ${path === "/profil/" ? "active" : ""}" href="/profil/">
+        <span class="ic">${icon("user")}</span><span>${esc(t("nav.profile"))}</span>
+      </a>
+    </div>`;
+
+  // Mobil: gamburger va orqa fon
+  const scrim = $("#nav-scrim");
+  const close = () => {
+    sidebar.classList.remove("open");
+    if (scrim) scrim.hidden = true;
+  };
+  $("[data-nav-toggle]")?.addEventListener("click", () => {
+    sidebar.classList.toggle("open");
+    if (scrim) scrim.hidden = !sidebar.classList.contains("open");
+  });
+  scrim?.addEventListener("click", close);
+  sidebar.addEventListener("click", (event) => {
+    if (event.target.closest("a")) close();
+  });
+
+  bindFeedbackLinks();
+  return user;
+}
+
+/** Menyudagi raqamli nishonni yangilaydi (masalan kutilayotgan bronlar). */
+export function setSidebarBadge(name, count) {
+  const badge = document.querySelector(`[data-badge="${name}"]`);
+  if (!badge) return;
+  badge.textContent = count;
+  badge.hidden = !count;
+}

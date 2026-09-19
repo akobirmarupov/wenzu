@@ -1,0 +1,254 @@
+/* Kirish / ro'yxatdan o'tish sahifalari */
+.auth-wrap {
+  min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr;
+  background: var(--ground);
+}
+.auth-visual {
+  position: relative; overflow: hidden; color: #FFFFFF;
+  background: radial-gradient(120% 140% at 20% 10%, #12513F 0%, var(--emerald-900) 60%, #061F1A 100%);
+  display: flex; flex-direction: column; justify-content: space-between; gap: var(--sp-6);
+  padding: var(--sp-10) var(--sp-10) var(--sp-12);
+  isolation: isolate;
+}
+:root[data-theme="dark"] .auth-visual {
+  background: radial-gradient(120% 140% at 20% 10%, #12283E 0%, #0D1A2C 60%, #060D16 100%);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .auth-visual {
+    background: radial-gradient(120% 140% at 20% 10%, #12283E 0%, #0D1A2C 60%, #060D16 100%);
+  }
+}
+.auth-visual::before {
+  content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background-image: radial-gradient(circle at 80% 25%, rgba(224,192,90,.22), transparent 45%);
+}
+.auth-visual .logo { color: #FFFFFF; align-self: flex-start; }
+
+/* Matn bloki — logotip tepada, matn pastda */
+.auth-text { display: flex; flex-direction: column; gap: var(--sp-4); }
+.auth-visual > * { position: relative; z-index: 2; }
+.auth-visual h2 { font-size: clamp(26px, 3vw, 38px); line-height: 1.1; }
+.auth-visual h2 em {
+  font-style: italic;
+  background: var(--gold-shine);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.auth-visual p { color: #E4EDE8; max-width: 40ch; }
+.auth-points { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-6); }
+.auth-points li { display: flex; align-items: flex-start; gap: var(--sp-3); font-size: var(--fs-sm); color: rgba(255, 255, 255, .88); }
+.auth-points .ic { color: var(--gold-400); font-weight: 800; }
+
+/* ===================================================================
+   Adminkadan qo'yilgan surat.
+
+   "Kontent → Bannerlar" da joylashuvi `auth` bo'lgan banner yaratilsa,
+   uning rasmi shu yerda TO'LIQ ko'rinadi. Rasm yo'q bo'lsa — yuqoridagi
+   standart gradient qoladi, ya'ni sahifa hech qachon bo'sh chiqmaydi.
+
+   Surat ATAYLAB xiralashtirilmaydi (`opacity: 1`): u sahifaning bezagi
+   emas, asosiy taassuroti. Ilgari u .42 shaffoflikda edi va chiroyli
+   kadr xira, iflos ko'rinardi.
+
+   Matn o'qilishi esa boshqacha ta'minlanadi: parda butun suratni emas,
+   faqat matn turgan PAST qismini va logotip turgan tepa chetini
+   qoraytiradi. O'rtasi — suratning eng chiroyli joyi — ochiq qoladi.
+   =================================================================== */
+.auth-visual.has-photo {
+  background-color: #0B120F;
+}
+.auth-visual.has-photo::after {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background-image: var(--auth-photo);
+  background-size: cover;
+  background-position: center;
+  opacity: 1;
+}
+.auth-visual.has-photo::before {
+  z-index: 1;
+  background-image:
+    /* pastdan yuqoriga — matn shu yerda turadi */
+    linear-gradient(to top,
+      rgba(6, 14, 11, .92) 0%,
+      rgba(6, 14, 11, .74) 22%,
+      rgba(6, 14, 11, .18) 48%,
+      rgba(6, 14, 11, 0) 68%),
+    /* tepadagi ingichka soya — logotip uchun */
+    linear-gradient(to bottom, rgba(6, 14, 11, .55) 0%, rgba(6, 14, 11, 0) 22%),
+    /* brend oltini — yengil iliqlik */
+    radial-gradient(circle at 78% 30%, rgba(224, 192, 90, .16), transparent 55%);
+}
+:root[data-theme="dark"] .auth-visual.has-photo::before,
+:root:not([data-theme="light"]) .auth-visual.has-photo::before {
+  background-image:
+    linear-gradient(to top,
+      rgba(3, 8, 14, .94) 0%,
+      rgba(3, 8, 14, .78) 22%,
+      rgba(3, 8, 14, .22) 48%,
+      rgba(3, 8, 14, 0) 68%),
+    linear-gradient(to bottom, rgba(3, 8, 14, .62) 0%, rgba(3, 8, 14, 0) 22%),
+    radial-gradient(circle at 78% 30%, rgba(224, 192, 90, .14), transparent 55%);
+}
+
+/* Suratli holatda matn pastga yig'iladi — tepasi ochiq qolsin */
+.auth-visual.has-photo .auth-text { margin-top: auto; }
+.auth-visual.has-photo h2,
+.auth-visual.has-photo p { text-shadow: 0 2px 12px rgba(0, 0, 0, .55); }
+
+.auth-eyebrow {
+  align-self: flex-start; padding: 5px 13px; border-radius: var(--radius-pill);
+  background: rgba(255, 255, 255, .14); border: 1px solid rgba(224, 192, 90, .55);
+  color: #FBE9A8; font-size: 11.5px; font-weight: 800;
+  letter-spacing: .09em; text-transform: uppercase;
+  backdrop-filter: blur(6px);
+}
+
+.auth-form-side { display: grid; place-items: center; padding: var(--sp-8) var(--sp-6); }
+.auth-card {
+  width: 100%; max-width: 430px;
+  display: flex; flex-direction: column; gap: var(--sp-5);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-l); padding: var(--sp-8);
+  box-shadow: var(--shadow);
+}
+/* Yuqoridagi ingichka oltin chiziq — kartani "tugallangan" qiladi */
+.auth-card { position: relative; overflow: hidden; }
+.auth-card::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--gold-shine);
+}
+.auth-card h1 { font-size: var(--fs-2xl); }
+
+/* SMS kod kiritish kataklari */
+.code-inputs { display: flex; gap: var(--sp-2); justify-content: center; }
+.code-inputs input {
+  width: 48px; height: 56px; text-align: center; color: var(--ink);
+  font-family: var(--font-mono); font-size: var(--fs-lg); font-weight: 700;
+  border: 1.5px solid var(--line); border-radius: var(--radius-s); background: var(--surface);
+}
+.code-inputs input:focus { outline: none; border-color: var(--theme-accent); box-shadow: 0 0 0 3px var(--theme-accent-dim); }
+
+@media (max-width: 860px) { .auth-wrap { grid-template-columns: 1fr; } .auth-visual { display: none; } }
+
+/* Telefondagi brend — kartaning tepasida.
+   Kompyuterda logotip chap ustunda turadi, shuning uchun bu yerda
+   ikkinchi nusxa ortiqcha bo'lardi. */
+.auth-brand { display: none; }
+@media (max-width: 860px) {
+  .auth-form-side { grid-auto-rows: min-content; align-content: center; gap: var(--sp-6); }
+  .auth-brand {
+    display: inline-flex; align-items: center; gap: var(--sp-2);
+    justify-self: center;
+    font-family: var(--font-display); font-weight: 700; font-size: 26px;
+    color: var(--ink); text-decoration: none;
+  }
+}
+
+/* Til va tema boshqaruvi — kirish sahifasining o'ng yuqori burchagida */
+.auth-controls {
+  position: absolute; top: var(--sp-5); right: var(--sp-6); z-index: 3;
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.auth-form-side { position: relative; }
+
+/* ===================================================================
+   Til almashtirgich — segmentli tugma (UZ | RU | EN).
+
+   Yon menyusi yo'q sahifalarda (kirish, ro'yxat, tasdiqlash) yuqori
+   paneldagi ochiladigan ro'yxat o'rniga shu ishlatiladi.
+
+   Ilgari bu yerda faqat `width: 150px` bor edi va boshqa hech narsa:
+   tugmalar `<button>` ning standart ko'rinishida, ichki bo'shliqsiz,
+   chegarasiz va bir-biriga yopishgan holda chiqardi. Endi u haqiqiy
+   segmentli boshqaruv: umumiy ramka, ichida uchta teng bo'lak.
+   =================================================================== */
+.lang-switch {
+  display: inline-flex; align-items: stretch;
+  padding: 3px; gap: 2px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+.lang-switch button {
+  min-width: 38px; padding: 5px 11px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 11.5px; font-weight: 800; letter-spacing: .04em;
+  color: var(--ink-faint); line-height: 1.4;
+  transition: background var(--transition), color var(--transition);
+}
+.lang-switch button:hover { color: var(--ink); background: var(--surface); }
+.lang-switch button.active {
+  background: var(--gold-shine); color: #1A1405;
+  box-shadow: var(--gold-glow);
+}
+
+/* Suratli chap ustun yonida boshqaruv oq fonda turadi, shuning uchun
+   qo'shimcha kontrast kerak emas — lekin mobil holatda u suratning
+   ustiga tushadi va o'sha yerda ko'rinishi kerak. */
+@media (max-width: 900px) {
+  .auth-controls { top: var(--sp-4); right: var(--sp-4); }
+  .lang-switch {
+    background: rgba(255, 255, 255, .16);
+    border-color: rgba(255, 255, 255, .28);
+    backdrop-filter: blur(8px);
+  }
+  .lang-switch button { color: rgba(255, 255, 255, .82); }
+  .lang-switch button:hover { background: rgba(255, 255, 255, .18); color: #FFFFFF; }
+}
+
+/* ===================================================================
+   GOOGLE ORQALI KIRISH.
+
+   Tugmani o'zimiz chizamiz (Google kutubxonasi emas). Ko'rinishi
+   Google brend qoidasiga mos: oq fon, kulrang ramka, rasmiy "G"
+   belgisi va aniq matn — odam uni tanib turishi kerak, aks holda
+   "bu nima?" degan ikkilanish paydo bo'ladi.
+   =================================================================== */
+.google-signin { margin-block: var(--sp-6); }
+
+.btn-google {
+  display: flex; align-items: center; justify-content: center; gap: var(--sp-3);
+  width: 100%; min-height: 48px; padding: 12px var(--sp-5);
+  border-radius: var(--radius-pill);
+  /* Google talabi: tugma OQ (yoki to'q ko'k) bo'lishi kerak. Sayt
+     temasidan qat'i nazar shu ranglar qoladi — brend belgisi. */
+  background: #FFFFFF; color: #1F1F1F;
+  border: 1px solid #DADCE0;
+  font-weight: 600; font-size: 15px;
+  transition: box-shadow var(--transition), background var(--transition);
+}
+.btn-google:hover { background: #F8F9FA; box-shadow: var(--shadow); }
+.btn-google:active { transform: scale(.99); }
+.btn-google .google-mark { width: 20px; height: 20px; flex-shrink: 0; }
+
+/* Nima yutayotgani — tugma ostidagi uchta qator. Ular reklama emas,
+   savolga javob: "nega Google, parol bilan bo'lmaydimi?" */
+.auth-perks {
+  display: flex; flex-direction: column; gap: var(--sp-2);
+  margin-block: var(--sp-5);
+}
+.auth-perks li {
+  display: flex; align-items: center; gap: var(--sp-3);
+  font-size: var(--fs-sm); color: var(--ink-soft);
+}
+
+/* Parol bilan kirish — YOPIQ holda.
+
+   O'chirilmadi: administrator va eski hisoblar shu yerdan kiradi.
+   Lekin yangi odam uni ochmasligi kerak, shuning uchun ko'zga
+   tashlanmaydigan qilib qo'yilgan. */
+.auth-legacy {
+  margin-top: var(--sp-6);
+  padding-top: var(--sp-5);
+  border-top: 1px solid var(--line-soft);
+}
+.auth-legacy > summary {
+  cursor: pointer; list-style: none;
+  font-size: var(--fs-sm); font-weight: 700; color: var(--ink-faint);
+  display: flex; align-items: center; gap: var(--sp-2);
+}
+.auth-legacy > summary::-webkit-details-marker { display: none; }
+.auth-legacy > summary::before { content: "\25B8"; transition: transform var(--transition); }
+.auth-legacy[open] > summary::before { transform: rotate(90deg); }
+.auth-legacy > summary:hover { color: var(--ink); }
+.auth-legacy > * + * { margin-top: var(--sp-3); }

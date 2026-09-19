@@ -1,0 +1,43 @@
+{% extends "layouts/dashboard.html" %}
+{% load static %}
+
+{% block dashboard_content %}
+{% comment %}
+  Boshqaruv markazi. Tartib ataylab shunday:
+    1. eng muhim to'rt raqam  → darrov e'tiborni tortadi
+    2. qolgan raqamlar        → kontekst beradi
+    3. arizalar               → shu yerdayoq tasdiqlanadi
+    4. so'nggi bronlar        → platforma "tirik"ligini ko'rsatadi
+    5. bo'limlarga qisqa yo'l → keyingi qadam
+{% endcomment %}
+<div class="grid grid-4" id="stats"></div>
+<div class="grid grid-auto-sm" id="secondary-stats"></div>
+
+<div class="panel">
+  <div class="panel-head">
+    <div class="stack stack-1">
+      <h2 class="display h3">So'nggi arizalar</h2>
+      <span class="small muted">Tasdiqlash uchun boshqa sahifaga o'tish shart emas.</span>
+    </div>
+    <a class="btn btn-ghost btn-sm" href="/boshqaruv/arizalar/">Barchasi <svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></a>
+  </div>
+  <div id="recent"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-head">
+    <h2 class="display h3">So'nggi bronlar</h2>
+    <a class="btn btn-ghost btn-sm" href="/boshqaruv/bronlar/">Barchasi <svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></a>
+  </div>
+  <div id="recent-bookings"></div>
+</div>
+
+<div class="panel">
+  <div class="panel-head"><h2 class="display h3">Bo'limlar</h2></div>
+  <div class="grid grid-auto-sm" id="quick-links"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/admin/overview.js' %}?v={{ asset_version }}"></script>
+{% endblock %}

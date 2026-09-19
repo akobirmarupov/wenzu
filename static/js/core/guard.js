@@ -1,0 +1,111 @@
+/**
+ * Sahifaga kirish nazorati.
+ *
+ * Bu — QULAYLIK qatlami, xavfsizlik emas: haqiqiy tekshiruv serverda,
+ * permission klasslarida. Bu yerda foydalanuvchi bo'sh sahifani ko'rib
+ * chalkashib qolmasligi uchun oldindan yo'naltiramiz.
+ */
+import { ROUTES } from "./config.js";
+import { auth } from "./auth.js";
+import { storage } from "./storage.js";
+
+function redirect(to) {
+  window.location.replace(to);
+}
+
+/** Tizimga kirgan bo'lishi shart. */
+export function requireAuth() {
+  const toLogin = () =>
+    redirect(`${ROUTES.login}?next=${encodeURIComponent(window.location.pathname)}`);
+
+  if (!auth.isAuthenticated()) {
+    toLogin();
+    return null;
+  }
+
+  // Token bor, lekin saqlangan PROFIL yo'q — sessiya yarim buzilgan.
+  //
+  // Bunday holat brauzer saqlashni qisman tozalaganda yoki kirish
+  // oxirigacha yetmaganda paydo bo'ladi. Ilgari funksiya shunchaki
+  // `null` qaytarardi va sahifalar `if (user) start()` deb tekshirib,
+  // hech narsa chizmasdan to'xtardi: odam BO'M-BO'SH ekranni ko'rardi
+  // va nima bo'lganini bilmasdi.
+  //
+  // Endi uni kirish sahifasiga qaytaramiz — u yerdan hammasi
+  // qaytadan tiklanadi.
+  const user = storage.getUser();
+  if (!user) {
+    storage.clear();
+    toLogin();
+    return null;
+  }
+  return user;
+}
+
+/**
+ * `role=business` bo'lishi shart. Qaytaradi: {user, businessType}.
+ *
+ * TASDIQLANMAGAN biznes panelga KIRITILMAYDI.
+ *
+ * Nega: ariza yuborilgani bilan joy hali tekshirilmagan. Panelga kirsa,
+ * egasi xona/menyu/jadval kiritib qo'yadi — server ularni baribir rad
+ * etadi (403), lekin foydalanuvchi buni faqat "Saqlash" bosgandan keyin
+ * biladi va vaqtini bekorga sarflaydi.
+ *
+ * O'rniga "Biznes ochish" sahifasiga qaytariladi: u yerda arizasi qanday
+ * holatda ekani va keyin nima bo'lishi yozilgan.
+ */
+export function requireOwner() {
+  const user = requireAuth();
+  if (!user) return null;
+
+  // PLATFORMA EGASI biznes paneliga KIRMAYDI — biznesi bo'lsa ham.
+  //
+  // Uning ishi boshqacha: barcha ma'lumotni ko'rish, tasdiqlash,
+  // o'chirish va platformani boshqarish. Ikki vazifani bir hisobda
+  // aralashtirish "men hozir kim sifatida turibman?" degan chalkashlik
+  // tug'dirardi. Server ham xuddi shunday rad etadi (`IsBusinessRole`).
+  if (user.is_staff) {
+    redirect(ROUTES.adminHome);
+    return null;
+  }
+  // `is_approved` — ARIZA tasdiqlanganmi. Obuna bilan aralashtirmaslik
+  // kerak: tasdiqlangan, lekin obunasi ochilmagan egasi ham panelga
+  // kiradi — u yerda o'z holatini ko'rib, tarif tanlaydi. Yozish
+  // amallarini server obunaga qarab cheklaydi.
+  //
+  // Bu tekshiruv ROL tekshiruvidan OLDIN turadi: rol endi faqat
+  // tasdiqdan keyin beriladi, ya'ni arizasi kutayotgan odamning roli
+  // 'user'. Uni "profilga" emas, aynan arizasi turgan ekranga yuborish
+  // kerak.
+  //
+  // `=== false` ataylab: eski, `is_approved` maydonisiz saqlangan
+  // sessiyada qiymat `undefined` bo'ladi va odamni bekorga quvib
+  // chiqarmaslik kerak — server baribir himoyalangan.
+  if (user.business?.is_approved === false) {
+    redirect(ROUTES.premium);
+    return null;
+  }
+  if (user.role !== "business" || !user.business) {
+    redirect(ROUTES.profile);
+    return null;
+  }
+  return { user, businessType: user.business.type };
+}
+
+/** `is_staff` bo'lishi shart. */
+export function requireAdmin() {
+  const user = requireAuth();
+  if (!user) return null;
+  if (!user.is_staff) {
+    redirect(auth.homeFor(user));
+    return null;
+  }
+  return user;
+}
+
+/** Kirgan foydalanuvchini login sahifasidan o'z paneliga qaytaradi. */
+export function redirectIfAuthenticated() {
+  if (!auth.isAuthenticated()) return;
+  redirect(auth.homeFor(storage.getUser()));
+}

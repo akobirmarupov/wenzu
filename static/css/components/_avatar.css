@@ -1,0 +1,61 @@
+/* ===================================================================
+   Profil rasmi va uning ramkasi.
+
+   Ramka — oltin gradientli halqa. `conic-gradient` bilan chiziladi,
+   shunda halqa aylana bo'ylab "aylanib" o'tadi va tekis chegaradan
+   ko'ra ancha jonli ko'rinadi.
+   =================================================================== */
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+  display: grid; place-items: center; overflow: hidden;
+  background: var(--theme-accent); color: var(--on-accent);
+  font-weight: 800; font-size: var(--fs-sm); line-height: 1;
+}
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.avatar-sm { width: 28px; height: 28px; font-size: 11px; }
+.avatar-lg { width: 64px; height: 64px; font-size: var(--fs-lg); }
+.avatar-xl { width: 112px; height: 112px; font-size: 38px; }
+
+/* Oltin halqa */
+.avatar-ring {
+  position: relative; display: inline-grid; place-items: center;
+  border-radius: 50%; padding: 4px;
+  background: conic-gradient(from 210deg,
+    #8F6F1E 0deg, #E9CE72 70deg, #FFF6D4 120deg,
+    #C9A227 190deg, #8F6F1E 260deg, #E0C05A 320deg, #8F6F1E 360deg);
+  box-shadow: var(--gold-glow);
+}
+.avatar-ring::after {
+  /* Halqa bilan rasm orasidagi ingichka fon — halqani "ajratib" turadi */
+  content: ""; position: absolute; inset: 2px; border-radius: 50%;
+  background: var(--surface);
+}
+.avatar-ring .avatar { position: relative; z-index: 1; }
+.avatar-ring.avatar-xl { padding: 5px; }
+.avatar-ring.avatar-lg { padding: 4px; }
+.avatar-ring.avatar-sm { padding: 2px; }
+
+/* Rasm almashtirish tugmasi */
+.avatar-edit {
+  position: absolute; right: -2px; bottom: -2px; z-index: 2;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: grid; place-items: center; cursor: pointer;
+  background: var(--surface); border: 1.5px solid var(--line);
+  color: var(--ink-soft); font-size: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition);
+}
+.avatar-edit:hover { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+
+.avatar-slot { position: relative; display: inline-block; }
+
+/* Holat nuqtasi (tasdiqlangan / tasdiqlanmagan) */
+.avatar-status {
+  position: absolute; right: 4px; top: 4px; z-index: 2;
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2.5px solid var(--surface);
+  display: grid; place-items: center; font-size: 8px; color: #fff;
+}
+.avatar-status-ok { background: var(--ok); }
+.avatar-status-warn { background: var(--warn); }

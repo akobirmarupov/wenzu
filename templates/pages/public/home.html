@@ -1,0 +1,153 @@
+{% extends "layouts/public.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container">
+
+  {# --- qidiruv va tur tanlash --- #}
+  <section class="home-head">
+    <h1 class="display">
+      <span data-i18n="home.heroTitle">Joyni oldindan band qiling</span>,
+      <em data-i18n="home.heroTitleAccent">navbatda turmang</em>
+    </h1>
+    <p class="lede" data-i18n="home.heroLead"></p>
+
+    <div class="home-tabs" role="tablist">
+      <button class="home-tab active" data-type="restaurant" role="tab"
+              aria-selected="true" data-i18n="nav.restaurants">Restoranlar</button>
+      <button class="home-tab" data-type="venue" role="tab"
+              aria-selected="false" data-i18n="nav.venues">To'yxonalar</button>
+    </div>
+
+    <form class="home-search" id="home-search">
+      <label class="search">
+        <span aria-hidden="true"><svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg></span>
+        <input id="home-q" data-i18n-placeholder="home.searchPlaceholder"
+               data-i18n-label="home.search">
+      </label>
+      <button class="btn btn-primary" type="submit" data-i18n="home.search">Qidirish</button>
+      <button class="btn btn-outline" type="button" id="near-me"
+              data-i18n-label="home.nearMe"><svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11Z"/><circle cx="12" cy="10" r="2.6"/></svg> <span data-i18n="home.nearMe">Yaqinimda</span></button>
+    </form>
+
+    <div class="home-stats" id="home-stats"></div>
+  </section>
+
+  {# --- reklama / e'lon banneri (admin panelda boshqariladi) --- #}
+  <section class="section-sm" id="banner-slot"></section>
+
+  {% comment %}
+    Restoran taomlari — ikki qator, qatorda to'rtta, sekin almashadi.
+    Bosh sahifada endi joy kartochkalari emas, MENYU ko'rsatiladi:
+    foydalanuvchi avval nima yeyishini tanlaydi, keyin qayerda ekanini.
+  {% endcomment %}
+  <section class="section-sm">
+    <div class="section-title">
+      <div>
+        <span class="eyebrow" data-i18n="home.dishesEyebrow"></span>
+        <h2 class="display h2" data-i18n="home.dishesTitle"></h2>
+      </div>
+      <div class="wall-dots" id="dish-dots" aria-hidden="true"></div>
+    </div>
+    <div id="dish-wall"></div>
+  </section>
+
+  {% comment %}
+    To'yxona menyusi — MATN qatorlari: chapda taom nomi va to'yxona,
+    o'ngda kishi boshiga narx, eng o'ngda kichik rasm.
+  {% endcomment %}
+  <section class="section-sm home-split">
+    <div class="stack stack-4">
+      <div class="section-title" style="margin-bottom:0">
+        <div>
+          <span class="eyebrow" data-i18n="home.feastEyebrow"></span>
+          <h2 class="display h2" data-i18n="home.feastTitle"></h2>
+        </div>
+        <a class="btn btn-ghost btn-sm" href="/toyxonalar/"><span data-i18n="home.viewAll"></span> <svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></a>
+      </div>
+      <div id="feast-list"></div>
+    </div>
+
+    <div class="panel stack stack-3">
+      <div class="section-title" style="margin-bottom:0">
+        <div>
+          <span class="eyebrow" data-i18n="home.newsEyebrow">Bilib qo'ying</span>
+          <h2 class="display h3" data-i18n="home.newsTitle"></h2>
+        </div>
+      </div>
+      <div class="news-strip" id="news-strip"></div>
+    </div>
+  </section>
+
+  {% comment %}
+    TAKLIFLAR — taomlar ro'yxatidan keyin.
+
+    Joy ataylab shu yerda. Odam bosh sahifani shu joygacha aylantirgan
+    bo'lsa, u platformani ko'rib chiqqan va endi u haqida fikri bor
+    bo'lishi mumkin. Yuqorida turgan chaqiruv esa hali hech narsa
+    ko'rmagan odamdan fikr so'ragan bo'lardi.
+
+    Ko'rinishi ham shunga yarasha jimgina: bitta qator, chegarasi
+    uzuq-yuluq chiziq. Bu reklama emas, taklif.
+  {% endcomment %}
+  <section class="section-sm">
+    <button type="button" class="feedback-strip" data-feedback>
+      <span class="ic" aria-hidden="true"><svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 17.5a6 6 0 1 1 6 0v1.2a1.3 1.3 0 0 1-1.3 1.3h-3.4A1.3 1.3 0 0 1 9 18.7Z"/><path d="M10 20.5h4"/></svg></span>
+      <span class="text">
+        <b data-i18n="feedback.stripTitle">Platforma uchun taklifingiz bormi?</b>
+        <span class="small" data-i18n="feedback.stripText">Nima yoqmadi yoki nimani qo'shsak — yozib qoldiring.</span>
+      </span>
+      <span class="go"><svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></span>
+    </button>
+  </section>
+
+  {# --- yangiliklar kartochkalari --- #}
+  <section class="section-sm" id="news-section" hidden>
+    <div class="section-title">
+      <div>
+        <span class="eyebrow" data-i18n="home.newsEyebrow"></span>
+        <h2 class="display h2" data-i18n="home.newsTitle"></h2>
+      </div>
+    </div>
+    <div class="news-grid" id="news-grid"></div>
+  </section>
+
+  {# --- qanday ishlaydi --- #}
+  <section class="section-sm">
+    <div class="section-title">
+      <div>
+        <span class="eyebrow" data-i18n="home.howEyebrow"></span>
+        <h2 class="display h2" data-i18n="home.howTitle"></h2>
+      </div>
+    </div>
+    <div class="how-grid">
+      <div class="how-step"><span class="n">1</span>
+        <h3 class="h4 display" data-i18n="home.step1"></h3>
+        <p class="muted small" data-i18n="home.step1Text"></p></div>
+      <div class="how-step"><span class="n">2</span>
+        <h3 class="h4 display" data-i18n="home.step2"></h3>
+        <p class="muted small" data-i18n="home.step2Text"></p></div>
+      <div class="how-step"><span class="n">3</span>
+        <h3 class="h4 display" data-i18n="home.step3"></h3>
+        <p class="muted small" data-i18n="home.step3Text"></p></div>
+    </div>
+  </section>
+
+  {# --- biznes ochish --- #}
+  <section class="section-sm" style="padding-bottom:var(--sp-16)">
+    <div class="cta-band">
+      <div style="flex:1;min-width:270px">
+        <span class="eyebrow" style="color:var(--gold-400)" data-i18n="home.ctaEyebrow"></span>
+        <h2 class="display" data-i18n="home.ctaTitle"></h2>
+        <p data-i18n="home.ctaText"></p>
+      </div>
+      <a class="btn btn-gold btn-lg" href="/profil/?tab=premium" data-i18n="home.ctaButton"></a>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{% static 'js/pages/public/home.js' %}?v={{ asset_version }}"></script>
+{% endblock %}

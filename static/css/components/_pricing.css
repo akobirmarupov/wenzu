@@ -1,0 +1,162 @@
+/* ===================================================================
+   Tarif kartochkalari — obuna va premium tanlash.
+
+   Uchta ustun: bepul sinov, oylik, uzoq muddat. Uzoq muddat ataylab
+   ajratilgan (oltin ramka + lenta): u eng foydali variant va ko'z
+   birinchi navbatda shunga tushishi kerak.
+
+   Kartochka ichi ikki qavat: tepada qaror qabul qilish uchun kerakli
+   narsa (nom, narx, tugma), pastda tafsilotlar. Shunday qilinmasa
+   uzun ro'yxat narxni pastga surib yuborardi.
+   =================================================================== */
+.price-wrap { display: flex; flex-direction: column; gap: var(--sp-5); }
+
+.price-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+.price-card {
+  position: relative;
+  display: flex; flex-direction: column;
+  border: 1px solid var(--line); border-radius: var(--radius-l);
+  background: var(--surface);
+  overflow: hidden;
+  transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
+}
+.price-card:hover { transform: translateY(-3px); box-shadow: var(--shadow); }
+
+/* Tanlangan/tavsiya etilgan tarif */
+.price-card.best {
+  border-color: var(--gold-500);
+  box-shadow: 0 0 0 1px var(--gold-500), var(--gold-glow);
+}
+.price-card.current { border-color: var(--theme-accent); }
+.price-card.muted-card { opacity: .82; }
+
+/* Lenta faqat uzoq muddat tanlanganda ko'rinadi — `.best` klassini
+   almashtirgich qo'yadi. */
+.price-card .price-ribbon { display: none; }
+.price-card.best .price-ribbon { display: block; }
+.price-ribbon {
+  position: absolute; top: 0; left: 50%; transform: translate(-50%, -50%);
+  padding: 4px 14px; border-radius: var(--radius-pill);
+  background: var(--gold-shine); color: #1A1405;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase;
+  box-shadow: var(--gold-glow); white-space: nowrap;
+}
+
+.price-card-body {
+  padding: var(--sp-8) var(--sp-6) var(--sp-6);
+  display: flex; flex-direction: column; gap: var(--sp-3);
+}
+.price-card h3 {
+  font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 600; color: var(--ink);
+}
+.price-card h3 .tone {
+  background: var(--gold-shine);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.price-card.muted-card h3 .tone { background: none; color: var(--ink-faint); }
+
+.price-amount { display: flex; flex-direction: column; gap: 2px; margin-top: var(--sp-2); }
+.price-amount b {
+  font-family: var(--font-display); font-size: 38px; font-weight: 600; line-height: 1;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+}
+.price-amount span { font-size: var(--fs-sm); color: var(--ink-faint); }
+
+.price-save {
+  align-self: flex-start; padding: 4px 11px; border-radius: var(--radius-pill);
+  background: var(--ok-dim); color: var(--ok);
+  font-size: var(--fs-xs); font-weight: 700;
+}
+.price-state {
+  align-self: flex-start; padding: 8px 16px; border-radius: var(--radius-pill);
+  background: var(--surface-2); border: 1px solid var(--line);
+  color: var(--ink-soft); font-size: var(--fs-sm); font-weight: 700;
+}
+.price-card.current .price-state {
+  background: var(--theme-accent-dim); border-color: var(--theme-accent); color: var(--theme-accent);
+}
+
+/* --- tafsilotlar --- */
+.price-features {
+  border-top: 1px solid var(--line-soft);
+  padding: var(--sp-5) var(--sp-6) var(--sp-6);
+  display: flex; flex-direction: column; gap: var(--sp-3);
+  background: var(--surface-2);
+}
+.price-features-head {
+  font-size: 10.5px; font-weight: 800; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ink-faint);
+}
+.price-features ul { display: flex; flex-direction: column; gap: var(--sp-2); }
+.price-features li {
+  display: flex; align-items: flex-start; gap: var(--sp-2);
+  font-size: var(--fs-sm); color: var(--ink-soft);
+}
+.price-features .tick { color: var(--ok); font-weight: 800; flex-shrink: 0; }
+.price-features .extras li { gap: var(--sp-3); }
+.price-features .extras .ic { font-size: 15px; flex-shrink: 0; width: 20px; }
+.price-features .extras b { display: block; color: var(--ink); font-size: var(--fs-sm); }
+.price-features .extras span span { display: block; }
+
+/* --- ochiq ariza haqida eslatma --- */
+.price-pending {
+  display: flex; align-items: flex-start; gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--warn); border-radius: var(--radius-m);
+  background: var(--warn-dim); color: var(--ink);
+}
+.price-pending .ic { font-size: 20px; line-height: 1; flex-shrink: 0; }
+.price-pending b { display: block; margin-bottom: 2px; }
+.price-pending .small { color: var(--ink-soft); }
+
+@media (max-width: 640px) {
+  .price-card-body { padding: var(--sp-6) var(--sp-5) var(--sp-5); }
+  .price-amount b { font-size: 32px; }
+}
+
+
+/* ===================================================================
+   Muddat almashtirgichi — kartochka ichida.
+
+   Ilgari har bir muddat alohida kartochka edi va ekranda to'rtta ustun
+   turardi. Aslida foydalanuvchi ikki qaror qabul qiladi: qaysi TUR va
+   qancha MUDDAT. Shuning uchun tur — kartochka, muddat — uning ichidagi
+   almashtirgich.
+   =================================================================== */
+.plan-toggle {
+  display: inline-flex; align-self: stretch;
+  padding: 3px; gap: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+.plan-toggle button {
+  flex: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 8px 12px; border-radius: var(--radius-pill);
+  font-size: var(--fs-sm); font-weight: 700; color: var(--ink-faint);
+  white-space: nowrap;
+  transition: background var(--transition), color var(--transition);
+}
+.plan-toggle button:hover { color: var(--ink); background: var(--surface); }
+.plan-toggle button.active {
+  background: var(--gold-shine); color: #1A1405;
+  box-shadow: var(--gold-glow);
+}
+/* Uzoq muddatdagi tejash — chipning o'zida ko'rinsin */
+.plan-toggle .cut {
+  padding: 1px 7px; border-radius: var(--radius-pill);
+  background: var(--ok-dim); color: var(--ok);
+  font-size: 10.5px; font-weight: 800;
+}
+.plan-toggle button.active .cut { background: rgba(26, 20, 5, .16); color: #1A1405; }
+
+/* Variantlar — faqat tanlangani ko'rinadi */
+.plan-variant { display: none; flex-direction: column; gap: var(--sp-3); }
+.plan-variant.active { display: flex; }

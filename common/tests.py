@@ -1,0 +1,706 @@
+"""
+Uchdan-uchgacha (end-to-end) smoke test: ro'yxatdan o'tishdan tortib
+sharh qoldirishgacha bo'lgan butun biznes oqimi.
+
+Bu test alohida metodlarga bo'linmagan — chunki bosqichlar bir-biriga
+ketma-ket bog'liq (ariza bo'lmasa biznes yo'q, biznes bo'lmasa bron yo'q).
+"""
+
+import datetime
+from decimal import Decimal
+from unittest.mock import patch
+
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+from rest_framework.test import APIClient
+
+from businesses.models import Business, Room
+from businesses.services import approve_application
+from reservations.models import Availability, Reservation
+
+User = get_user_model()
+
+
+class FullFlowTest(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+    def auth(self, user):
+        client = APIClient()
+        client.force_authenticate(user=user)
+        return client
+
+    def test_full_flow(self):
+        # --- 1. Google orqali ro'yxatdan o'tish ------------------------
+        #
+        # Google imzosini test ichida yasab bo'lmaydi, shuning uchun
+        # tekshiruv qadami almashtiriladi. Uning O'ZI alohida testda
+        # sinaladi (`account/tests.py`) — bu yerda undan KEYINGI oqim
+        # muhim.
+        with patch("account.routes.user.verify_google_token") as verify:
+            verify.return_value = {
+                "sub": "google-sardor-1",
+                "email": "sardor.y@gmail.com",
+                "name": "Sardor Yusupov",
+                "picture": "",
+            }
+            response = self.client.post("/api/auth/google/", {
+                "credential": "test-token",
+            }, format="json")
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertTrue(response.data["created"], "Birinchi kirishda hisob yaratilsin")
+
+        # Username pochtaning @ belgisigacha bo'lgan qismidan, nuqtasiz.
+        owner = User.objects.get(email="sardor.y@gmail.com")
+        self.assertEqual(owner.username, "sardor_y")
+        self.assertEqual(owner.full_name, "Sardor Yusupov")
+        self.assertEqual(owner.role, "user")
+        self.assertTrue(owner.is_confirmed, "Google pochtani tekshirgan")
+        self.assertIsNone(owner.phone_number, "Google raqam bermaydi")
+
+        # --- 2. Ikkinchi kirish: YANGI hisob yaratilmaydi --------------
+        with patch("account.routes.user.verify_google_token") as verify:
+            verify.return_value = {
+                "sub": "google-sardor-1",
+                "email": "sardor.y@gmail.com",
+                "name": "Sardor Yusupov",
+                "picture": "",
+            }
+            response = self.client.post("/api/auth/google/", {
+                "credential": "test-token",
+            }, format="json")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.data["created"], "Mavjud hisobga kiritilsin")
+        self.assertEqual(User.objects.filter(email="sardor.y@gmail.com").count(), 1)
+
+        # --- 3. Hali biznes yo'q --------------------------------------
+        self.assertEqual(response.data["user"]["role"], "user")
+        self.assertIsNone(response.data["user"]["business"])
+
+        # --- 4. "Restoran ochish" arizasi -----------------------------
+        #
+        # Avval RAQAMSIZ urinib ko'ramiz. Google orqali kelgan odamda
+        # raqam bo'lmaydi va ariza o'tmasligi kerak: administrator uni
+        # ko'rib chiqib, egasi bilan bog'lanadi.
+        blocked = self.auth(owner).post("/api/business-applications/", {
+            "business_type": "restaurant", "business_name": "Shoxona Restorani",
+        }, format="json")
+        self.assertEqual(blocked.status_code, 403, "Raqamsiz ariza o'tmasin")
+
+        # Raqam kiritiladi — haqiqiy oqimda buni kichik oyna so'raydi.
+        added = self.auth(owner).patch(
+            "/api/auth/me/", {"phone_number": "+998901234567"}, format="json",
+        )
+        self.assertEqual(added.status_code, 200, added.data)
+
+        response = self.auth(owner).post("/api/business-applications/", {
+            "business_type": "restaurant", "business_name": "Shoxona Restorani",
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertIn("BEPUL sinov", response.data["message"])
+
+        # ROL HALI O'ZGARMAYDI — ariza tekshirilmagan.
+        #
+        # "Restoran egasi" degan yozuv tasdiqning natijasi. Ilgari u
+        # ariza yuborilishi bilan qo'yilardi va ariza rad etilsa ham
+        # qolib ketardi.
+        owner.refresh_from_db()
+        self.assertEqual(owner.role, "user", "Tasdiqdan oldin rol o'zgarmasin")
+
+        business = Business.objects.get(owner=owner)
+
+        # MUHIM: ariza yuborilgani bilan biznes hali ISHLAMAYDI —
+        # qidiruvda ko'rinmaydi va obunasi yo'q. Bepul sinov faqat admin
+        # tasdiqlagach boshlanadi. Aks holda istalgan foydalanuvchi bir
+        # daqiqada "restoran" ochib, tekshiruvsiz bir hafta bepul
+        # ishlatib ketardi.
+        self.assertFalse(business.is_visible, "Tasdiqlanmagan biznes yashirin turishi kerak")
+        self.assertFalse(hasattr(business, "subscription"), "Sinov hali boshlanmasligi kerak")
+
+        # --- 4b. Admin arizani tasdiqlaydi → 7 kunlik sinov ochiladi ---
+        approver = User.objects.create_user(
+            username="early_admin", password="StrongPass123!",
+            full_name="Tasdiqlovchi", phone_number="+998900000777",
+            is_staff=True, is_superuser=True,
+        )
+        approval = self.auth(approver).get("/api/admin/applications/")
+        self.assertEqual(approval.status_code, 200, approval.data)
+        first_application = approval.data["results"][0]["id"]
+        self.assertEqual(
+            self.auth(approver).post(f"/api/admin/applications/{first_application}/approve/").status_code,
+            200,
+        )
+
+        business.refresh_from_db()
+        self.assertTrue(business.is_visible, "Tasdiqdan keyin biznes qidiruvga chiqadi")
+        self.assertEqual(business.subscription.status, "trial")
+
+        # ANA ENDI u restoran egasi.
+        owner.refresh_from_db()
+        self.assertEqual(owner.role, "business", "Tasdiqdan keyin rol business bo'ladi")
+
+        # --- 5. Qayta kirish: endi business.type qaytadi ---------------
+        with patch("account.routes.user.verify_google_token") as verify:
+            verify.return_value = {
+                "sub": "google-sardor-1",
+                "email": "sardor.y@gmail.com",
+                "name": "Sardor Yusupov",
+                "picture": "",
+            }
+            response = self.client.post("/api/auth/google/", {
+                "credential": "test-token",
+            }, format="json")
+        self.assertEqual(response.data["user"]["business"]["type"], "restaurant",
+                         "Frontend shu maydonga qarab restoran panelini ochadi")
+
+        # --- 6. Egasi xona qo'shadi -----------------------------------
+        owner_client = self.auth(owner)
+        response = owner_client.post("/api/owner/rooms/", {
+            "name": "VIP xona — 6 kishilik", "room_type": "vip",
+            "capacity": 6, "deposit_tier": "premium",
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        room = Room.objects.get(business=business)
+
+        # To'yxona endpointi restoran egasiga yopiq bo'lishi kerak
+        response = owner_client.get("/api/owner/halls/")
+        self.assertEqual(response.status_code, 403, "Restoran egasiga Zallar bo'limi yopiq")
+
+        # --- 7. Menyu qo'shish ----------------------------------------
+        response = owner_client.post("/api/owner/menu/restaurant/", {
+            "name": "Steyk Ribay", "price": "140000", "description": "",
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        # --- 8. Bo'sh vaqt jadvalini generatsiya qilish ---------------
+        today = datetime.date.today()
+        response = owner_client.post("/api/owner/availability/generate/", {
+            "room": str(room.id), "start_time": "08:00", "end_time": "23:00",
+            "year": today.year, "months": [today.month],
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertGreater(response.data["created"], 0)
+
+        # --- 9. Mijoz ro'yxatdan o'tadi va bron qiladi -----------------
+        customer = User.objects.create_user(
+            username="dilshod", password="StrongPass123!",
+            full_name="Dilshod Aliyev", phone_number="+998901112233",
+            is_phone_verified=True,
+        )
+        customer_client = self.auth(customer)
+
+        book_date = today + datetime.timedelta(days=1)
+        if book_date.month != today.month:
+            book_date = today
+
+        payload = {
+            "room": str(room.id), "date": str(book_date),
+            "start_time": "19:00", "end_time": "21:00", "guests_count": 4,
+        }
+        response = customer_client.post("/api/reservations/", payload, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data["deposit_amount"], "99000.00")
+        reservation_id = response.data["id"]
+
+        # Xuddi shu vaqtga ikkinchi bron — kesishgani uchun rad etilishi kerak
+        response = customer_client.post("/api/reservations/", payload, format="json")
+        self.assertEqual(response.status_code, 409, "Kesishgan vaqt band bo'lishi kerak")
+
+        # Kesishmaydigan boshqa oraliq — o'tishi kerak
+        response = customer_client.post("/api/reservations/", {
+            **payload, "start_time": "13:00", "end_time": "15:00",
+        }, format="json")
+        self.assertEqual(response.status_code, 201,
+                         "Bir kunda kesishmaydigan ikkinchi bron mumkin bo'lishi kerak")
+
+        # --- 10. Soat gridi uchun band oraliqlar ----------------------
+        response = self.client.get(f"/api/rooms/{room.id}/busy-hours/?date={book_date}")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(len(response.data["busy_ranges"]), 2)
+
+        # --- 11. Egasi bronni tasdiqlaydi va yakunlaydi ---------------
+        response = owner_client.patch(
+            f"/api/owner/reservations/{reservation_id}/status/",
+            {"status": "confirmed"}, format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+
+        response = owner_client.patch(
+            f"/api/owner/reservations/{reservation_id}/status/",
+            {"status": "completed"}, format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.data)
+
+        # --- 12. Sharh — faqat yakunlangan bron uchun -----------------
+        other = Reservation.objects.exclude(pk=reservation_id).first()
+        response = customer_client.post("/api/reviews/", {
+            "reservation": str(other.id), "rating": 5, "comment": "Zo'r!",
+        }, format="json")
+        self.assertEqual(response.status_code, 400,
+                         "Yakunlanmagan bron uchun sharh qoldirib bo'lmaydi")
+
+        response = customer_client.post("/api/reviews/", {
+            "reservation": reservation_id, "rating": 5, "comment": "Xizmat a'lo darajada!",
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        business.refresh_from_db()
+        self.assertEqual(business.rating_avg, 5.0, "Sharhdan keyin reyting yangilanishi kerak")
+
+        # --- 13. Ommaviy qidiruv --------------------------------------
+        response = self.client.get("/api/businesses/?type=restaurant&search=Shoxona")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["rooms_count"], 1)
+
+        response = self.client.get(f"/api/businesses/{business.id}/")
+        self.assertEqual(len(response.data["rooms"]), 1)
+        self.assertEqual(len(response.data["menu"]), 1)
+
+        # --- 14. Admin arizani tasdiqlaydi ---------------------------
+        admin = User.objects.create_user(
+            username="platform_admin", password="StrongPass123!",
+            full_name="Uvente Admin", phone_number="+998900000000",
+            is_staff=True, is_superuser=True,
+        )
+        admin_client = self.auth(admin)
+
+        # Oddiy foydalanuvchiga admin bo'limi yopiq
+        self.assertEqual(customer_client.get("/api/admin/overview/").status_code, 403)
+
+        # Ariza 4b-qadamda tasdiqlangan edi — endi PULLIK obunaga o'tamiz.
+        # Bu alohida oqim: egasi tarif tanlaydi → ariza → admin to'lovni
+        # tasdiqlaydi. Tasdiq "bu haqiqiy joy" degani, to'lov emas.
+        from subscriptions.models import SubscriptionPlan
+
+        plan = SubscriptionPlan.objects.get(business_type="restaurant", duration_months=1)
+        response = owner_client.post("/api/owner/subscription/requests/", {
+            "plan": str(plan.id), "note": "To'lov chekini yubordim",
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        request_id = response.data["id"]
+
+        # Tugmani ikki marta bosish yangi ariza YARATMASLIGI kerak.
+        again = owner_client.post("/api/owner/subscription/requests/", {
+            "plan": str(plan.id),
+        }, format="json")
+        self.assertEqual(again.status_code, 200, "Ochiq ariza bo'lsa mavjudi qaytariladi")
+        self.assertEqual(again.data["id"], request_id)
+
+        response = admin_client.post(f"/api/admin/subscription-requests/{request_id}/approve/")
+        self.assertEqual(response.status_code, 200, response.data)
+
+        business.refresh_from_db()
+        business.subscription.refresh_from_db()
+        self.assertEqual(business.subscription.status, "active")
+        self.assertIsNotNone(business.subscription.subscription_ends_at)
+        self.assertEqual(business.subscription.payments.count(), 1)
+
+        # --- 15. Biznesni bloklash ------------------------------------
+        response = admin_client.patch(f"/api/admin/businesses/{business.id}/toggle-block/")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertFalse(response.data["is_visible"])
+
+        response = self.client.get("/api/businesses/?type=restaurant")
+        self.assertEqual(response.data["count"], 0, "Bloklangan biznes qidiruvda ko'rinmasligi kerak")
+
+
+class VenueFlowTest(TestCase):
+    """To'yxona oqimi — bir kunda faqat bitta to'y."""
+
+    def test_venue_booking(self):
+        owner = User.objects.create_user(
+            username="gulnora", password="StrongPass123!",
+            full_name="Gulnora Rashidova", phone_number="+998909876543",
+            is_phone_verified=True,
+        )
+        client = APIClient()
+        client.force_authenticate(user=owner)
+
+        response = client.post("/api/business-applications/", {
+            "business_type": "venue", "business_name": "Grand Palace To'yxonasi",
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        owner.refresh_from_db()
+        business = Business.objects.get(owner=owner)
+        self.assertEqual(business.business_type, "venue")
+
+        # Tasdiqlanmaguncha ma'lumot kiritib bo'lmaydi.
+        blocked = client.post("/api/owner/halls/", {
+            "name": "Erta zal", "people": 100, "all_price": "1000000",
+        }, format="json")
+        self.assertEqual(blocked.status_code, 403,
+                         "Tasdiqlanmagan biznes zal qo'sha olmasligi kerak")
+
+        # Admin tasdiqlaydi → 7 kunlik bepul sinov boshlanadi.
+        approve_application(
+            application=business.application,
+            approved_by=User.objects.create_user(
+                username="venue_admin", password="StrongPass123!",
+                full_name="Admin", phone_number="+998900000888", is_staff=True,
+            ),
+        )
+        business.refresh_from_db()
+        # Rol aynan SHU yerda beriladi (`approve_application`), ariza
+        # yuborilganda emas. `force_authenticate` esa xotiradagi obyektni
+        # ushlab turadi — uni yangilamasak, so'rovlar hali ham "oddiy
+        # foydalanuvchi" nomidan ketardi.
+        owner.refresh_from_db()
+        self.assertEqual(owner.role, "business")
+        self.assertEqual(business.subscription.status, "trial")
+
+        # Xonalar bo'limi to'yxona egasiga yopiq
+        self.assertEqual(client.get("/api/owner/rooms/").status_code, 403)
+
+        response = client.post("/api/owner/halls/", {
+            "name": "Katta zal", "people": 500, "all_price": "9000000",
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        hall_id = response.data["id"]
+
+        today = datetime.date.today()
+        response = client.post("/api/owner/availability/generate/", {
+            "start_time": "08:00", "end_time": "00:00",
+            "year": today.year, "months": [today.month],
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        customer = User.objects.create_user(
+            username="nodira", password="StrongPass123!",
+            full_name="Nodira Karimova", phone_number="+998907778899",
+            is_phone_verified=True,
+        )
+        customer_client = APIClient()
+        customer_client.force_authenticate(user=customer)
+
+        # Bu to'yxonada taom paketlari yo'q — `dish_count` narxga
+        # ta'sir qilmaydi va menyu talab ham qilinmaydi. To'lanadigan
+        # summa faqat zalning bir kunlik ijarasi.
+        payload = {"hall": hall_id, "date": str(today), "guests_count": 250, "dish_count": 2}
+        response = customer_client.post("/api/reservations/", payload, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertEqual(response.data["deposit_amount"], "599000.00")
+
+        # Availability signal orqali band bo'lishi kerak
+        availability = Availability.objects.get(business=business, date=today)
+        self.assertTrue(availability.is_booked)
+
+        # Shu kunga ikkinchi bron mumkin emas
+        response = customer_client.post("/api/reservations/", payload, format="json")
+        self.assertEqual(response.status_code, 409, "To'yxonada bir kunda bitta to'y")
+
+        response = APIClient().get(f"/api/halls/{hall_id}/busy-dates/")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertIn(str(today), response.data["busy_dates"])
+
+
+class RuralVenueFlowTest(TestCase):
+    """
+    Qishloq to'yxonasi oqimi.
+
+    Qishloqda to'yxona kishi boshiga emas, BUTUNLAY ijaraga olinadi:
+    bir kunlik to'y uchun qat'iy summa to'lanadi (masalan 15 000 000
+    so'm) va oshpazni ham, mahsulotni ham to'y egasining o'zi olib
+    boradi. Ya'ni:
+
+      * egasi kishi boshiga narx kiritmasligi mumkin;
+      * mijoz taom tanlamasdan ham bron bera olishi kerak;
+      * "kishi boshiga" narx mijozga UMUMAN ko'rinmasligi kerak, toki
+        egasi uni o'zi kiritmagunicha.
+    """
+
+    def setUp(self):
+        self.owner = User.objects.create_user(
+            username="qishloq_ega", password="StrongPass123!",
+            full_name="Baxtiyor Sattorov", phone_number="+998901112233",
+            is_phone_verified=True,
+        )
+        self.admin = User.objects.create_user(
+            username="rural_admin", password="StrongPass123!",
+            full_name="Admin", phone_number="+998900000777", is_staff=True,
+        )
+        self.customer = User.objects.create_user(
+            username="tuy_egasi", password="StrongPass123!",
+            full_name="Jasur Qodirov", phone_number="+998933334455",
+            is_phone_verified=True,
+        )
+
+        self.owner_client = APIClient()
+        self.owner_client.force_authenticate(user=self.owner)
+        self.customer_client = APIClient()
+        self.customer_client.force_authenticate(user=self.customer)
+
+        response = self.owner_client.post("/api/business-applications/", {
+            "business_type": "venue", "business_name": "Urgut Saroy To'yxonasi",
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        self.business = Business.objects.get(owner=self.owner)
+        approve_application(application=self.business.application, approved_by=self.admin)
+        # Rol tasdiqda beriladi; `force_authenticate` xotiradagi obyektni
+        # ushlab turgani uchun uni qayta o'qiymiz.
+        self.owner.refresh_from_db()
+
+        self.today = datetime.date.today()
+        response = self.owner_client.post("/api/owner/availability/generate/", {
+            "start_time": "08:00", "end_time": "00:00",
+            "year": self.today.year, "months": [self.today.month],
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+    def _create_hall(self, **overrides):
+        payload = {"name": "Katta zal", "people": 500, "all_price": "15000000"}
+        payload.update(overrides)
+        response = self.owner_client.post("/api/owner/halls/", payload, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+        return response.data["id"]
+
+    def test_books_without_menu_or_per_person_price(self):
+        """500 kishilik zal, 15 000 000 so'm — taom tanlamasdan bron."""
+        hall_id = self._create_hall()
+
+        # Mijoz ko'radigan sahifa: narx rejimi "fixed", kishi boshiga
+        # narxlar ro'yxati BO'SH — ko'rsatadigan narsa yo'q.
+        detail = APIClient().get(f"/api/businesses/{self.business.id}/")
+        self.assertEqual(detail.status_code, 200, detail.data)
+        self.assertEqual(detail.data["pricing_mode"], "fixed")
+        self.assertEqual(detail.data["dish_pricing"], [])
+        self.assertEqual(detail.data["halls"][0]["all_price"], "15000000.00")
+
+        # Bron: faqat sana va odamlar soni. Taom ham, taom soni ham yo'q.
+        response = self.customer_client.post("/api/reservations/", {
+            "hall": hall_id, "date": str(self.today), "guests_count": 500,
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        reservation = Reservation.objects.get(pk=response.data["id"])
+        self.assertIsNone(reservation.dish_count)
+        self.assertIsNone(reservation.price_per_person,
+                          "Qishloq bronida kishi boshiga narx bo'lmasligi kerak")
+        self.assertEqual(reservation.total_price, Decimal("15000000.00"),
+                         "Summa mehmonlar soniga ko'paymasligi kerak")
+        self.assertEqual(reservation.selected_menu, [])
+
+    def test_books_when_no_price_configured_at_all(self):
+        """Egasi hech qanday narx kiritmagan — bron baribir o'tadi."""
+        hall_id = self._create_hall(all_price=None)
+
+        detail = APIClient().get(f"/api/businesses/{self.business.id}/")
+        self.assertEqual(detail.data["pricing_mode"], "unset")
+
+        response = self.customer_client.post("/api/reservations/", {
+            "hall": hall_id, "date": str(self.today), "guests_count": 300,
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        reservation = Reservation.objects.get(pk=response.data["id"])
+        self.assertIsNone(reservation.total_price,
+                          "Narx noma'lum bo'lsa 0 emas, bo'sh qolishi kerak")
+        self.assertIsNone(reservation.price_per_person)
+
+    def test_owner_adds_per_person_price_later(self):
+        """
+        Egasi keyinroq kishi boshiga narx kiritsa, mijoz uni ko'radi va
+        summa kishi soniga ko'payadi. Har bir to'yxona o'z narxini qo'yadi.
+        """
+        from catalog.models import VenueMenuItem
+
+        hall_id = self._create_hall(all_price=None)
+
+        response = self.owner_client.put("/api/owner/pricing/", [
+            {"dish_count": 1, "price_per_person": "150000"},
+            {"dish_count": 2, "price_per_person": "300000"},
+        ], format="json")
+        self.assertEqual(response.status_code, 200, response.data)
+
+        detail = APIClient().get(f"/api/businesses/{self.business.id}/")
+        self.assertEqual(detail.data["pricing_mode"], "per_person")
+        self.assertEqual(len(detail.data["dish_pricing"]), 2)
+
+        dishes = [
+            VenueMenuItem.objects.create(business=self.business, name=name)
+            for name in ("Palov", "Norin")
+        ]
+
+        # Taom soni tanlanib, menyudan hech narsa belgilanmasa — bron
+        # o'tmaydi: oshxona bunday buyurtmani bajara olmasdi.
+        response = self.customer_client.post("/api/reservations/", {
+            "hall": hall_id, "date": str(self.today),
+            "guests_count": 200, "dish_count": 2,
+        }, format="json")
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertIn("menu_items", response.data["error"]["details"])
+
+        response = self.customer_client.post("/api/reservations/", {
+            "hall": hall_id, "date": str(self.today),
+            "guests_count": 200, "dish_count": 2,
+            "menu_items": [str(dish.id) for dish in dishes],
+        }, format="json")
+        self.assertEqual(response.status_code, 201, response.data)
+
+        reservation = Reservation.objects.get(pk=response.data["id"])
+        self.assertEqual(reservation.price_per_person, Decimal("300000.00"))
+        self.assertIsNone(reservation.day_rent_price, "Bu zalda ijara narxi yo'q")
+        self.assertEqual(reservation.total_price, Decimal("60000000.00"))
+
+    def test_owner_can_clear_per_person_price(self):
+        """
+        Narxni kiritgan egasi uni QAYTARIB OLA olishi kerak — aks holda
+        bir marta bosilgan tugma joyni abadiy "shahar rejimida" qoldirardi.
+        """
+        self._create_hall()
+        self.owner_client.put("/api/owner/pricing/", [
+            {"dish_count": 1, "price_per_person": "150000"},
+        ], format="json")
+
+        response = self.owner_client.put("/api/owner/pricing/", [], format="json")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data, [])
+
+        detail = APIClient().get(f"/api/businesses/{self.business.id}/")
+        self.assertEqual(detail.data["pricing_mode"], "fixed")
+        self.assertEqual(detail.data["dish_pricing"], [])
+
+    def test_rejects_dish_count_without_matching_package(self):
+        """
+        Kishi boshiga narx bor, lekin so'ralgan paket yo'q — bu jim
+        o'tkazib yuboriladigan holat emas: mijoz ko'rgan narx bilan
+        yozilgan narx boshqacha bo'lib qolardi.
+        """
+        hall_id = self._create_hall(all_price=None)
+        self.owner_client.put("/api/owner/pricing/", [
+            {"dish_count": 1, "price_per_person": "150000"},
+        ], format="json")
+
+        response = self.customer_client.post("/api/reservations/", {
+            "hall": hall_id, "date": str(self.today),
+            "guests_count": 100, "dish_count": 3,
+        }, format="json")
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertIn("dish_count", response.data["error"]["details"])
+
+
+class FeedbackTest(TestCase):
+    """
+    Takliflar oqimi — sinov davridagi asosiy teskari aloqa kanali.
+
+    Eng muhim qoida: forma KIRISH TALAB QILMAYDI. Eng foydali fikr
+    ko'pincha ro'yxatdan o'tmagan, ya'ni saytni tashlab ketayotgan
+    odamdan keladi.
+    """
+
+    def setUp(self):
+        from common.models import Feedback
+
+        self.Feedback = Feedback
+        self.client = APIClient()
+        self.url = "/api/feedback/"
+
+        self.admin = User.objects.create_user(
+            username="fb_admin", password="StrongPass123!", full_name="Admin",
+            phone_number="+998900007001", is_staff=True,
+        )
+        self.customer = User.objects.create_user(
+            username="fb_user", password="StrongPass123!", full_name="Mijoz Mijozov",
+            phone_number="+998900007002",
+        )
+
+    def test_guest_can_send_feedback(self):
+        """Kirmagan odam ham yoza olishi SHART — aks holda kanal yarim yopiq."""
+        response = self.client.post(self.url, {
+            "kind": "problem",
+            "message": "Qidiruvda tumanni tanlash qulay bo'lmadi.",
+            "contact": "+998901112233",
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201, response.data)
+        feedback = self.Feedback.objects.get()
+        self.assertIsNone(feedback.user, "Mehmonning taklifi muallifsiz saqlanadi")
+        self.assertEqual(feedback.kind, "problem")
+        self.assertEqual(feedback.status, self.Feedback.STATUS_NEW)
+
+    def test_signed_in_author_is_recorded(self):
+        """Kirgan odam yozsa, administrator u bilan bog'lana olishi kerak."""
+        self.client.force_authenticate(self.customer)
+        response = self.client.post(self.url, {
+            "message": "Bron oynasida sana tanlash tushunarsiz.",
+            "page": "/toyxonalar/",
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201, response.data)
+        feedback = self.Feedback.objects.get()
+        self.assertEqual(feedback.user, self.customer)
+        self.assertEqual(feedback.page, "/toyxonalar/")
+
+    def test_too_short_message_is_rejected(self):
+        """Tasodifan bosilgan ikki harf administratorning vaqtini olmasin."""
+        response = self.client.post(self.url, {"message": "yaxshi"}, format="json")
+        self.assertEqual(response.status_code, 400, response.data)
+
+    def test_author_cannot_be_forged(self):
+        """
+        Mehmon `user` maydonini o'zi yuborsa ham, u E'TIBORGA OLINMAYDI —
+        aks holda birovning nomidan xabar qoldirish mumkin bo'lardi.
+        """
+        response = self.client.post(self.url, {
+            "message": "Bu xabar boshqa odam nomidan yozilmoqchi.",
+            "user": self.customer.pk,
+        }, format="json")
+
+        self.assertEqual(response.status_code, 201, response.data)
+        self.assertIsNone(self.Feedback.objects.get().user)
+
+    def test_staff_are_notified(self):
+        """Administrator taklifdan darhol xabar topishi kerak."""
+        from notifications.models import Notification
+
+        Notification.objects.all().delete()
+        self.client.post(self.url, {
+            "message": "Telefonda kartochkalar juda katta ko'rinadi.",
+        }, format="json")
+
+        self.assertEqual(Notification.objects.filter(user=self.admin).count(), 1)
+
+    def test_only_admin_can_read_the_list(self):
+        self.client.post(self.url, {"message": "Oddiy bir taklif matni."}, format="json")
+
+        self.client.force_authenticate(self.customer)
+        self.assertEqual(self.client.get("/api/admin/feedback/").status_code, 403)
+
+        self.client.force_authenticate(self.admin)
+        response = self.client.get("/api/admin/feedback/")
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["unread"], 1)
+
+    def test_admin_can_mark_as_done(self):
+        self.client.post(self.url, {"message": "Yana bitta taklif matni."}, format="json")
+        feedback = self.Feedback.objects.get()
+
+        self.client.force_authenticate(self.admin)
+        response = self.client.patch(
+            f"/api/admin/feedback/{feedback.id}/",
+            {"status": "done", "admin_note": "Kelasi versiyada"}, format="json",
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        feedback.refresh_from_db()
+        self.assertEqual(feedback.status, "done")
+        self.assertEqual(feedback.admin_note, "Kelasi versiyada")
+
+    def test_message_cannot_be_edited_by_admin(self):
+        """Foydalanuvchining so'zi o'zgarmasligi kerak."""
+        self.client.post(self.url, {"message": "Asl matn shu yerda turibdi."}, format="json")
+        feedback = self.Feedback.objects.get()
+
+        self.client.force_authenticate(self.admin)
+        self.client.patch(
+            f"/api/admin/feedback/{feedback.id}/",
+            {"message": "O'zgartirilgan matn"}, format="json",
+        )
+
+        feedback.refresh_from_db()
+        self.assertEqual(feedback.message, "Asl matn shu yerda turibdi.")

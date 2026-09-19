@@ -1,0 +1,603 @@
+/* ===================================================================
+   TELEFON KO'RINISHI.
+
+   Bu fayl ro'yxatda ENG OXIRIDA turadi — shuning uchun u boshqa
+   qatlamlarni xotirjam ustidan yozadi va `!important` kerak emas.
+
+   Bu yerda faqat KICHIK EKRANGA va O'RNATILGAN ILOVAGA tegishli
+   qoidalar bo'ladi. Umumiy tartib (yon menyuning surilishi, jadval
+   aylanishi, katakchalarning tik joylashishi) o'z komponentlarida
+   qolaveradi — u yerda kontekst bilan birga o'qiladi.
+   =================================================================== */
+
+/* -------------------------------------------------------------------
+   1. "TIRQISHLI" EKRANLAR (notch, yumaloq burchak).
+
+   Telefonda ekranning yuqori va past cheti tizim elementlari bilan
+   band. `viewport-fit=cover` bilan sahifa butun ekranni egallaydi,
+   ya'ni mazmun o'sha chetlarga kirib ketishi mumkin — pastdagi
+   tugmalar barmoq bilan bosilmay qoladi.
+
+   `env(safe-area-inset-*)` — tizim aytadigan xavfsiz masofa. Qo'llab
+   -quvvatlamaydigan brauzerda u 0 ga teng, ya'ni hech narsa buzilmaydi.
+   ------------------------------------------------------------------- */
+.side-nav {
+  padding-top: max(var(--sp-5), env(safe-area-inset-top));
+  padding-bottom: max(var(--sp-5), env(safe-area-inset-bottom));
+}
+.topbar { padding-top: env(safe-area-inset-top); }
+.footer { padding-bottom: max(var(--sp-8), env(safe-area-inset-bottom)); }
+
+/* -------------------------------------------------------------------
+   2. BRAUZER PANELI VA BALANDLIK.
+
+   Telefonda `100vh` — manzil qatori YASHIRINGANDAGI balandlik. Panel
+   ko'rinib turganda esa sahifa ekranga sig'may, pastki qismi kesilib
+   qoladi. `100dvh` ("dynamic") panel bilan birga o'zgaradi.
+
+   `100vh` fallback sifatida oldin yoziladi: eski brauzer ikkinchi
+   qatorni tushunmaydi va birinchisida qolib ketadi.
+   ------------------------------------------------------------------- */
+.shell { min-height: 100vh; min-height: 100dvh; }
+.side-nav { height: 100vh; height: 100dvh; }
+
+@media (max-width: 940px) {
+  /* -----------------------------------------------------------------
+     3. YUQORI PANEL — YOPISHIB TURADI.
+
+     Telefonda sahifa uzun bo'ladi va pastga tushgan odam menyuga
+     qaytish uchun tepaga scroll qilishi kerak edi. Endi gamburger
+     doim ko'z oldida.
+     ----------------------------------------------------------------- */
+  .topbar {
+    position: sticky; top: 0; z-index: calc(var(--z-sidebar) - 2);
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 560px) {
+  /* -----------------------------------------------------------------
+     4. KLAVIATURA OCHILGANDA EKRAN "SAKRAMASIN".
+
+     iOS Safari 16 px dan KICHIK matnli maydonga bosilganda sahifani
+     avtomatik kattalashtiradi va foydalanuvchi qo'lda qaytarishi
+     kerak bo'ladi. 16 px — o'sha chegara.
+     ----------------------------------------------------------------- */
+  .input, .select, .textarea { font-size: 16px; }
+
+  /* -----------------------------------------------------------------
+     5. BARMOQ O'LCHAMI.
+
+     Sichqoncha uchun 34 px yetarli, barmoq uchun emas: yonma-yon
+     turgan mayda tugmalar noto'g'ri bosiladi. 42 px — qulay eng
+     kichik o'lcham.
+     ----------------------------------------------------------------- */
+  .btn { padding: 12px 20px; min-height: 44px; }
+  .btn-sm { min-height: 38px; }
+  .icon-btn { width: 42px; height: 42px; }
+
+  /* Kartochkadagi tugmalar tor ekranda yonma-yon siqilib qolardi. */
+  .row-2 > .btn, .row-3 > .btn { flex: 1; }
+
+  /* Sarlavhalar telefonda biroz kichrayadi — aks holda uzun nom
+     ekranga sig'may, uch qatorga bo'linib ketardi. */
+  .display.h2 { font-size: var(--fs-xl); }
+  h1.display  { font-size: var(--fs-2xl); }
+
+  /* Modal — pastdan chiqadigan varaq ko'rinishida (`_modal.css` da
+     560 px uchun allaqachon shunday). Ichidagi tugmalar tik tursin. */
+  .modal .row-2 { flex-direction: column-reverse; align-items: stretch; }
+  .modal .row-2 > .btn { width: 100%; }
+
+  /* Jadval kartochkalari va panel ichi torroq chetga o'tadi. */
+  .panel { padding: var(--sp-4); }
+  .dash-content { padding: var(--sp-4) var(--sp-3) var(--sp-12); }
+
+  /* Uzun matnli ustunlar telefonda jadvalni cho'zib yubormasin —
+     `.table-wrap` aylantiradi, lekin kamroq aylantirish qulayroq. */
+  .table th, .table td { padding: var(--sp-3); }
+}
+
+/* -------------------------------------------------------------------
+   5a. TELEFONDA YON MENYU YO'Q — HAMMASI PASTDA.
+
+   Kompyuterda chap menyu doim ko'rinib turadi va bu to'g'ri: joy bor,
+   sichqoncha bilan yetish oson.
+
+   Telefonda esa u SURILUVCHI panel edi va har bir o'tish uch harakatga
+   aylanardi: barmoqni ekranning tepa-chap burchagiga cho'zib gamburgerni
+   bosish → menyu chiqishini kutish → bandni bosish. Telefonni bir qo'lda
+   ushlagan odam uchun tepa-chap burchak — eng noqulay nuqta.
+
+   Ustiga, pastki menyu allaqachon bor edi va yon menyudagi bandlarning
+   ko'pini TAKRORLARDI. Ya'ni bir xil bo'limga ikki xil yo'l bor edi va
+   qaysi biri "asosiy" ekani bilinmasdi.
+
+   Endi telefonda yon menyu ham, gamburger ham UMUMAN yo'q. Uning
+   o'rniga:
+     · asosiy bo'limlar   → pastki menyu (`.tabbar`)
+     · egasining paneli   → profil sahifasidagi kartochka
+   Ya'ni har bir bo'limga aynan BITTA yo'l qoladi.
+
+   Qoida `.shell.has-tabbar` bilan CHEGARALANGAN — u faqat ommaviy
+   sahifalarda bo'ladi. Boshqaruv panelida (`layouts/dashboard.html`)
+   pastki menyu yo'q va u yerda yon menyu telefonda ham kerak, aks
+   holda panelning bo'limlariga umuman o'tib bo'lmasdi.
+   ------------------------------------------------------------------- */
+@media (max-width: 940px) {
+  .shell.has-tabbar .side-nav,
+  .shell.has-tabbar .nav-scrim,
+  .shell.has-tabbar .topbar-burger { display: none; }
+
+  /* Gamburger ketgach brend chap chetga suriladi — yonida bo'sh
+     joy qolmasin. */
+  .shell.has-tabbar .topbar { padding-left: var(--sp-4); }
+
+  /* -----------------------------------------------------------------
+     YUQORI PANELDA PROFIL VA "KIRISH" TUGMALARI YO'Q.
+
+     Ikkalasi ham pastki menyuda turibdi va u yerga barmoq bilan yetish
+     osonroq. Yuqorida ular faqat joy egallardi: 390 px li ekranda
+     brend, qo'ng'iroq, til, tema va profil — beshta element bir qatorga
+     tiqilib qolardi.
+
+     Mehmondagi holat ayniqsa isrof edi: "Kirish" va "Ro'yxatdan o'tish"
+     ikkita katta tugma bo'lib turardi, holbuki ikkalasi ham AYNAN BIR
+     manzilga olib boradi (`userHtml`) va pastki menyuda "Kirish" allaqachon bor.
+
+     Boshqaruv panelida (`layouts/dashboard.html`) bu qoida ishlamaydi —
+     u yerda pastki menyu yo'q va profil havolasi faqat shu yerda.
+     ----------------------------------------------------------------- */
+  .shell.has-tabbar .topbar-user,
+  .shell.has-tabbar #topbar-right > .btn { display: none; }
+
+  /* Qolgan boshqaruvlar kichrayadi: qo'ng'iroq, til va tema.
+     34 px barmoq uchun hali qulay, lekin qatorda joy ochiladi. */
+  .topbar { min-height: var(--topbar-h); }
+  .topbar-right { gap: 6px; }
+  .topbar .icon-btn,
+  .topbar .notif-trigger { width: 32px; height: 32px; font-size: 14px; }
+  .topbar .lang-trigger { height: 32px; padding: 0 8px 0 6px; }
+  .topbar .notif-dot { min-width: 15px; height: 15px; font-size: 9px; }
+
+  /* -----------------------------------------------------------------
+     OCHILUVCHI OYNALAR EKRANDAN CHIQIB KETMASIN.
+
+     Bildirishnoma ro'yxati qo'ng'iroqqa nisbatan joylashardi
+     (`position: absolute; right: -60px`) va kengligi 360 px edi.
+     Telefonda qo'ng'iroq panelning o'rtasida turadi, ya'ni ro'yxatning
+     chap yarmi ekrandan tashqarida qolardi — foydalanuvchi xabarning
+     boshini umuman ko'rmasdi.
+
+     Yechim: telefonda u qo'ng'iroqqa emas, EKRANGA nisbatan
+     joylashadi va ikki chetdan bir xil masofa qoldiradi. Shunda
+     kengligi qanday bo'lishidan qat'i nazar to'liq ko'rinadi.
+     ----------------------------------------------------------------- */
+  .notif-panel {
+    position: fixed;
+    top: calc(var(--topbar-h) + env(safe-area-inset-top) + 6px);
+    left: var(--sp-3); right: var(--sp-3);
+    width: auto;
+  }
+  .notif-body { max-height: min(58vh, 400px); }
+  .notif-head { padding: var(--sp-2) var(--sp-3); }
+  .notif-row { padding: var(--sp-2) var(--sp-3); gap: var(--sp-2); }
+  .notif-row .ic { width: 26px; height: 26px; font-size: 12px; }
+
+  /* Til ro'yxati ham torroq — uch band uchun 186 px ortiqcha edi. */
+  .lang-dropdown { min-width: 150px; }
+  .lang-dropdown button { padding: 7px 8px; }
+}
+
+/* -------------------------------------------------------------------
+   5b. RASMLAR TELEFONGA MOSLANADI.
+
+   Muammo: kartochka to'ri kompyuterda 3-4 ustun bo'ladi va har bir
+   rasm ~270 px keladi. Telefonda esa to'r bitta ustunga tushadi va
+   AYNAN O'SHA nisbat (16/10) ekran kengligiga cho'ziladi — 360 px li
+   telefonda rasm 225 px balandlikka chiqadi. Natijada bitta ekranga
+   bittayarim kartochka sig'adi va ro'yxatni ko'rish uchun uzoq
+   aylantirish kerak bo'ladi.
+
+   Yechim: nisbat KENGROQ (16/9) qilinadi va balandlikka yuqori chegara
+   qo'yiladi. Kartochkaning o'zi, ranglari, tartibi — hammasi o'sha-o'sha
+   qoladi, faqat rasm past bo'ladi va ekranga ikki-uch kartochka sig'adi.
+
+   `object-fit: cover` allaqachon o'z komponentida turibdi, ya'ni rasm
+   cho'zilib buzilmaydi — faqat yuqori va pastidan qirqiladi.
+   ------------------------------------------------------------------- */
+@media (max-width: 560px) {
+  /* To'r ikki ustunga tushgani uchun (5c-bo'lim) rasm ham ikki barobar
+     tor bo'ladi — balandligini ham shunga yarasha pasaytiramiz, aks
+     holda kartochka cho'zilib, ikki ustunning foydasi yo'qolardi. */
+  .card-media    { aspect-ratio: 4 / 3; max-height: 108px; }
+  .card-media-sm { aspect-ratio: 4 / 3; max-height: 100px; }
+
+  /* Detal sahifasidagi galereya — sahifaning eng katta rasmi.
+     Telefonda u ekranning yarmini egallab, sarlavha va tugmalar
+     pastda ko'rinmay qolardi. */
+  .detail-gallery .stage { aspect-ratio: 3 / 2; max-height: 240px; }
+  .detail-gallery .thumb { width: 56px; }
+
+  /* Menyu to'ri: bitta ustun o'rniga ikkita — taom rasmlari shunda
+     ikki barobar kichrayadi va bir ekranda to'rttasi ko'rinadi. */
+  .menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
+  .menu-item img { aspect-ratio: 1 / 1; }
+
+  /* Bron oynasidagi taom qatori va joy profilidagi kichik surat. */
+  .pick-row .thumb { width: 48px; height: 48px; }
+  .biz-profile-head img { width: 46px; height: 46px; }
+}
+
+/* -------------------------------------------------------------------
+   5c. TELEFONDA HAMMASI IXCHAM.
+
+   Telefon ekrani kompyuternikidan uch barobar tor, lekin sayt undan
+   BIR XIL o'lchamlarni meros olardi: bir kartochka butun ekranni
+   egallardi, profil sarlavhasi ekranning yarmiga cho'zilardi va
+   ro'yxatni ko'rish uchun uzoq aylantirish kerak bo'lardi.
+
+   Bu bo'lim shuni tuzatadi. Yondashuv oddiy: bir ekranga IMKON QADAR
+   KO'P ma'lumot sig'sin, lekin hech narsa o'qib bo'lmaydigan darajada
+   kichraymasin. Amalda bu:
+
+     · katalog     — bir qatorda ikkita kartochka, ya'ni bir ekranda
+                     to'rttasi ko'rinadi (ilgari bittayarim edi)
+     · profil      — rasm chapda, ma'lumot o'ngda (ilgari ustma-ust
+                     turib, ekranning yarmini egallardi)
+     · bo'shliqlar — bir pog'ona kichrayadi
+
+   Chegara 560 px: undan kengroq (planshet, aylantirilgan telefon)
+   ekranda joy yetarli va u yerda hech narsa o'zgarmaydi.
+   ------------------------------------------------------------------- */
+@media (max-width: 560px) {
+  /* ---------------- MATN SHKALASI ----------------
+     Butun shkala bir pog'ona pastga tushadi. Har bir sarlavhani
+     alohida kichraytirgandan ko'ra shu to'g'ri: nisbatlar saqlanadi
+     va kelajakda qo'shiladigan yangi matn ham avtomatik moslashadi.
+
+     `--fs-base` 15 → 14 px. Undan pastga tushmaymiz: 13 px li asosiy
+     matn telefonda charchatadi.
+
+     Matnli MAYDONLAR bundan mustasno — ular quyida 16 px da qoladi,
+     aks holda iOS bosilganda sahifani kattalashtirib yuboradi. */
+  :root {
+    --fs-xs: 11px;   --fs-sm: 12.5px; --fs-base: 14px;
+    --fs-md: 15.5px; --fs-lg: 18px;   --fs-xl: 22px;  --fs-2xl: 27px;
+  }
+
+  /* ---------------- umumiy zichlik ---------------- */
+  .section { padding-block: var(--sp-6); }
+  .container { padding-inline: var(--sp-3); }
+  .panel { padding: var(--sp-3); }
+  .grid { gap: var(--sp-3); }
+
+  h1.display { font-size: 22px; }
+  .display.h3 { font-size: var(--fs-md); }
+  .lede { font-size: var(--fs-sm); }
+  .catalog-head { margin-bottom: var(--sp-4); }
+
+  /* ---------------- BOSH SAHIFA SARLAVHASI ----------------
+     Telefonda bu blok ekranning yarmidan ko'pini egallardi: ustma-ust
+     turgan "eyebrow", katta sarlavha, ikki qatorli tavsif, tur
+     tugmalari, ikki qatorga o'ralgan qidiruv va statistika.
+
+     Tavsif telefonda yashiriladi: "Joyni oldindan band qiling,
+     navbatda turmang" degan sarlavhadan keyin u yangi hech narsa
+     qo'shmaydi, faqat ikki qator joy oladi. Kompyuterda qoladi —
+     u yerda joy bor.
+
+     ("Toshkent · restoran va to'yxonalar" yozuvi esa butunlay olib
+     tashlandi: platforma bitta shahar bilan chegaralanmaydi.) */
+  .home-head { padding: var(--sp-4) 0 var(--sp-3); gap: var(--sp-3); }
+  .home-head .lede { display: none; }
+  .home-head h1 { font-size: 21px; }
+  .home-tab { padding: 6px 14px; font-size: var(--fs-xs); }
+
+  /* QIDIRUV — BITTA QATORDA.
+     `flex-wrap: wrap` tufayli uchta element ikki qatorga bo'linib
+     ketardi. Endi o'ralmaydi: maydon qolgan joyni egallaydi
+     (`flex: 1` + `min-width: 0` — usiz u o'z mazmuniga qarab
+     kengayib, tugmalarni siqib chiqarardi), "Yaqinimda" esa faqat
+     nishonchaga qisqaradi. Uning matni ekran o'quvchisi uchun
+     `data-i18n-label` da qoladi. */
+  .home-search { flex-wrap: nowrap; gap: 5px; padding: 5px; border-radius: var(--radius-m); }
+  .home-search .search { flex: 1; min-width: 0; }
+  .home-search .btn { min-height: 38px; padding: 0 12px; white-space: nowrap; }
+  .home-search #near-me { padding: 0 10px; }
+  .home-search #near-me span { display: none; }
+
+  /* Bo'lim sarlavhalari ham bir pog'ona pastga. */
+  .section-title { margin-bottom: var(--sp-3); }
+  .section-sm { padding-block: var(--sp-5); }
+
+  /* ---------------- TAOMLAR TO'RI: BIR QATORDA UCHTA ----------------
+     `_showcase.css` 640 px dan tor ekranda ikkita ustun beradi. Uchta
+     bilan bir ekranga ikki barobar ko'p taom sig'adi va lenta o'z
+     vazifasini bajaradi — tanlash uchun bir nechta variantni birga
+     ko'rsatish.
+
+     Bir sahifada 8 ta taom bor (`PAGE_SIZE`), uchta ustunda esa bu
+     3 + 3 + 2 bo'lib, oxirgi qator yarim bo'sh qolardi. Shuning uchun
+     oxirgi ikkitasi telefonda ko'rsatilmaydi: 3 x 2 = 6 ta to'liq
+     to'r chiqadi. */
+  .dish-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); }
+  .dish-wall > :nth-child(n+7) { display: none; }
+  .dish-tile .body { padding: 5px 7px 7px; }
+  .dish-tile .name { font-size: 11px; }
+  .dish-tile .place { font-size: 9.5px; }
+  .dish-tile .price { font-size: 11px; margin-top: 1px; }
+
+  /* ---------------- katalog: BIR QATORDA IKKITA ----------------
+     `.grid-auto` ning o'zi `minmax(270px, 1fr)` — 390 px li ekranda
+     bu majburan bitta ustun beradi. Telefonda uni aniq ikkitaga
+     qotiramiz va `minmax(0, ...)` bilan yozamiz: `auto` bo'lsa uzun
+     nom ustunni kengaytirib, to'rni buzib yuborardi. */
+  .grid-auto,
+  .grid-auto-sm { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-3); }
+
+  .biz-card .card-body { padding: var(--sp-3); gap: 2px; }
+  .biz-card .name {
+    font-size: var(--fs-sm); line-height: 1.25;
+    /* Uzun nom ("Marvarid Steak House") ikki qatorda kesiladi —
+       shunda qo'shni kartochkalar bir xil balandlikda qoladi. */
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .biz-card .meta { font-size: 11px; gap: 4px; flex-wrap: nowrap; overflow: hidden; }
+  .biz-card .meta > span { white-space: nowrap; }
+
+  /* Manzil qatori tor ustunda deyarli butunlay kesilardi va faqat
+     joy egallardi. Tuman `.meta` da baribir turibdi, aniq manzil esa
+     xarita nishonchasi ortida. */
+  .biz-card .card-body .addr { display: none; }
+
+  .biz-card .foot { margin-top: 4px; gap: 4px; flex-wrap: wrap; }
+  .biz-card .foot .rating { font-size: 11px; gap: 1px; }
+  .biz-card .foot .tag,
+  .biz-card .foot .rank-tag { font-size: 10px; padding: 2px 7px; }
+  /* Ikki ustunda "350 kishigacha · 15 000 000 so'm dan" bitta qatorga
+     sig'maydi va uch nuqta bilan kesilardi — aynan NARX ko'rinmay
+     qolardi. Shuning uchun telefonda u o'raladi. */
+  .biz-card .facts {
+    font-size: 10px; margin-top: 3px; line-height: 1.35;
+    white-space: normal; overflow: visible; text-overflow: clip;
+  }
+
+  .biz-card-media .rating-badge { top: 6px; right: 6px; padding: 2px 7px; font-size: 10px; }
+  .biz-card-media .distance-badge { bottom: 6px; left: 6px; padding: 2px 7px; font-size: 10px; }
+  .biz-card-media .map-pin { top: 6px; right: 6px; width: 24px; height: 24px; }
+  .biz-card-media .map-pin svg { width: 12px; height: 12px; }
+
+  /* Depozit nishoni tor ustunda ikki qatorga bo'linib ketmasin.
+     (Tugmalarni tenglashtirish `_detail.css` da — u kompyuterda ham
+     kerak, faqat telefonga tegishli emas.) */
+  .card-body .seal { font-size: 10px; padding: 2px 8px; }
+
+  /* Bo'limlar qatori — tugmalar allaqachon sig'adi, lekin `overflow-x`
+     tufayli ostida bo'sh aylantirgich chizig'i chiqib turardi. */
+  .tabs { scrollbar-width: none; margin-bottom: var(--sp-4); }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { padding: 10px 12px; }
+
+  /* ---------------- profil sarlavhasi ----------------
+     Rasm CHAPDA, dumaloq va kichik; ma'lumot o'ngda. Ilgari bu blok
+     kompyuterdagi uch ustunli tartibni meros olardi va telefonda
+     ism rasm yonidagi tor ustunga tiqilib, uch qatorga bo'linardi. */
+  .profile-cover { padding: var(--sp-4); border-radius: var(--radius-m); }
+  .profile-head {
+    flex-direction: row; align-items: center; text-align: left;
+    gap: var(--sp-3); flex-wrap: wrap;
+  }
+  .profile-avatar .avatar-xl { width: 62px; height: 62px; font-size: 22px; }
+  .profile-avatar .avatar-ring.avatar-xl { padding: 3px; }
+  .avatar-edit { width: 24px; height: 24px; font-size: 11px; }
+
+  .profile-identity { align-items: flex-start; flex: 1; gap: 3px; }
+  .profile-identity h1 { font-size: 19px; }
+  .profile-identity .handle { font-size: 11px; }
+  .profile-badges { justify-content: flex-start; gap: 5px; margin-top: 4px; }
+  .profile-badge { font-size: 10px; padding: 3px 9px; }
+
+  /* Uchinchi ustun — "a'zo bo'lgan sana" va "rasmni o'chirish".
+     Telefonda IKKALASI HAM yo'q:
+       · sana pastdagi "Shaxsiy ma'lumotlar" ramkasida aynan shu
+         holicha takrorlanadi;
+       · rasmni o'chirish esa kamdan-kam kerak bo'ladigan amal va
+         sarlavhaning yarmini egallab turardi. Rasmni ALMASHTIRISH
+         qoladi — u rasm ustidagi kichik kamera tugmasi orqali. */
+  .profile-head > .stack:last-child { display: none; }
+
+  .profile-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--sp-2); margin-top: var(--sp-4); padding-top: var(--sp-3);
+  }
+  /* Kataklar TEPADAN tekislanadi: nomi ikki qatorga bo'lingani
+     qo'shnilarini pastga surib yubormasin. */
+  .profile-stat { align-items: center; text-align: center; justify-content: flex-start; }
+  .profile-stat .value { font-size: 19px; }
+  .profile-stat .label { font-size: 8.5px; letter-spacing: .02em; line-height: 1.2; }
+
+  /* ---------------- ma'lumot qatorlari ----------------
+     Nom chapda, qiymat o'ngda — bitta qatorda. Tik joylashuv har bir
+     qatorni ikkiga bo'lib, ramkani ikki barobar uzaytirardi.
+
+     Nomlar kichraytirilgani uchun ular endi sig'adi: "Telefon raqami"
+     11 px da ~70 px joy oladi va qolgan ~250 px qiymatga qoladi. */
+  .info-row { gap: var(--sp-3); padding: var(--sp-2) 0; }
+  .info-row .k { font-size: 11px; flex-shrink: 0; }
+  .info-row .v { font-size: var(--fs-sm); min-width: 0; }
+
+  /* ISHONCHLILIK qatori — istisno: unda nishon, chiziq va izoh bor,
+     ya'ni uchta element. Ular o'ng chetdagi tor ustunga sig'may,
+     bir-birining ustiga chiqib ketardi. Shuning uchun faqat shu qator
+     tik joylashadi. */
+  .info-row:has(.trust-cell) { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .trust-cell { align-items: flex-start; text-align: left; }
+  /* Butun kenglikdagi chiziq ajratuvchi chiziqqa o'xshab qolardi. */
+  .trust-bar { width: 150px; }
+
+  /* ---------------- bo'lim menyusi ----------------
+     Profilda bo'lim bittagina bo'lsa (tasdiqlangan joy egasida
+     shunday: faqat "Ma'lumotlarim"), menyu hech qayerga olib
+     bormaydi — u shunchaki butun kenglikdagi tugma bo'lib turadi va
+     ekrandan joy oladi. Ikki va undan ortiq bo'limda esa qoladi. */
+  #profile-menu:not(:has(button ~ button)) { display: none; }
+
+  /* ---------------- statistika kartochkalari ----------------
+     `_layout.css` telefonda `.grid-3` va `.grid-4` ni BITTA ustunga
+     tushiradi. Bu matnli blok uchun to'g'ri, lekin ichida bitta raqam
+     turgan kartochka uchun isrof: to'rtta ko'rsatkich to'rtta butun
+     kenglikdagi blokka aylanib, ekranni to'liq egallardi va ular
+     ostidagi ro'yxatga yetib borish uchun uzoq aylantirish kerak edi.
+
+     Raqamga esa kenglik kerak emas — ikki ustun yetarli va to'rtala
+     ko'rsatkich bir qarashda ko'rinadi. */
+  .grid-3, .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat-card { padding: var(--sp-3); gap: 4px; }
+  .stat-card .label { font-size: 9.5px; letter-spacing: .04em; line-height: 1.25; }
+  .stat-card .value { font-size: 22px; }
+
+  /* Bosh sahifadagi uchta ko'rsatkich — bir qatorda uchtasi.
+     `auto-fit, minmax(130px, ...)` telefonda ikkitani sig'dirib,
+     uchinchisini yolg'iz qatorga tushirardi va yonida bo'sh joy
+     qolardi. Uchta raqamga 390 px yetarli. */
+  .home-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); }
+  .home-stat { padding: var(--sp-3); }
+  .home-stat .value { font-size: 21px; }
+  .home-stat .label { font-size: 8.5px; letter-spacing: .03em; }
+
+  /* Sahifa sarlavhasi — tugma pastga tushib, butun kenglikni olsin. */
+  .page-head { gap: var(--sp-3); margin-bottom: var(--sp-4); }
+  .page-head .btn { width: 100%; }
+
+  /* Ramka sarlavhasi — qator bo'lib qoladi, lekin O'RALADI.
+     Yonma-yon sig'maydigan filtr tugmalari o'z-o'zidan pastki qatorga
+     tushadi ("Mening bronlarim" nomi ilgari har bir so'zi alohida
+     qatorga bo'linib ketardi).
+
+     Ustunga aylantirish esa noto'g'ri edi: sarlavha yonidagi YAKKA
+     tugmalar — masalan "Shaxsiy ma'lumotlar"dagi qalamcha — pastga
+     tushib, chap chetda yolg'iz qolib ketardi. */
+  .panel-head { flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-3); }
+
+  /* ---------------- qisqa yo'l kartochkalari ---------------- */
+  .shortcut-card { padding: var(--sp-3); gap: 3px; }
+  .shortcut-card .ic { font-size: 20px; }
+  .shortcut-card b { font-size: var(--fs-sm); }
+  .shortcut-card .go { top: var(--sp-3); right: var(--sp-3); }
+  .shortcut-panel::after { top: var(--sp-3); right: var(--sp-8); }
+  .sign-out { padding: var(--sp-3); gap: var(--sp-3); }
+
+  /* ---------------- ro'yxat qatorlari (bronlar) ----------------
+     Ilgari har bir bron ikki-uch qatorli katta blok edi va ekranga
+     ikkitasi zo'rg'a sig'ardi. */
+  .list-row { padding: var(--sp-3) 0; gap: var(--sp-2); }
+  .list-row .stack { min-width: 0 !important; }
+  .list-row b { font-size: var(--fs-sm); }
+  .list-row .small { font-size: 11px; }
+  .list-row .xs { font-size: 10px; }
+  .list-row-actions { gap: 6px; }
+
+  /* Mijoz kartochkasi (egasining bronlar ekrani) — rasm kichrayadi. */
+  .customer-card { gap: var(--sp-2); }
+  .customer-card .cust-photo { width: 34px; height: 34px; }
+
+  /* ---------------- pastki menyu ----------------
+     52 px dan 48 px ga — barmoq uchun hali ham qulay, lekin ekranda
+     to'rt piksel ko'proq mazmun qoladi. */
+  /* Bandlar BESHTA — 390 px li ekranda har biriga ~78 px. Bu yozuvni
+     ham, nishonchani ham qulay o'lchamda saqlashga yetadi: pastki
+     menyu eng ko'p bosiladigan joy, uni maydalash noto'g'ri bo'lardi. */
+  :root { --tabbar-h: 52px; }
+  .tabbar-item { padding: 6px 2px 5px; gap: 3px; }
+  .tabbar-item .ic { font-size: 18px; }
+  .tabbar-item .lb { font-size: 10px; }
+}
+
+/* Juda tor ekran (≤ 380 px): rasmlar yana bir pog'ona pasayadi. */
+@media (max-width: 380px) {
+  .card-media    { max-height: 92px; }
+  .card-media-sm { max-height: 86px; }
+  .detail-gallery .stage { max-height: 205px; }
+  .profile-identity h1 { font-size: 17px; }
+  .profile-stat .label { font-size: 8px; }
+}
+
+/* -------------------------------------------------------------------
+   6. O'RNATILGAN ILOVA REJIMI.
+
+   Ilova bosh ekrandan ochilganda brauzerning "orqaga" tugmasi yo'q.
+   Shuning uchun matnni tasodifan belgilab qo'yish va ikki marta
+   bosganda kattalashish bezovta qiladi — ular o'chiriladi.
+   Matnli maydonlarga bu tegmaydi.
+   ------------------------------------------------------------------- */
+@media (display-mode: standalone) {
+  body { -webkit-user-select: none; user-select: none; }
+  .input, .textarea, .select, p, h1, h2, h3, .table {
+    -webkit-user-select: text; user-select: text;
+  }
+}
+
+/* -------------------------------------------------------------------
+   7. "ILOVANI O'RNATING" TASMASI.
+
+   Pastda turadi: yuqorida bo'lsa sarlavhani bosib qolardi. Faqat
+   Android brauzeri o'rnatish mumkinligini aytganda paydo bo'ladi
+   (`js/core/pwa.js`), bir marta yopilsa boshqa chiqmaydi.
+   ------------------------------------------------------------------- */
+.install-bar {
+  position: fixed; z-index: var(--z-toast, 90);
+  left: var(--sp-4); right: var(--sp-4);
+  bottom: max(var(--sp-4), env(safe-area-inset-bottom));
+  display: flex; align-items: center; gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-m); box-shadow: var(--shadow-lg);
+  animation: install-rise .28s ease-out;
+}
+@keyframes install-rise {
+  from { transform: translateY(120%); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+.install-bar .install-icon {
+  width: 44px; height: 44px; border-radius: var(--radius-s); flex-shrink: 0;
+  background: var(--surface-2);
+}
+.install-bar .install-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.install-bar .install-text b { font-size: var(--fs-sm); }
+.install-bar .install-text span { font-size: var(--fs-xs); color: var(--ink-soft); }
+
+@media (max-width: 560px) {
+  /* Tor ekranda tavsif matni tugmalarni siqib qo'yardi. */
+  .install-bar .install-text span { display: none; }
+}
+
+/* Kompyuterda tasma CHAP MENYUNI bosib qolmasin.
+
+   U `position: fixed` bo'lgani uchun butun ekran kengligini oladi va
+   yon menyuning eng pastidagi bandni ("Taklif yuborish") yopib turardi:
+   havola bor, lekin uni ko'rib bo'lmasdi.
+
+   Chegara 940 px — yon menyu aynan shundan kengroq ekranda ko'rinadi. */
+@media (min-width: 941px) {
+  .install-bar { left: calc(var(--sidebar-width) + var(--sp-4)); }
+}
+
+/* -------------------------------------------------------------------
+   8. OFLAYN SAHIFA.
+   ------------------------------------------------------------------- */
+.offline-wrap {
+  min-height: 100vh; min-height: 100dvh;
+  display: grid; place-items: center; padding: var(--sp-6);
+  background: var(--ground);
+}
+.offline-card {
+  max-width: 420px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-4);
+  padding: var(--sp-8) var(--sp-6);
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-l); box-shadow: var(--shadow);
+}
+.offline-icon { font-size: 46px; }

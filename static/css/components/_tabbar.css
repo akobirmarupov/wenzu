@@ -1,0 +1,89 @@
+/* ===================================================================
+   PASTKI MENYU — FAQAT TELEFONDA.
+
+   Telefonda asosiy bo'limlarga o'tish uchun har safar gamburgerni
+   bosib, yon menyuni chiqarish kerak edi: ikki harakat, ustiga
+   barmoq ekranning TEPASIGA cho'zilishi kerak. Telefonni bir qo'lda
+   ushlagan odam uchun tepa burchak — eng noqulay nuqta.
+
+   Shuning uchun asosiy bo'limlar pastga, bosh barmoq yetadigan joyga
+   tushirildi. Yon menyu yo'qolgani yo'q: unda brend, ikkilamchi
+   bandlar va panel havolasi qolaveradi.
+
+   KOMPYUTERDA BU MENYU UMUMAN YO'Q (`display: none`) — u yerda chap
+   yon menyu doim ko'rinib turadi va pastki qatorning hojati yo'q.
+   Shuning uchun bu fayldagi hamma narsa media-so'rov ichida.
+   =================================================================== */
+/* Menyu balandligi bitta joyda: mazmun uchun ajratiladigan bo'shliq,
+   toast va o'rnatish tasmasi ham shu qiymatga tayanadi. */
+:root { --tabbar-h: 52px; }
+
+.tabbar { display: none; }
+
+@media (max-width: 940px) {
+  .tabbar {
+    position: fixed; z-index: var(--z-sticky);
+    left: 0; right: 0; bottom: 0;
+    display: grid; grid-auto-flow: column; grid-auto-columns: 1fr;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(12px) saturate(1.4);
+    border-top: 1px solid var(--line);
+    /* Tirqishli ekranlarda pastki chet tizim chizig'i bilan band —
+       usiz oxirgi qator barmoq bilan bosilmay qolardi. */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .tabbar-item {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 3px;
+    /* 52px — barmoq uchun qulay eng kichik balandlik. */
+    min-height: var(--tabbar-h); padding: 7px 2px 6px;
+    color: var(--ink-faint); text-align: center;
+    transition: color var(--transition);
+  }
+  .tabbar-item .ic { font-size: 19px; line-height: 1; }
+  .tabbar-item .lb {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .01em;
+    /* Uzun nom ("Bronlarim") tor ekranda qo'shni kataklarni
+       siqib qo'ymasligi uchun bir qatorda kesiladi. */
+    max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tabbar-item.active { color: var(--theme-accent); }
+
+  /* Faol bandning ustidagi qisqa chiziqcha — rang ko'rmaydigan
+     foydalanuvchi uchun ham "qayerdaman?" degan savolga javob. */
+  .tabbar-item.active::before {
+    content: ""; position: absolute; top: 0;
+    width: 26px; height: 2.5px; border-radius: 0 0 3px 3px;
+    background: var(--theme-accent);
+  }
+
+  /* Pastki menyu mazmunning USTIDA suzib turadi — sahifaning oxirgi
+     qatori uning ostida qolib ketmasligi uchun joy ajratamiz.
+
+     Bo'shliq POYLOQNING ichida beriladi, `shell-main` ning pastida
+     emas: aks holda yashil poyloq tugagach, menyugacha bo'lgan oraliqda
+     boshqa rangli chiziq qolib, "sahifa tugamagandek" ko'rinardi.
+     Bu yerda esa poyloq menyu ostiga kirib boradi. */
+  .shell.has-tabbar .footer {
+    padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--sp-6));
+  }
+
+  /* Poyloqsiz sahifa bo'lsa (kelajakda) mazmun baribir kesilmasin. */
+  .shell.has-tabbar > .shell-main > main:last-child {
+    padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
+  }
+
+  /* Pastga yopishadigan boshqa elementlar ham menyuning USTIGA chiqadi,
+     aks holda ular bir joyda ustma-ust tushardi:
+       · "Ilovani o'rnating" tasmasi
+       · xabar (toast) — u har bir amaldan keyin chiqadi va aynan
+         menyu turgan joyni bosib qolardi
+     `~` ishlatilgan: ikkalasi ham `body` ichida `.shell` dan KEYIN
+     turadi (`pwa.js` va `base.html`). */
+  .shell.has-tabbar ~ .install-bar,
+  .shell.has-tabbar ~ #toast-root {
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + var(--sp-3));
+  }
+}

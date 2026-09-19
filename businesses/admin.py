@@ -1,0 +1,177 @@
+from django.contrib import admin
+from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
+from unfold.admin import ModelAdmin, TabularInline
+from unfold.decorators import action
+
+from .models import Business, BusinessApplication, BusinessPhoto, Hall, Room, VenuePricing
+
+
+class RoomInline(TabularInline):
+    model = Room
+    extra = 1
+    fields = ("name", "room_type", "capacity", "deposit_tier")
+
+
+class BusinessPhotoInline(TabularInline):
+    model = BusinessPhoto
+    extra = 1
+    fields = ("image", "order")
+
+
+class VenuePricingInline(TabularInline):
+    model = VenuePricing
+    extra = 0
+    fields = ("dish_count", "price_per_person")
+
+
+class HallInline(TabularInline):
+    model = Hall
+    extra = 1
+    fields = ("name", "people", "all_price", "deposit_price")
+
+
+@admin.register(Business)
+class BusinessAdmin(ModelAdmin):
+    list_display = (
+        "name", "business_type", "district", "owner", "is_visible",
+        "telegram_username", "rating_avg", "reviews_count",
+    )
+    list_filter = ("business_type", "is_visible", "district", "cuisine")
+    search_fields = ("name", "address", "district", "owner__username", "owner__full_name")
+    readonly_fields = ("rating_avg", "reviews_count", "map_preview")
+    list_select_related = ("owner",)
+
+    @admin.display(description="Xaritada")
+    def map_preview(self, obj):
+        """
+        Administrator uchun tayyor havola.
+
+        Joyni tekshirayotgan odam koordinatalarni ko'chirib, xaritaga
+        qo'lda qo'yishi kerak emas — bir bosishda o'sha nuqta ochiladi
+        va manzil to'g'rimi-yo'qmi ko'rinadi.
+        """
+        from django.utils.html import format_html
+
+        links = obj.map_links
+        if not links:
+            return "— (koordinata ham, manzil ham kiritilmagan)"
+        return format_html(
+            '<a href="{}" target="_blank" rel="noopener">Google Maps</a> · '
+            '<a href="{}" target="_blank" rel="noopener">Yandex</a>',
+            links.get("google", ""), links.get("yandex", ""),
+        )
+
+    def get_inlines(self, request, obj=None):
+        if obj is None:
+            return []
+        if obj.business_type == Business.TYPE_RESTAURANT:
+            return [BusinessPhotoInline, RoomInline]
+        if obj.business_type == Business.TYPE_VENUE:
+            return [BusinessPhotoInline, HallInline, VenuePricingInline]
+        return []
+
+
+@admin.register(Room)
+class RoomAdmin(ModelAdmin):
+    list_display = ("business", "name", "room_type", "capacity", "deposit_tier")
+    list_filter = ("room_type", "deposit_tier", "business__business_type")
+    search_fields = ("name", "business__name")
+    actions_detail = ["quick_add_room"]
+
+    @action(description=_("Yangi xona qo'shish"), url_path="quick-add-room")
+    def quick_add_room(self, request, object_id):
+        from django.shortcuts import redirect
+        return redirect(reverse("admin:businesses_room_add"))
+
+
+@admin.register(Hall)
+class HallAdmin(ModelAdmin):
+    list_display = ("business", "name", "people", "package", "all_price", "deposit_price")
+    list_filter = ("business__business_type",)
+    search_fields = ("name", "business__name")
+    actions_detail = ["quick_add_hall"]
+
+    @action(description=_("Yangi zal qo'shish"), url_path="quick-add-hall")
+    def quick_add_hall(self, request, object_id):
+        from django.shortcuts import redirect
+        return redirect(reverse("admin:businesses_hall_add"))
+
+
+@admin.register(BusinessApplication)
+class BusinessApplicationAdmin(ModelAdmin):
+    list_display = ("business_name", "business_type", "applicant", "status", "created_at", "approved_at")
+    list_filter = ("business_type", "status")
+    search_fields = ("business_name", "applicant__username", "applicant__phone_number")
+    readonly_fields = ("approved_at", "approved_by")
+
+    actions = ["approve_payment", "reject"]
+
+    def save_model(self, request, obj, form, change):
+        """
+        Shakl orqali `status` o'zgartirilsa ham SERVIS chaqiriladi.
+
+        Nega kerak: ilgari faqat ro'yxatdagi "amal" (action) servisga
+        borardi. Admin esa arizani ochib, `status` ni "Tasdiqlangan"ga
+        qo'yib saqlashi mumkin edi — bu eng tabiiy yo'l. Shunda maydon
+        o'zgarardi, lekin obuna OCHILMASDI va joy ko'rinmasdi: egasi
+        "tasdiqlandi" degan yozuvni ko'rib turib, boshqaruv paneliga
+        kira olmasdi. Aynan shu holat sodir bo'lgan.
+
+        Endi ikkala yo'l ham bitta joyga — `approve_application` /
+        `reject_application` ga olib boradi.
+        """
+        from businesses.services import approve_application, reject_application
+
+        previous_status = (
+            BusinessApplication.objects.filter(pk=obj.pk)
+            .values_list("status", flat=True)
+            .first()
+            if change else None
+        )
+        super().save_model(request, obj, form, change)
+
+        if obj.status == previous_status:
+            return
+        if obj.status == BusinessApplication.STATUS_APPROVED:
+            approve_application(application=obj, approved_by=request.user)
+            self.message_user(request, "Ariza tasdiqlandi: obuna ochildi va joy ommaga chiqdi.")
+        elif obj.status == BusinessApplication.STATUS_REJECTED:
+            reject_application(application=obj, rejected_by=request.user)
+            self.message_user(request, "Ariza rad etildi: joy qidiruvdan yashirildi.")
+
+    @admin.action(description=_("To'lovni tasdiqlash (obuna 30 kunga faollashadi)"))
+    def approve_payment(self, request, queryset):
+        # API va admin panel bir xil servis funksiyasini chaqiradi —
+        # shunda oqim ikki joyda ikki xil bo'lib ketmaydi.
+        from businesses.services import approve_application
+
+        count = 0
+        for application in queryset.exclude(status="approved"):
+            approve_application(application=application, approved_by=request.user)
+            count += 1
+        self.message_user(request, f"{count} ta ariza tasdiqlandi va obuna faollashtirildi.")
+
+    @admin.action(description=_("Arizani rad etish"))
+    def reject(self, request, queryset):
+        from businesses.services import reject_application
+
+        count = 0
+        for application in queryset.exclude(status="rejected"):
+            reject_application(application=application, rejected_by=request.user)
+            count += 1
+        self.message_user(request, f"{count} ta ariza rad etildi.")
+
+@admin.register(VenuePricing)
+class VenuePricingAdmin(ModelAdmin):
+    list_display = ("business", "dish_count", "price_per_person")
+    list_filter = ("dish_count",)
+    search_fields = ("business__name",)
+    autocomplete_fields = ("business",)
+
+
+@admin.register(BusinessPhoto)
+class BusinessPhotoAdmin(ModelAdmin):
+    list_display = ("business", "order", "created_at")
+    search_fields = ("business__name",)
+    autocomplete_fields = ("business",)

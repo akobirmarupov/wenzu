@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% comment %}
+  Kirish / ro'yxatdan o'tish qobig'i.
+
+  Chap ustun (`auth-visual`) — restoran surati. Surat adminkadan
+  qo'yiladi: "Kontent → Bannerlar", joylashuvi "Kirish sahifasi".
+  Surat bo'lmasa standart zumrad gradient qoladi, sahifa hech qachon
+  bo'sh chiqmaydi.
+
+  Matn `.auth-text` ichida — suratli holatda u pastga yig'iladi va
+  kadrning eng chiroyli o'rta qismi ochiq qoladi.
+{% endcomment %}
+
+{% block body %}
+<div class="auth-wrap">
+  <aside class="auth-visual">
+    <a href="/" class="logo"><img class="brand-mark" src="{% static 'images/brand/feasto-mark.svg' %}" alt="" width="28" height="28">Feasto</a>
+
+    <div class="auth-text">
+      {% block visual %}
+      <h2>Joyni <em>oldindan</em> band qiling</h2>
+      <p data-i18n="home.heroLead"></p>
+      {% endblock %}
+    </div>
+  </aside>
+
+  <main class="auth-form-side">
+    <div class="auth-controls" id="auth-controls"></div>
+
+    {% comment %}
+      Telefondagi brend.
+
+      Chap ustun (`auth-visual`) 860 px dan tor ekranda umuman
+      yashiriladi va u bilan birga logotip ham ketardi — kirish sahifasi
+      qaysi saytga tegishli ekani bilinmay qolardi. Bu qator aynan
+      o'sha bo'shliqni to'ldiradi va kompyuterda ko'rinmaydi
+      (`_auth.css`).
+    {% endcomment %}
+    <a class="auth-brand" href="/">
+      <img class="brand-mark" src="{% static 'images/brand/feasto-mark.svg' %}"
+           alt="" width="34" height="34">Feasto
+    </a>
+
+    <div class="auth-card">
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+</div>
+{% endblock %}

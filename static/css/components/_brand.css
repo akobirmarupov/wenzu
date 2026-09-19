@@ -1,0 +1,46 @@
+/* ===================================================================
+   FEASTO BELGISI.
+
+   Belgi bitta SVG fayl (`images/brand/feasto-mark.svg`) va u to'rt
+   joyda ishlatiladi: yuqori panel, yon menyu, kirish sahifasi va
+   poyloq. Har birida o'lchami boshqacha, qolgani bir xil.
+
+   Nega `<img>`, inline SVG emas: fayl BITTA nusxada turadi va brauzer
+   uni keshlaydi. Inline bo'lsa, u har bir sahifaning HTML'iga
+   ko'chirilardi va logotipni almashtirish uchun to'rt joyni tahrirlash
+   kerak bo'lardi.
+
+   LOGOTIPNI ALMASHTIRISH: `static/images/brand/feasto-mark.svg`
+   faylining o'rniga o'zingiznikini qo'ying — boshqa hech narsaga
+   tegish shart emas. PNG bo'lsa nomini shu holicha qoldiring yoki
+   shu fayldagi yo'lni yangilang.
+   =================================================================== */
+
+.brand-mark {
+  flex-shrink: 0;
+  /* Kvadrat qolsin: uzun nomli konteynerda cho'zilib ketmasin. */
+  width: 28px; height: 28px; object-fit: contain;
+  /* Matn bilan bir chiziqda tursin — `<img>` sukut bo'yicha matn
+     asosiga o'tirib, bir necha piksel pastga tushib qoladi. */
+  vertical-align: middle;
+}
+
+/* Yon menyudagi brend — eng katta ko'rinish. */
+.side-nav .brand { gap: var(--sp-2); }
+.side-nav .brand .brand-mark { width: 30px; height: 30px; }
+
+/* Yuqori panel (telefonda ko'rinadi) — biroz kichikroq. */
+.topbar-brand { gap: 7px; }
+.topbar-brand .brand-mark { width: 26px; height: 26px; }
+
+/* Kirish sahifasi — rasm ustidagi oq matn yonida. */
+.auth-visual .logo { display: inline-flex; align-items: center; gap: var(--sp-2); }
+.auth-visual .logo .brand-mark { width: 32px; height: 32px; }
+
+/* Poyloq sarlavhasi. */
+.footer-brand { display: flex; align-items: center; gap: var(--sp-2); }
+.footer-brand .brand-mark { width: 24px; height: 24px; }
+
+@media (max-width: 560px) {
+  .topbar-brand .brand-mark { width: 24px; height: 24px; }
+}
