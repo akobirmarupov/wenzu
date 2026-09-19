@@ -195,6 +195,8 @@ export default {
   },
 
   auth: {
+    visualTitle: "Joyni *oldindan* band qiling",
+    googleButton: "Google bilan davom etish",
     googleTitle: "Bir bosishda kiring",
     googleLead: "Google hisobingiz bilan davom eting — parol o'ylab topish, SMS kutish shart emas.",
     perkFast: "Bir bosish — hisob tayyor",

@@ -7,12 +7,21 @@
  * ya'ni sahifa hech qachon bo'sh ko'rinmaydi.
  */
 import { api } from "../core/api.js";
-import { getLanguage } from "../core/i18n.js";
+import { getLanguage, t } from "../core/i18n.js";
 import { esc } from "./dom.js";
 
 export async function initAuthVisual(selector = ".auth-visual") {
   const visual = document.querySelector(selector);
   if (!visual) return;
+
+  const title = visual.querySelector(".auth-text h2") || visual.querySelector("h2");
+  const lead = visual.querySelector(".auth-text p") || visual.querySelector("p");
+
+  // Standart sarlavha ham tarjima qilinadi. Shablondagi o'zbekcha matn
+  // faqat ZAXIRA: skript yuklanmasa ham ustun bo'sh qolmaydi, yuklansa
+  // tanlangan tilga almashadi. Urg'uli so'z `*yulduzcha*` bilan
+  // belgilanadi — quyidagi `accentuate` uni oltin `<em>` ga aylantiradi.
+  if (title) title.innerHTML = accentuate(t("auth.visualTitle"));
 
   let banner = null;
   try {
@@ -27,9 +36,6 @@ export async function initAuthVisual(selector = ".auth-visual") {
     visual.classList.add("has-photo");
     visual.style.setProperty("--auth-photo", `url("${banner.media_src}")`);
   }
-
-  const title = visual.querySelector(".auth-text h2") || visual.querySelector("h2");
-  const lead = visual.querySelector(".auth-text p") || visual.querySelector("p");
 
   if (title && banner.title) title.innerHTML = accentuate(banner.title);
   if (lead && banner.body) lead.textContent = banner.body;

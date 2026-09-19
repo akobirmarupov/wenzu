@@ -7,6 +7,18 @@
 </head>
 <body class="{{ body_class }}">
 
+  {% comment %}
+    Kirish pardasi. CSS o'zi ko'taradi (`_intro.css`), ya'ni skript
+    yuklanmasa ham sayt ochiq qoladi. Seansda bir marta ko'rinadi —
+    bayrog'i yuqoridagi `theme_boot` da qo'yiladi.
+  {% endcomment %}
+  <div class="intro" aria-hidden="true">
+    <span class="intro-mark">
+      <img src="{% static 'images/brand/feasto-mark.svg' %}" alt="" width="64" height="64">
+    </span>
+    <span class="intro-word">Feasto</span>
+  </div>
+
   {% block body %}{% endblock %}
 
   <div id="toast-root"></div>

@@ -153,6 +153,8 @@ export default {
   },
 
   auth: {
+    visualTitle: "Забронируйте место *заранее*",
+    googleButton: "Продолжить через Google",
     googleTitle: "Вход в одно нажатие",
     googleLead: "Продолжите с аккаунтом Google — не нужно придумывать пароль и ждать SMS.",
     perkFast: "Одно нажатие — аккаунт готов",

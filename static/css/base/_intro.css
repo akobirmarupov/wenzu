@@ -1,0 +1,88 @@
+/* ===================================================================
+   Saytga kirish animatsiyasi.
+
+   Qisqa brend ekrani: belgi o'sib chiqadi, atrofida oltin halqa
+   yoyiladi, nom paydo bo'ladi — va parda ko'tariladi. Hammasi ~1
+   sekund. Uzunroq bo'lsa u taassurot emas, to'siq bo'lib qolardi.
+
+   Uchta muhim qaror:
+
+   1. ANIMATSIYA O'ZINI O'ZI OLIB TASHLAYDI. Parda JS bilan emas, CSS
+      bilan yo'qoladi (`forwards` + `visibility`). Skript yuklanmay
+      qolsa ham sayt ochiq qoladi — aks holda bitta xato butun saytni
+      qulflab qo'yardi.
+
+   2. SEANSDA BIR MARTA. Har sahifa almashganda takrorlansa, u
+      bezovta qilardi. Bayroqni `theme_boot.html` dagi kichik skript
+      chizishdan OLDIN qo'yadi, shuning uchun ikkinchi sahifada parda
+      umuman miltillamaydi.
+
+   3. HARAKAT KERAKMAS foydalanuvchida umuman ko'rsatilmaydi.
+   =================================================================== */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 200;               /* toast va modaldan ham tepada */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-4);
+  background: var(--ground);
+  /* Parda ko'tarilgach bosishlarni to'smasligi kerak. */
+  pointer-events: none;
+  animation: intro-veil .95s cubic-bezier(.4, 0, .2, 1) forwards;
+}
+
+/* Belgi: kichikdan o'sib, joyiga "o'tirib" qoladi. */
+.intro-mark {
+  position: relative;
+  display: inline-flex;
+  animation: intro-mark .8s cubic-bezier(.2, .8, .25, 1) backwards;
+}
+.intro-mark img { width: 64px; height: 64px; display: block; }
+
+/* Belgi atrofidan yoyiladigan oltin halqa. */
+.intro-mark::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--gold-500);
+  opacity: 0;
+  animation: intro-ring 1s ease-out .12s backwards;
+}
+
+.intro-word {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--ink);
+  animation: intro-word .6s cubic-bezier(.2, .8, .25, 1) .22s backwards;
+}
+
+@keyframes intro-veil {
+  0%, 62%  { opacity: 1; visibility: visible; }
+  100%     { opacity: 0; visibility: hidden; }
+}
+@keyframes intro-mark {
+  from { opacity: 0; transform: scale(.72); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes intro-ring {
+  0%   { opacity: .9; transform: scale(.7); }
+  70%  { opacity: .25; }
+  100% { opacity: 0; transform: scale(1.35); }
+}
+@keyframes intro-word {
+  from { opacity: 0; transform: translateY(9px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Seansda ko'rilgan bo'lsa yoki harakat kerak bo'lmasa — umuman yo'q. */
+:root[data-intro="seen"] .intro { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .intro { display: none; }
+}

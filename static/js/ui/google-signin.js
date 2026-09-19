@@ -23,6 +23,7 @@
  * Tugmani endi O'ZIMIZ chizamiz — Google brend qoidasiga mos: oq
  * fon, rasmiy "G" belgisi, aniq matn.
  */
+import { t } from "../core/i18n.js";
 import { auth } from "../core/auth.js";
 import { ROUTES } from "../core/config.js";
 import { storage } from "../core/storage.js";
@@ -131,7 +132,7 @@ function showRedirectError() {
  * @param {string} selector - tugma joylashadigan element
  * @param {object} options  - {label}
  */
-export function renderGoogleButton(selector, { label = "Google bilan davom etish" } = {}) {
+export function renderGoogleButton(selector, { label = t("auth.googleButton") } = {}) {
   const host = document.querySelector(selector);
   if (!host) return;
 

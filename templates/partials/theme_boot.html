@@ -15,6 +15,15 @@
       }
       var lang = localStorage.getItem("feasto.lang") || localStorage.getItem("wenzu.lang");
       if (lang) document.documentElement.lang = lang;
+
+      // Kirish animatsiyasi — seansda BIR MARTA. Bayroq shu yerda,
+      // sahifa chizilishidan oldin qo'yiladi: ikkinchi sahifada parda
+      // bir lahzaga ham ko'rinmaydi.
+      if (sessionStorage.getItem("feasto.intro")) {
+        document.documentElement.setAttribute("data-intro", "seen");
+      } else {
+        sessionStorage.setItem("feasto.intro", "1");
+      }
     } catch (e) { /* localStorage yopiq */ }
   })();
 </script>

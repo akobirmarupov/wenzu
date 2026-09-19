@@ -18,6 +18,52 @@
   <aside class="auth-visual">
     <a href="/" class="logo"><img class="brand-mark" src="{% static 'images/brand/feasto-mark.svg' %}" alt="" width="28" height="28">Feasto</a>
 
+
+    {% comment %}
+      Chap ustunning o'rtasidagi jonli sahna.
+
+      Nega matn yo'q: bu qism uch tilda ishlaydi, shuning uchun sahna
+      faqat shakl va ikonkalardan tuzilgan — tarjima kerak emas va
+      til almashganda hech narsa siljimaydi.
+
+      Nega shablonda (JS emas): sahna sahifa bilan birga keladi,
+      ya'ni skript yuklanguncha ham bo'sh joy ko'rinmaydi. Admin
+      "Kontent → Bannerlar" ga surat qo'ysa, sahna avtomatik yashirinadi
+      (`.has-photo`, `_auth.css`) — surat o'zi yetarli taassurot beradi.
+    {% endcomment %}
+    <div class="auth-scene" aria-hidden="true">
+      <span class="scene-orb orb-1"></span>
+      <span class="scene-orb orb-2"></span>
+
+      <div class="scene-stack">
+        <article class="scene-card sc-venue">
+        <span class="sc-thumb"><svg class="ico" width="22px" height="22px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 20.5h18"/><path d="M4.5 20.5V10L12 4.5 19.5 10v10.5"/><path d="M9 20.5v-5a3 3 0 0 1 6 0v5"/><path d="M4.5 10h15"/></svg></span>
+        <span class="sc-lines">
+          <span class="sc-line w70"></span>
+          <span class="sc-line w45"></span>
+        </span>
+        <span class="sc-stars"><span class="s"><svg class="ico" width="13px" height="13px" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.8 2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83L6.62 20.5l1.03-6L3.3 10.2l6-.9z"/></svg></span><span class="s"><svg class="ico" width="13px" height="13px" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.8 2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83L6.62 20.5l1.03-6L3.3 10.2l6-.9z"/></svg></span><span class="s"><svg class="ico" width="13px" height="13px" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.8 2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83L6.62 20.5l1.03-6L3.3 10.2l6-.9z"/></svg></span><span class="s"><svg class="ico" width="13px" height="13px" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.8 2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83L6.62 20.5l1.03-6L3.3 10.2l6-.9z"/></svg></span><span class="s"><svg class="ico" width="13px" height="13px" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m12 3.8 2.7 5.5 6 .9-4.35 4.25 1.03 6-5.38-2.83L6.62 20.5l1.03-6L3.3 10.2l6-.9z"/></svg></span></span>
+        </article>
+
+        <article class="scene-card sc-date">
+        <span class="sc-ico"><svg class="ico" width="18px" height="18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3.5" y="5.5" width="17" height="15" rx="2"/><path d="M3.5 10h17"/><path d="M8 3.5v4M16 3.5v4"/></svg></span>
+        <b>14</b>
+        <span class="sc-line w40"></span>
+        </article>
+
+        <article class="scene-card sc-guests">
+        <span class="sc-ico"><svg class="ico" width="18px" height="18px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="9.5" cy="8" r="3.4"/><path d="M3 20.5a6.5 6.5 0 0 1 13 0"/><path d="M16.5 4.9a3.4 3.4 0 0 1 0 6.2"/><path d="M18 14.6a6.5 6.5 0 0 1 3 5.9"/></svg></span>
+        <b>120</b>
+        <span class="sc-line w30"></span>
+        </article>
+
+        <article class="scene-card sc-done">
+        <span class="sc-check"><svg class="ico" width="16px" height="16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></span>
+        <span class="sc-line w55"></span>
+        </article>
+      </div>
+    </div>
+
     <div class="auth-text">
       {% block visual %}
       <h2>Joyni <em>oldindan</em> band qiling</h2>

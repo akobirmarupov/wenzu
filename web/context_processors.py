@@ -38,6 +38,7 @@ STYLESHEETS = [
     "css/base/_typography.css",
     "css/base/_layout.css",
     "css/base/_icons.css",
+    "css/base/_intro.css",
     # 2. Komponentlar
     "css/components/_brand.css",
     "css/components/_button.css",

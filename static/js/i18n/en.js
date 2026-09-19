@@ -153,6 +153,8 @@ export default {
   },
 
   auth: {
+    visualTitle: "Book your place *ahead of time*",
+    googleButton: "Continue with Google",
     googleTitle: "Sign in with one tap",
     googleLead: "Continue with your Google account — no password to invent, no SMS to wait for.",
     perkFast: "One tap and your account is ready",
