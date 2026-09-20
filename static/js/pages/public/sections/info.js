@@ -25,7 +25,6 @@ import { auth } from "../../../core/auth.js";
 import { t } from "../../../core/i18n.js";
 import { esc, busy, formValues } from "../../../ui/dom.js";
 import { modal } from "../../../ui/modal.js";
-import { icon } from "../../../ui/icons.js";
 import { toast } from "../../../ui/toast.js";
 import { dateLabel, trustSeal, trustBar } from "../../../ui/format.js";
 
@@ -50,17 +49,16 @@ export function roleName(user) {
 /**
  * Bitta katak: ustida nomi, ostida qiymati.
  *
- * Qiymat bo'sh bo'lsa "—" emas, "Qo'shish" havolasi chiqadi. Chiziqcha
- * faqat "bu yerda hech narsa yo'q" deb turardi; havola esa nima qilish
- * kerakligini ko'rsatadi va bir bosishda tahrirlash oynasini ochadi.
+ * Bo'sh maydon shunchaki "—" bilan ko'rsatiladi. Ilgari u yerda
+ * "Qo'shish" havolasi turardi va ramkada ikki xil tugma paydo
+ * bo'lardi — sarlavhadagi "Tahrirlash" va kataklardagi havolalar.
+ * Ma'lumotni o'zgartirishning YAGONA yo'li bo'lgani ma'qul: muqovadagi
+ * bitta "Tahrirlash" tugmasi barcha maydonni bir oynada ochadi.
  */
-function cell(label, value, { mono = false, wide = false, addField = "" } = {}) {
-  const empty = !value;
-  const body = empty && addField
-    ? `<button class="cell-add" type="button" data-edit-profile data-focus="${esc(addField)}">
-         ${icon("plus", { size: 14 })} ${esc(t("common.add"))}
-       </button>`
-    : `<span class="cell-value${mono ? " mono" : ""}">${value || "—"}</span>`;
+function cell(label, value, { mono = false, wide = false } = {}) {
+  const body = value
+    ? `<span class="cell-value${mono ? " mono" : ""}">${value}</span>`
+    : `<span class="cell-value is-empty">—</span>`;
 
   return `
     <div class="info-cell${wide ? " is-wide" : ""}">
@@ -110,19 +108,16 @@ export function render(user) {
       <section class="panel info-card">
         <div class="panel-head">
           <h2 class="display h3">${esc(t("profile.personalInfo"))}</h2>
-          <button class="btn btn-ghost btn-sm" type="button" data-edit-profile>
-            ${icon("edit")} ${esc(t("profile.edit"))}
-          </button>
         </div>
 
         <div class="info-cells">
-          ${cell(t("auth.fullName"), esc(user.full_name || ""), { addField: "full_name" })}
+          ${cell(t("auth.fullName"), esc(user.full_name || ""))}
           ${cell(t("auth.username"), esc(user.username), { mono: true })}
           ${cell(t("auth.phone"), `${esc(user.phone_number)} ${phoneSeal}`, { mono: true })}
           ${cell(t("profile.role"), esc(roleName(user)))}
-          ${cell(t("profile.birthDate"), user.birth_date ? dateLabel(user.birth_date) : "", { addField: "birth_date" })}
+          ${cell(t("profile.birthDate"), user.birth_date ? dateLabel(user.birth_date) : "")}
           ${cell(t("profile.memberSince"), dateLabel(user.date_joined))}
-          ${cell(t("profile.bio"), esc(user.bio || ""), { wide: true, addField: "bio" })}
+          ${cell(t("profile.bio"), esc(user.bio || ""), { wide: true })}
         </div>
 
         <p class="field-hint">${esc(t("profile.idHint"))}</p>
@@ -132,15 +127,10 @@ export function render(user) {
 /**
  * Tahrirlash oynasi.
  *
- * Eksport qilingan, chunki uni ikki joydan ochish mumkin: shu
- * bo'limdagi tugma va muqovadagi "Tahrirlash". Ikki nusxa yozilsa,
- * bir kuni ular bir-biridan farq qila boshlardi.
- *
- * `focusField` — qaysi maydonga darrov kursor qo'yish. Bo'sh katakdagi
- * "Qo'shish" havolasi aynan shu maydonni ochadi, ya'ni odam oynani
- * ochib yana qidirib o'tirmaydi.
+ * Eksport qilingan, chunki uni muqovadagi tugma ochadi — mantiq esa
+ * shu yerda, ma'lumot bo'limi bilan bir joyda turishi kerak.
  */
-export function openEditor(user, onUpdated, focusField = "") {
+export function openEditor(user, onUpdated) {
   const node = modal.open(`
     <h2 class="display h3">${esc(t("profile.editTitle"))}</h2>
     <p class="muted small">${esc(t("profile.idHint"))}</p>
@@ -176,8 +166,6 @@ export function openEditor(user, onUpdated, focusField = "") {
         </button>
       </div>
     </form>`);
-
-  if (focusField) node.querySelector(`#${CSS.escape(focusField)}`)?.focus();
 
   node.querySelector("#profile-form").addEventListener("submit", async (event) => {
     event.preventDefault();

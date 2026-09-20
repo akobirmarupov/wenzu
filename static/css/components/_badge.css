@@ -13,6 +13,9 @@
   padding: var(--sp-1) var(--sp-3); border-radius: var(--radius-pill);
   font-size: var(--fs-xs); font-weight: 800; letter-spacing: .02em;
   border: 1.5px dashed currentColor;
+  /* Nishon ikki qatorga bo'linmaydi: tor ustunda "Tasdiqlangan"
+     yozuvi "Tasdiqlan / gan" bo'lib, tabletka shakli buzilardi. */
+  white-space: nowrap;
 }
 .seal-ok    { color: var(--ok);     background: var(--ok-dim); }
 .seal-warn  { color: var(--warn);   background: var(--warn-dim); }

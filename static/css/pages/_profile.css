@@ -53,8 +53,7 @@
   right: -2px; bottom: -2px;
 }
 
-/* Matn bloki o'rtadagi bo'sh joyni egallaydi — amallar esa o'ng chetga
-   yopishadi. `min-width: 0` bo'lmasa uzun ism blokni cho'zib yuboradi. */
+/* `min-width: 0` bo'lmasa uzun ism blokni cho'zib yuboradi. */
 .pid-text {
   flex: 1;
   min-width: 0;
@@ -89,16 +88,29 @@
   margin-top: 2px;
 }
 
+/* --- amallar qatori ---
+   Hisobga tegishli TO'RTALA amal (tahrirlash, rasmni almashtirish,
+   rasmni o'chirish, chiqish) bitta qatorda, muqova ostida turadi.
+
+   Ilgari ular o'ng chetdagi tor ustunda edi va telefonda uchta tugma
+   390 px ga sig'may, uchinchisi ekrandan chiqib ketardi. Chiqish esa
+   butunlay boshqa joyda — sahifa oxiridagi alohida panelda — turardi.
+
+   Endi qator O'RALADI: joy yetmasa tugma pastki qatorga tushadi,
+   hech qachon kesilmaydi. */
 .pid-actions {
-  flex: none;
   display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  flex-wrap: wrap;
   gap: var(--sp-2);
+  margin-top: var(--sp-4);
+  padding-top: var(--sp-4);
+  border-top: 1px solid var(--line-soft);
 }
-/* Uchala tugma bir xil enda: har biri o'z yozuviga qarab turli enda
-   bo'lsa, ustun tishli ko'rinadi. */
-.pid-actions .btn { justify-content: flex-start; width: 100%; }
+/* Chiqish — qatordagi oxirgi va eng tinch amal: o'ng chetga suriladi
+   va boshqalardan ajralib turadi, chunki u qaytarib bo'lmaydigan
+   harakat (qaytadan kirish kerak bo'ladi). */
+.pid-logout { margin-left: auto; color: var(--ink-soft); }
+.pid-logout:hover { color: var(--danger); }
 
 /* --- statistika chiplari ---
    Ilgari bu to'rtta ulkan raqam bo'lgan alohida tasma edi va muqovaning
@@ -108,7 +120,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--sp-2);
-  margin-top: var(--sp-5);
+  margin-top: var(--sp-4);
   padding-top: var(--sp-4);
   border-top: 1px solid var(--line-soft);
 }
@@ -189,9 +201,14 @@
 }
 
 /* --- ma'lumot kataklari --- */
+/* Ikki ustun — lekin faqat joy YETSA.
+   Qat'iy ikki ustun planshet kengligida (~820 px) kataklarni shunchalik
+   siqib qo'yardiki, telefon raqami ikki qatorga bo'linib ketardi
+   ("+99877121041 / 8"). `auto-fit` esa joy yetmasa o'zi bitta ustunga
+   tushadi. */
 .info-cells {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: var(--sp-4);
 }
 .info-cell {
@@ -215,13 +232,18 @@
 .cell-value {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;          /* nishon sig'masa pastga tushadi */
   gap: var(--sp-2);
   font-size: var(--fs-base);
   font-weight: 600;
   color: var(--ink);
-  /* Uzun username yoki matn katakni kengaytirib yubormasin. */
-  overflow-wrap: anywhere;
+  /* Uzun matn (qisqacha ma'lumot) katakni kengaytirib yubormasin. */
+  overflow-wrap: break-word;
 }
+/* Raqam va username o'rtasidan BO'LINMAYDI: telefon raqami ikkiga
+   bo'linsa uni o'qib bo'lmaydi. Sig'masa butun bo'lak pastga tushadi. */
+.cell-value.mono { overflow-wrap: normal; word-break: keep-all; }
+.cell-value.is-empty { color: var(--ink-faint); font-weight: 600; }
 
 /* Bo'sh maydondagi "Qo'shish" — tugmaga o'xshamaydi, lekin bosiladi. */
 .cell-add {
@@ -257,11 +279,14 @@
   grid-template-columns: 1fr;
   gap: var(--sp-3);
 }
+/* Har bir kartochka bir xil balandlikda: ichidagi yozuv bir qatorli
+   yoki ikki qatorli bo'lishidan qat'i nazar qator tekis ko'rinadi. */
 .link-tile {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
-  padding: var(--sp-4);
+  min-height: 72px;
+  padding: var(--sp-3) var(--sp-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-m);
   background: var(--surface-2);
@@ -300,53 +325,52 @@
 }
 .lt-go { margin-left: auto; color: var(--ink-faint); flex: none; }
 
-/* --- chiqish qatori --- */
-.profile-signout {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--sp-4);
-  padding: var(--sp-4) var(--sp-5);
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-m);
-}
-.profile-signout .btn { flex: none; }
-
 /* ===================================================================
    Telefon
    =================================================================== */
 @media (max-width: 720px) {
-  .profile-id { padding: var(--sp-5); }
+  .profile-page { gap: var(--sp-4); }
+  .profile-id { padding: var(--sp-4); }
 
-  /* Muqova ustunga aylanadi: yonma-yon turgan rasm, ism va tugmalar
-     390 px ga sig'maydi — tugmalar ikki qatorga bo'linib ketardi. */
-  .pid-main {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: var(--sp-4);
-  }
-  .pid-actions {
-    flex-direction: row;
-    width: 100%;
-  }
-  .pid-actions .btn { flex: 1; }
+  /* Rasm va ism YONMA-YON qoladi — ustunga tushirilsa muqova
+     behuda uzayib ketardi. Avatar esa kichrayadi. */
+  .pid-main { gap: var(--sp-3); }
+  .pid-avatar .avatar { width: 60px; height: 60px; font-size: 20px; }
+  .pid-text h1 { font-size: var(--fs-lg); }
+
+  /* Ajratuvchi nuqtalar olib tashlanadi: qator ko'chganda ular satr
+     oxirida osilib qolardi ("+998... ·"). */
+  .pid-meta { gap: 2px 10px; font-size: var(--fs-xs); }
+  .pid-meta .dot { display: none; }
 
   .pid-stats { gap: 6px; }
+  .pid-stat { padding: 5px 10px; font-size: var(--fs-xs); }
+  .pid-stat b { font-size: var(--fs-base); }
 
-  /* Ajratuvchi nuqtalar telefonda olib tashlanadi: qator ko'chganda
-     ular satr oxirida osilib qolardi ("+998... ·"). Bo'shliqning o'zi
-     ajratish uchun yetarli. */
-  .pid-meta { gap: 2px 12px; }
-  .pid-meta .dot { display: none; }
+  /* Amallar: ikki ustunli to'r. Yonma-yon tizilsa to'rtta tugma
+     390 px ga sig'maydi, bittadan qo'yilsa muqova to'rt qavat
+     bo'lib ketadi. */
+  .pid-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-2);
+  }
+  .pid-actions .btn { width: 100%; justify-content: center; }
+  .pid-logout { margin-left: 0; }
+
+  /* Bo'limlar tasmasi suriladi. O'ng chetdagi yumshoq soya "yana
+     bor" degan ishora beradi — ilgari uchinchi band shunchaki
+     kesilgandek ko'rinardi. */
+  .profile-tabs {
+    padding: 4px;
+    -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
+            mask-image: linear-gradient(to right, #000 85%, transparent);
+  }
+  .profile-tab { padding: 8px 12px; font-size: var(--fs-xs); }
 
   .profile-grid,
   .info-cells { grid-template-columns: 1fr; }
+  .info-cells { gap: var(--sp-3); }
 
-  /* Chiqish: yozuv va tugma ustma-ust — yonma-yon turganda tugmaga
-     ikki so'zlik joy qolardi. */
-  .profile-signout {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--sp-3);
-  }
+  .link-tile { min-height: 64px; }
 }

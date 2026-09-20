@@ -21,7 +21,10 @@
  *   · muqova baland emas — ism, nishon va amallar bitta qatorda;
  *   · statistika katta raqamlar bloki emas, kichik chiplar;
  *   · bo'limlar chapdagi baland kartochka emas, gorizontal tasma;
- *   · "chiqish" alohida katta panel emas, sahifa oxiridagi tinch qator.
+ *   · hisob bilan bog'liq TO'RTALA amal (tahrirlash, rasmni
+ *     almashtirish, rasmni o'chirish, chiqish) bitta qatorda, muqova
+ *     ostida — har biri alohida joyda turgani foydalanuvchini
+ *     "qaysi amal qayerda?" deb qidirishga majbur qilardi.
  */
 import { api } from "../../core/api.js";
 import { auth } from "../../core/auth.js";
@@ -158,25 +161,30 @@ function identityHtml(current) {
         <div class="pid-badges">${roleBadge(current)}${verifyBadge(current)}</div>
       </div>
 
-      <div class="pid-actions">
-        <button class="btn btn-outline btn-sm" type="button" data-edit-profile>
-          ${icon("edit")} ${esc(t("profile.edit"))}
-        </button>
-
-        <label class="btn btn-ghost btn-sm" for="avatar-input">
-          ${icon("camera")} ${esc(t("profile.changePhoto"))}
-          <input type="file" id="avatar-input" accept="image/*" hidden>
-        </label>
-
-        ${current.avatar
-          ? `<button class="btn btn-ghost btn-sm" type="button" data-remove-avatar>
-               ${icon("trash")} ${esc(t("profile.removePhoto"))}
-             </button>`
-          : ""}
-      </div>
     </div>
 
-    ${statsHtml(current)}`;
+    ${statsHtml(current)}
+
+    <div class="pid-actions">
+      <button class="btn btn-outline btn-sm" type="button" data-edit-profile>
+        ${icon("edit")} ${esc(t("profile.edit"))}
+      </button>
+
+      <label class="btn btn-ghost btn-sm" for="avatar-input">
+        ${icon("camera")} ${esc(t("profile.changePhoto"))}
+        <input type="file" id="avatar-input" accept="image/*" hidden>
+      </label>
+
+      ${current.avatar
+        ? `<button class="btn btn-ghost btn-sm" type="button" data-remove-avatar>
+             ${icon("trash")} ${esc(t("profile.removePhoto"))}
+           </button>`
+        : ""}
+
+      <button class="btn btn-ghost btn-sm pid-logout" type="button" data-logout>
+        ${icon("logout")} ${esc(t("nav.logout"))}
+      </button>
+    </div>`;
 }
 
 /* ---------- 2-qatlam: bo'limlar tasmasi ---------- */
@@ -258,23 +266,6 @@ function shortcutsHtml(current) {
     </section>`;
 }
 
-/**
- * Chiqish qatori.
- *
- * Ataylab KICHIK va sahifaning eng pastida: bu kundalik amal emas,
- * lekin izlagan odam aniq shu yerdan topadi. Ilgari u butun boshli
- * panel edi va ekranda "Ma'lumotlarim" bilan bir xil vaznda turardi.
- */
-function signOutHtml() {
-  return `
-    <div class="profile-signout">
-      <span class="small muted">${esc(t("profile.logoutHint"))}</span>
-      <button class="btn btn-ghost btn-sm" type="button" data-logout>
-        ${icon("logout")} ${esc(t("nav.logout"))}
-      </button>
-    </div>`;
-}
-
 /* ---------- boshqaruv ---------- */
 let activeKey = new URLSearchParams(window.location.search).get("tab") || "info";
 
@@ -300,8 +291,7 @@ async function paint() {
     <div class="profile-grid${side ? "" : " is-single"}">
       <div class="pg-main">${section.module.render(user)}</div>
       ${side ? `<aside class="pg-side">${side}</aside>` : ""}
-    </div>
-    ${signOutHtml()}`);
+    </div>`);
 
   section.module.bind?.({
     user,
@@ -336,20 +326,17 @@ async function start() {
   await paint();
 
   delegate("#profile-tabs", "[data-section]", (button) => switchTo(button.dataset.section));
-  delegate("#profile-content", "[data-logout]", () => auth.logout());
+  delegate("#profile-id", "[data-logout]", () => auth.logout());
 
-  // Tahrirlash oynasi UCH joydan ochiladi: muqovadagi tugma, bo'lim
-  // sarlavhasidagi tugma va bo'sh katakdagi "Qo'shish" havolasi. Uchala
-  // holat ham shu yerda, BIR MARTA bog'lanadi — bo'lim qayta
-  // chizilganda tinglovchi ko'paymasligi uchun.
-  const openEditor = (trigger) => {
+  // Tahrirlash oynasi YAGONA joydan ochiladi — muqovadagi tugma.
+  // Tinglovchi bir marta, muqova konteyneriga qo'yiladi: bo'lim qayta
+  // chizilganda u yo'qolmaydi va ko'paymaydi ham.
+  delegate("#profile-id", "[data-edit-profile]", () => {
     infoSection.openEditor(user, (fresh) => {
       user = fresh;
       paint();
-    }, trigger?.dataset.focus || "");
-  };
-  delegate("#profile-id", "[data-edit-profile]", openEditor);
-  delegate("#profile-content", "[data-edit-profile]", openEditor);
+    });
+  });
 
   // --- avatar yuklash ---
   document.addEventListener("change", async (event) => {
