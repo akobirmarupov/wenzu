@@ -163,6 +163,17 @@
   .shell.has-tabbar .topbar-user,
   .shell.has-tabbar #topbar-right > .btn { display: none; }
 
+  /* TEMA YO'Q — u profil sozlamalariga ko'chdi.
+
+     Yuqori panel telefonda eng tor joy: to'rtta boshqaruv (qo'ng'iroq,
+     til, tema, foydalanuvchi) sarlavhaga joy qoldirmasdi.
+
+     TIL esa QOLADI, qo'ng'iroq yonida. U temadan farq qiladi: temani
+     odam bir marta tanlab, boshqa tegmaydi, tilni esa sahifa ochilishi
+     bilan almashtirishi kerak bo'lishi mumkin — sozlamalar ichiga
+     yashirilsa, matnni tushunmagan odam uni topa olmasdi. */
+  .shell.has-tabbar .topbar [data-theme-toggle] { display: none; }
+
   /* Qolgan boshqaruvlar kichrayadi: qo'ng'iroq, til va tema.
      34 px barmoq uchun hali qulay, lekin qatorda joy ochiladi. */
   .topbar { min-height: var(--topbar-h); }
@@ -308,7 +319,16 @@
   .home-head { padding: var(--sp-4) 0 var(--sp-3); gap: var(--sp-3); }
   .home-head .lede { display: none; }
   .home-head h1 { font-size: var(--fs-xl); }
-  .home-tab { min-height: var(--ctl-h-sm); padding: 0 var(--sp-3); font-size: var(--fs-xs); }
+
+  /* QIDIRUV VA TUR TUGMALARI TELEFONDA YO'Q.
+
+     Pastki menyuda "Restoran" va "To'yxona" allaqachon turibdi va
+     ularning har biri o'z qidiruvi bilan ochiladi. Bosh sahifadagi
+     ikkinchi nusxa ekranning eng qimmatli qismini — birinchi
+     ekranni — egallab, taomlar tasmasini pastga surib yuborardi.
+     Kompyuterda esa pastki menyu yo'q, shuning uchun u yerda qoladi. */
+  .home-tabs,
+  .home-search { display: none; }
 
   /* QIDIRUV — BITTA QATORDA.
      `flex-wrap: wrap` tufayli uchta element ikki qatorga bo'linib
@@ -330,22 +350,53 @@
   .section-title { margin-bottom: var(--sp-3); }
   .section-sm { padding-block: var(--sp-5); }
 
-  /* ---------------- TAOMLAR TO'RI: BIR QATORDA UCHTA ----------------
-     `_showcase.css` 640 px dan tor ekranda ikkita ustun beradi. Uchta
-     bilan bir ekranga ikki barobar ko'p taom sig'adi va lenta o'z
-     vazifasini bajaradi — tanlash uchun bir nechta variantni birga
-     ko'rsatish.
-
-     Bir sahifada 8 ta taom bor (`PAGE_SIZE`), uchta ustunda esa bu
-     3 + 3 + 2 bo'lib, oxirgi qator yarim bo'sh qolardi. Shuning uchun
-     oxirgi ikkitasi telefonda ko'rsatilmaydi: 3 x 2 = 6 ta to'liq
-     to'r chiqadi. */
-  .dish-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sp-2); }
-  .dish-wall > :nth-child(n+7) { display: none; }
+  /* ---------------- TAOMLAR TASMASI ----------------
+     Telefonda kartochka kichrayadi — ekranga ikkitadan ko'proq taom
+     sig'adi va tasma "oqayotgani" ko'rinib turadi. Bitta katta
+     kartochka bilan u tasmaga emas, sekin almashadigan bitta rasmga
+     o'xshab qolardi. */
+  .menu-marquee { gap: var(--sp-2); }
+  .mm-track { gap: var(--sp-2); }
   .dish-tile .body { padding: var(--sp-1) var(--sp-2) var(--sp-2); }
   .dish-tile .name { font-size: var(--fs-xs); }
   .dish-tile .place { font-size: var(--fs-2xs); }
   .dish-tile .price { font-size: var(--fs-xs); margin-top: 1px; }
+
+  /* ---------------- katalog filtrlari: IKKI QATORGA ----------------
+     Oshxona turlari (Barchasi, Milliy taomlar, Yevropa oshxonasi,
+     Fusion, Sharqona, Fast food, Boshqa) va "Yaqinimda" — jami
+     sakkizta chip. 44 px balandlikda va 13,5 px yozuv bilan ular
+     390 px li ekranda UCH qatorga yoyilib, qidiruvdan keyin yana
+     yarim ekranni egallardi.
+
+     Chip bir pog'ona kichrayadi (30 px, 12 px yozuv) va endi ikki
+     qatorga sig'adi. Bronlar filtridagi chiplar bilan aynan bir xil
+     o'lchamda — ikkala ekranda bir xil ritm. */
+  .filter-bar { gap: 6px; }
+
+  /* Qidiruv maydoni o'z qatorini oladi, chiplar esa ostidan boshlanadi. */
+  .filter-bar .search { flex: 1 0 100%; }
+
+  /* `display: contents` — oshxona chiplari o'z konteyneridan "chiqib",
+     `.filter-bar` ning bevosita bandlariga aylanadi.
+
+     Nega kerak: "Yaqinimda" chipi alohida konteynerdan tashqarida
+     turardi va shuning uchun oshxona chiplari bilan BIR qatorni
+     bo'lisha olmasdi — u har doim yangi, uchinchi qatorga tushardi.
+     Endi hammasi bitta oqimda o'raladi va ikki qatorga joylashadi:
+     birinchi qatorda oshxona turlari, ikkinchisida qolganlari va
+     "Yaqinimda".
+
+     (Uzunroq tarjimada — masalan ruschada — uchinchi qator paydo
+     bo'lishi mumkin; chiplar o'ralishi shuni hal qiladi.) */
+  #cuisine-chips { display: contents; }
+
+  .filter-bar .chip {
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: var(--fs-2xs);
+    border-width: 1px;
+  }
 
   /* ---------------- katalog: BIR QATORDA IKKITA ----------------
      `.grid-auto` ning o'zi `minmax(270px, 1fr)` — 390 px li ekranda
@@ -459,6 +510,30 @@
   .shortcut-panel::after { top: var(--sp-3); right: var(--sp-8); }
   .sign-out { padding: var(--sp-3); gap: var(--sp-3); }
 
+  /* ---------------- bronlar filtri: BITTA QATORDA ----------------
+     To'rtta chip (Barchasi / Kutilmoqda / Tasdiqlangan / Yakunlangan)
+     44 px balandlikda va 13,5 px yozuv bilan 390 px ga sig'masdi —
+     "Yakunlangan" ikkinchi qatorga tushib, sarlavha bilan ro'yxat
+     orasi ikki barobar uzayardi.
+
+     Endi chiplar bir pog'ona kichrayadi va qator O'RALMAYDI. Tarjima
+     uzunroq bo'lsa (ruscha "Подтверждённые") qator surilib ketadi,
+     lekin baribir bitta qator bo'lib qoladi. */
+  #booking-filters {
+    flex-wrap: nowrap;
+    gap: 6px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  #booking-filters::-webkit-scrollbar { display: none; }
+  #booking-filters .chip {
+    min-height: 30px;
+    padding: 0 var(--sp-3);
+    font-size: var(--fs-2xs);
+    border-width: 1px;
+  }
+
   /* ---------------- ro'yxat qatorlari (bronlar) ----------------
      Ilgari har bir bron ikki-uch qatorli katta blok edi va ekranga
      ikkitasi zo'rg'a sig'ardi. */
@@ -472,6 +547,22 @@
   /* Mijoz kartochkasi (egasining bronlar ekrani) — rasm kichrayadi. */
   .customer-card { gap: var(--sp-2); }
   .customer-card .cust-photo { width: 34px; height: 34px; }
+
+  /* ---------------- poyloq (footer) ----------------
+     TELEFONDA POYLOQ UMUMAN YO'Q.
+
+     Ilgari sahifa oxirida brend yozuvi, "Platforma" va "Aloqa"
+     ustunlari hamda huquqlar qatori turardi — telefonda bu yarim
+     ekranlik blok edi va uning ostida yana pastki menyu ham bor edi.
+
+     Poyloqning ikkita vazifasi bor edi, ikkalasi ham boshqa joyda
+     bajariladi:
+       · yo'l ko'rsatish  → pastki menyu (har doim ko'rinib turadi);
+       · aloqa ma'lumoti  → profildagi sozlamalar oynasi.
+
+     Kompyuterda esa qoladi: u yerda pastki menyu yo'q va sahifa
+     qayerda tugaganini poyloq bildiradi. */
+  .footer { display: none; }
 
   /* ---------------- pastki menyu ----------------
      52 px dan 48 px ga — barmoq uchun hali ham qulay, lekin ekranda

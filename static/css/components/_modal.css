@@ -47,6 +47,9 @@
 }
 
 .modal-wide { max-width: 680px; }
+/* Sozlamalar oynasi — ENSIZ. Ichida faqat qisqa satrlar bor va 460 px
+   da ular cho'zilib, o'rtasida katta bo'shliq qolardi. */
+.modal-sheet { max-width: 360px; }
 .modal h2 { font-size: var(--fs-xl); margin-bottom: var(--sp-4); color: var(--ink); }
 .modal p { color: var(--ink-soft); }
 .modal-close {
@@ -197,4 +200,223 @@
   font-size: var(--fs-sm);
   font-weight: 700;
   color: var(--ink-soft);
+}
+
+/* ===================================================================
+   Biznes turini tanlash — "Nima ochmoqchisiz?"
+
+   Ikkita KATTA tugma: restoran yoki to'yxona. Bu oynadagi yagona
+   savol, shuning uchun ikkala variant ham teng kenglikda, yonma-yon
+   turadi va har biri alohida kartochka bo'lib ko'rinadi.
+
+   Ilgari bu yerda hech qanday uslub yo'q edi (`.biz-choice` va `.opt`
+   CSS da umuman yozilmagan): tugmalar bezaksiz, ichki bo'shliqsiz
+   chiqib, ikkala yozuv bir-biriga yopishib qolardi ("Restoran
+   To'yxona") va ular umuman bosiladigan narsaga o'xshamasdi.
+   =================================================================== */
+.biz-choice {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-3);
+}
+
+.opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-1);
+  min-height: 132px;
+  padding: var(--sp-5) var(--sp-4);
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: center;
+  transition: border-color var(--transition), background var(--transition),
+              transform var(--transition), box-shadow var(--transition);
+}
+.opt:hover {
+  border-color: var(--theme-accent);
+  background: var(--surface-2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.opt:focus-visible {
+  outline: 2px solid var(--theme-accent);
+  outline-offset: 2px;
+}
+
+/* Ikonka — doira ichida, aksent tusida. Tugmaning o'zi neytral
+   qolgani uchun ko'z avval ikonkaga tushadi. */
+.opt .ic {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--theme-accent-dim);
+  color: var(--on-accent-dim);
+}
+
+.opt h3 { font-size: var(--fs-md); }
+
+/* Telefonda bittadan: 390 px da ikkita kartochka har biriga ~170 px
+   qoldiradi va "To'yxona" yozuvi ikkiga bo'linib ketardi. */
+@media (max-width: 560px) {
+  .biz-choice { grid-template-columns: 1fr; }
+  .opt {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: var(--sp-4);
+    min-height: 0;
+    padding: var(--sp-4);
+    text-align: left;
+  }
+  .opt .ic { width: 48px; height: 48px; flex: none; }
+  .opt h3 { margin-top: 0 !important; }
+}
+
+/* ===================================================================
+   Sozlamalar oynasi — profildagi uch chiziqli tugma ochadi.
+
+   Ichida uch xil qator bor va ularning BARCHASI bir xil balandlikda,
+   bir xil ichki bo'shliqda turadi:
+     · bosiladigan amal   (tahrirlash, rasm, chiqish)
+     · tanlov             (til, tema — o'ngida chiplar)
+     · havola             (restoranlar, telefon, pochta)
+
+   Ramka yo'q: qatorlar ingichka chiziq bilan ajratiladi. Har biri
+   alohida kartochka bo'lsa, o'n bitta qator o'n bitta quticha bo'lib
+   ko'rinardi.
+   =================================================================== */
+.settings-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.ss-group { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+.ss-title {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-faint);
+}
+
+.ss-rows {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-m);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.ss-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 100%;
+  min-height: var(--ctl-h);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--line-soft);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+.ss-row:last-child { border-bottom: 0; }
+.ss-row:hover { background: var(--surface-2); }
+.ss-row:focus-visible { outline: 2px solid var(--theme-accent); outline-offset: -2px; }
+
+.ss-ic {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-s);
+  background: var(--surface-2);
+  color: var(--ink-soft);
+}
+
+.ss-text { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.ss-text b { font-size: var(--fs-sm); font-weight: 600; }
+/* Izoh O'RALADI, kesilmaydi: "Savol yoki taklif bo'lsa — Telegram
+   orqali yozing" bitta qatorga sig'masdi va uch nuqta bilan uzilib,
+   jumla ma'nosiz bo'lib qolardi. Ikki qatorgacha ochiladi. */
+.ss-text span {
+  font-size: var(--fs-xs);
+  line-height: 1.35;
+  color: var(--ink-faint);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ss-go { margin-left: auto; flex: none; color: var(--ink-faint); }
+
+/* Chiqish — qaytarib bo'lmaydigan amal, shuning uchun alohida
+   ro'yxatda va qizil tusda. */
+.ss-row.is-danger { color: var(--danger); }
+.ss-row.is-danger .ss-ic { background: var(--danger-dim); color: var(--danger); }
+.ss-row.is-danger:hover { background: var(--danger-dim); }
+
+/* --- ichki ekran sarlavhasi --- */
+.ss-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+.ss-head h2 { margin: 0; font-size: var(--fs-lg); }
+
+.ss-back {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: var(--ctl-h-sm);
+  height: var(--ctl-h-sm);
+  margin-left: calc(var(--sp-2) * -1);
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+}
+.ss-back:hover { color: var(--ink); background: var(--surface-2); }
+
+/* Tanlangan til yoki tema yonidagi belgi — aksent tusida.
+   Chip o'rniga BELGI: uchta til chipi qator bo'lib turganda qaysi biri
+   tanlanganini rang bilan ajratish kerak edi, satr ko'rinishida esa
+   oddiy belgi yetarli va u tanishroq (telefon sozlamalari shunday). */
+.ss-tick { margin-left: auto; flex: none; color: var(--theme-accent); }
+
+/* Til qisqartmasi (UZ / RU / EN) ikonka o'rnida turadi. */
+.ss-row .ss-ic {
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  letter-spacing: .03em;
+}
+
+.ss-note {
+  margin: 0;
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+/* Tahrirlash oynasidagi rasm amallari — maydonlardan OLDIN, chunki
+   rasm ham shu oynaning bir qismi va uni pastga surib qo'yish "rasm
+   qayerda o'zgaradi?" degan savol tug'dirardi. */
+.edit-photo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid var(--line-soft);
 }

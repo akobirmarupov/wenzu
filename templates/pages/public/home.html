@@ -37,7 +37,29 @@
   <section class="section-sm" id="banner-slot"></section>
 
   {% comment %}
-    Restoran taomlari — ikki qator, qatorda to'rtta, sekin almashadi.
+    TAKLIFLAR — menyulardan OLDIN.
+
+    Ilgari u sahifaning o'rtasida, menyulardan keyin turardi va
+    ko'pchilik u yergacha aylantirmasdi. Endi birinchi ekranga yaqin:
+    odam bannerni ko'rgach darhol duch keladi.
+
+    Ko'rinishi ham tugmadek: to'ldirilgan fon va aniq chegara. Ilgari
+    uzuq-yuluq chiziqli, fonsiz tasma edi va bosiladigan narsaga
+    o'xshamasdi.
+  {% endcomment %}
+  <section class="section-sm">
+    <button type="button" class="feedback-strip" data-feedback>
+      <span class="ic" aria-hidden="true"><svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 17.5a6 6 0 1 1 6 0v1.2a1.3 1.3 0 0 1-1.3 1.3h-3.4A1.3 1.3 0 0 1 9 18.7Z"/><path d="M10 20.5h4"/></svg></span>
+      <span class="text">
+        <b data-i18n="feedback.stripTitle">Platforma uchun taklifingiz bormi?</b>
+        <span class="small" data-i18n="feedback.stripText">Nima yoqmadi yoki nimani qo'shsak — yozib qoldiring.</span>
+      </span>
+      <span class="go"><svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></span>
+    </button>
+  </section>
+
+  {% comment %}
+    Restoran taomlari — BITTA qator, sekin surilib turadi.
     Bosh sahifada endi joy kartochkalari emas, MENYU ko'rsatiladi:
     foydalanuvchi avval nima yeyishini tanlaydi, keyin qayerda ekanini.
   {% endcomment %}
@@ -53,21 +75,26 @@
   </section>
 
   {% comment %}
-    To'yxona menyusi — MATN qatorlari: chapda taom nomi va to'yxona,
-    o'ngda kishi boshiga narx, eng o'ngda kichik rasm.
-  {% endcomment %}
-  <section class="section-sm home-split">
-    <div class="stack stack-4">
-      <div class="section-title" style="margin-bottom:0">
-        <div>
-          <span class="eyebrow" data-i18n="home.feastEyebrow"></span>
-          <h2 class="display h2" data-i18n="home.feastTitle"></h2>
-        </div>
-        <a class="btn btn-ghost btn-sm" href="/toyxonalar/"><span data-i18n="home.viewAll"></span> <svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></a>
-      </div>
-      <div id="feast-list"></div>
-    </div>
+    To'yxona menyusi — OLTI USTUNLI devor, har bir ustun sekin
+    suriladi. Qo'shni ustunlar qarama-qarshi yo'nalishda.
 
+    Bo'lim TO'LIQ enlikda: ilgari u yangiliklar bilan yonma-yon
+    turardi va yarim ustunda oltita tik ustunga 100 px dan ham kam
+    joy qolardi. Yangiliklar endi o'z bo'limida, devor ostida.
+  {% endcomment %}
+  <section class="section-sm">
+    <div class="section-title">
+      <div>
+        <span class="eyebrow" data-i18n="home.feastEyebrow"></span>
+        <h2 class="display h2" data-i18n="home.feastTitle"></h2>
+      </div>
+      <a class="btn btn-ghost btn-sm" href="/toyxonalar/"><span data-i18n="home.viewAll"></span> <svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></a>
+    </div>
+    <div id="feast-list"></div>
+  </section>
+
+  {# --- yangiliklar tasmasi --- #}
+  <section class="section-sm">
     <div class="panel stack stack-3">
       <div class="section-title" style="margin-bottom:0">
         <div>
@@ -77,28 +104,6 @@
       </div>
       <div class="news-strip" id="news-strip"></div>
     </div>
-  </section>
-
-  {% comment %}
-    TAKLIFLAR — taomlar ro'yxatidan keyin.
-
-    Joy ataylab shu yerda. Odam bosh sahifani shu joygacha aylantirgan
-    bo'lsa, u platformani ko'rib chiqqan va endi u haqida fikri bor
-    bo'lishi mumkin. Yuqorida turgan chaqiruv esa hali hech narsa
-    ko'rmagan odamdan fikr so'ragan bo'lardi.
-
-    Ko'rinishi ham shunga yarasha jimgina: bitta qator, chegarasi
-    uzuq-yuluq chiziq. Bu reklama emas, taklif.
-  {% endcomment %}
-  <section class="section-sm">
-    <button type="button" class="feedback-strip" data-feedback>
-      <span class="ic" aria-hidden="true"><svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 17.5a6 6 0 1 1 6 0v1.2a1.3 1.3 0 0 1-1.3 1.3h-3.4A1.3 1.3 0 0 1 9 18.7Z"/><path d="M10 20.5h4"/></svg></span>
-      <span class="text">
-        <b data-i18n="feedback.stripTitle">Platforma uchun taklifingiz bormi?</b>
-        <span class="small" data-i18n="feedback.stripText">Nima yoqmadi yoki nimani qo'shsak — yozib qoldiring.</span>
-      </span>
-      <span class="go"><svg class="ico" width="1.15em" height="1.15em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m9 6 6 6-6 6"/></svg></span>
-    </button>
   </section>
 
   {# --- yangiliklar kartochkalari --- #}

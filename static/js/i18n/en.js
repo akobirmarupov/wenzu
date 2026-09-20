@@ -277,7 +277,7 @@ export default {
     birthDate: "Date of birth",
     bio: "About you",
     bioPlaceholder: "One line about yourself",
-    idHint: "Username and phone number cannot be changed — they identify your account.",
+    idHint: "The username cannot be changed — it identifies your account.",
     changePhoto: "Change photo",
     removePhoto: "Remove photo",
     removePhotoText: "Your profile photo will be deleted and replaced with your initials.",
@@ -303,6 +303,10 @@ export default {
     cancelled: "Booking cancelled",
     logoutHint: "You'll be signed out. Your data stays safe.",
     quickLinks: "Quick access",
+    settingsTitle: "Settings",
+    aboutPlatform: "About the platform",
+    adminWrite: "Contact the admin",
+    adminWriteText: "A question or an idea — write on Telegram",
     leaveReview: "Leave a review",
     bit: "Bit",
     trustTitle: "Trust score",
@@ -352,6 +356,7 @@ export default {
   },
 
   common: {
+    back: "Back",
     loading: "Loading...", error: "Something went wrong", retry: "Try again",
     save: "Save", cancel: "Cancel", delete: "Delete", edit: "Edit",
     add: "Add", close: "Close", confirm: "Confirm",

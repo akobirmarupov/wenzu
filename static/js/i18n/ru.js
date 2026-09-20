@@ -277,7 +277,7 @@ export default {
     birthDate: "Дата рождения",
     bio: "О себе",
     bioPlaceholder: "Одно предложение о себе",
-    idHint: "Имя пользователя и телефон изменить нельзя — они идентифицируют аккаунт.",
+    idHint: "Имя пользователя изменить нельзя — оно идентифицирует аккаунт.",
     changePhoto: "Сменить фото",
     removePhoto: "Удалить фото",
     removePhotoText: "Фото профиля будет удалено, вместо него появятся инициалы.",
@@ -303,6 +303,10 @@ export default {
     cancelled: "Бронь отменена",
     logoutHint: "Вы выйдете из аккаунта. Все данные сохранятся.",
     quickLinks: "Быстрый доступ",
+    settingsTitle: "Настройки",
+    aboutPlatform: "О платформе",
+    adminWrite: "Связаться с админом",
+    adminWriteText: "Вопрос или предложение — напишите в Telegram",
     leaveReview: "Оставить отзыв",
     bit: "Бит",
     trustTitle: "Балл надёжности",
@@ -352,6 +356,7 @@ export default {
   },
 
   common: {
+    back: "Назад",
     loading: "Загрузка...", error: "Произошла ошибка", retry: "Повторить",
     save: "Сохранить", cancel: "Отмена", delete: "Удалить", edit: "Изменить",
     add: "Добавить", close: "Закрыть", confirm: "Подтвердить",

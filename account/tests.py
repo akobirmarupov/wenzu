@@ -301,18 +301,37 @@ class SharedPhoneNumberTest(TestCase):
 
         self.assertEqual(response.status_code, 400)
 
-    def test_each_account_keeps_its_own_number_locked(self):
+    def test_number_can_be_changed_later(self):
         """
-        Takrorlanishga ruxsat berilgani bilan, BIR hisobdagi raqam
-        baribir bir marta yoziladi.
+        Raqam QULFLANMAYDI — odam uni istagan vaqtda almashtiradi.
+
+        Ilgari bu yerda teskari tekshiruv turardi: ikkinchi marta
+        yozishga urinish 400 qaytarardi. Qulf himoya bermasdi (raqam
+        takrorlanadi, tasdiqlanmaydi va kirish uchun ishlatilmaydi),
+        lekin raqami o'zgargan har bir odamni administratorga
+        yuborardi.
         """
         self._save_phone(self.first, "+998901112222")
 
         response = self._save_phone(self.first, "+998903334444")
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 200, response.data)
         self.first.refresh_from_db()
-        self.assertEqual(self.first.phone_number, "+998901112222")
+        self.assertEqual(self.first.phone_number, "+998903334444")
+
+    def test_number_can_be_cleared(self):
+        """Bo'sh qiymat raqamni o'chiradi va bayroqni ham tushiradi."""
+        self._save_phone(self.first, "+998901112222")
+
+        self.client.force_authenticate(self.first)
+        response = self.client.patch(
+            "/api/auth/me/", {"phone_number": ""}, format="json",
+        )
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.first.refresh_from_db()
+        self.assertIsNone(self.first.phone_number)
+        self.assertFalse(self.first.is_phone_verified)
 
 
 class StaleSessionTests(TestCase):

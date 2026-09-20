@@ -327,7 +327,7 @@ export default {
     birthDate: "Tug'ilgan sana",
     bio: "Qisqacha",
     bioPlaceholder: "O'zingiz haqingizda bir jumla",
-    idHint: "Username va telefon raqami o'zgartirilmaydi — ular hisobingizni aniqlaydi.",
+    idHint: "Username o'zgartirilmaydi — u hisobingizni aniqlaydi.",
     changePhoto: "Rasmni almashtirish",
     removePhoto: "Rasmni olib tashlash",
     removePhotoText: "Profil rasmi o'chiriladi, o'rniga bosh harflaringiz ko'rinadi.",
@@ -353,6 +353,10 @@ export default {
     cancelled: "Bron bekor qilindi",
     logoutHint: "Hisobingizdan chiqasiz. Ma'lumotlaringiz saqlanib qoladi.",
     quickLinks: "Tez o'tish",
+    settingsTitle: "Sozlamalar",
+    aboutPlatform: "Platforma haqida",
+    adminWrite: "Admin bilan bog'lanish",
+    adminWriteText: "Savol yoki taklif bo'lsa — Telegram orqali yozing",
     leaveReview: "Sharh qoldirish",
     bit: "Bit",
     trustTitle: "Ishonchlilik bali",
@@ -402,6 +406,7 @@ export default {
   },
 
   common: {
+    back: "Orqaga",
     loading: "Yuklanmoqda...",
     error: "Xatolik yuz berdi",
     retry: "Qayta urinish",

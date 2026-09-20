@@ -12,13 +12,17 @@
  * tahrirlash ancha kam uchraydigan amal.
  *
  * ===================================================================
- * NEGA QATOR EMAS, KATAK
+ * KATAK EMAS, QATOR
  * ===================================================================
- * Ilgari har bir maydon butun enni egallagan alohida qator edi:
- * chapda nomi, o'ngda qiymati, orada uzun bo'shliq. Sakkizta maydon
- * sakkizta qator degani — ekranning yarmi. Endi ular ikki ustunli
- * katakda: nomi ustida kichik, qiymati ostida. Bir xil ma'lumot ikki
- * baravar kam joy egallaydi va ko'z chapdan o'ngga sakrab yurmaydi.
+ * Ilgari maydonlar ikki ustunli katakda turardi va har birining
+ * tepasida KATTA HARFLI yorliq bor edi ("TO'LIQ ISM"). Mayda yozuv
+ * bo'lsa ham, katta harf va kengaytirilgan harf oralig'i tufayli
+ * yorliq o'z qiymatidan ko'proq ko'zga tashlanardi — ya'ni ekranda
+ * ma'lumotning o'zi emas, uning nomi baqirardi.
+ *
+ * Endi bitta ustunda qatorlar: chapda sust nom, o'ngda to'q qiymat,
+ * orasida ingichka chiziq. Barcha qiymatlar bitta vertikal chiziqdan
+ * boshlanadi, ko'z esa faqat pastga tushib o'qiydi.
  */
 import { api } from "../../../core/api.js";
 import { auth } from "../../../core/auth.js";
@@ -26,7 +30,8 @@ import { t } from "../../../core/i18n.js";
 import { esc, busy, formValues } from "../../../ui/dom.js";
 import { modal } from "../../../ui/modal.js";
 import { toast } from "../../../ui/toast.js";
-import { dateLabel, trustSeal, trustBar } from "../../../ui/format.js";
+import { dateLabel } from "../../../ui/format.js";
+import { icon } from "../../../ui/icons.js";
 
 /**
  * Profildagi rol yozuvi.
@@ -47,101 +52,126 @@ export function roleName(user) {
 }
 
 /**
- * Bitta katak: ustida nomi, ostida qiymati.
+ * Bitta qator: chapda nomi, o'ngda qiymati.
  *
- * Bo'sh maydon shunchaki "—" bilan ko'rsatiladi. Ilgari u yerda
- * "Qo'shish" havolasi turardi va ramkada ikki xil tugma paydo
- * bo'lardi — sarlavhadagi "Tahrirlash" va kataklardagi havolalar.
- * Ma'lumotni o'zgartirishning YAGONA yo'li bo'lgani ma'qul: muqovadagi
- * bitta "Tahrirlash" tugmasi barcha maydonni bir oynada ochadi.
+ * ===================================================================
+ * BO'SH MAYDON QATOR OCHMAYDI
+ * ===================================================================
+ * Ilgari to'ldirilmagan maydon ham qator bo'lib turardi va o'ng
+ * tomonida "—" chiziqchasi ko'rinardi. Yangi hisobda bu ikki-uchta
+ * bo'sh qator degani edi: odam ekranda o'zi haqida ma'lumot emas,
+ * chiziqchalar ro'yxatini ko'rardi.
+ *
+ * Endi bo'sh maydon umuman chizilmaydi — qator faqat qiymat KIRITILSA
+ * paydo bo'ladi. Maydonni to'ldirish yo'li o'zgarmadi: muqovadagi
+ * "Tahrirlash" barcha maydonni bir oynada ochadi va u yerda bo'shlari
+ * ham ko'rinadi.
  */
-function cell(label, value, { mono = false, wide = false } = {}) {
-  const body = value
-    ? `<span class="cell-value${mono ? " mono" : ""}">${value}</span>`
-    : `<span class="cell-value is-empty">—</span>`;
+function row(label, value, { mono = false } = {}) {
+  if (!value) return "";
 
   return `
-    <div class="info-cell${wide ? " is-wide" : ""}">
-      <span class="cell-label">${esc(label)}</span>
-      ${body}
+    <div class="info-row">
+      <dt>${esc(label)}</dt>
+      <dd class="${mono ? "num" : ""}">${value}</dd>
     </div>`;
 }
 
 /**
- * Ishonchlilik kartochkasi — bal, daraja va chiziq.
+ * Ishonchlilik qiymati — endi alohida kartochka emas, oddiy qator.
  *
  * Nima uchun profilda ko'rinadi: bal joy egasiga ko'rinadi va u shunga
  * qarab bronni tasdiqlaydi yoki rad etadi. Egasi ko'radigan, lekin
  * odamning o'zi ko'rmaydigan baho — yashirin qora ro'yxat bo'lardi.
- * Ko'rinib turgan bal esa o'zi ogohlantiruvchi vazifasini bajaradi.
  *
- * Sahifaning YON ustunida, alohida kartochkada. Alohida, chunki bu
- * YAGONA o'zgarib turadigan ko'rsatkich:
- * qolgan maydonlar odamning o'zi kiritgan ma'lumot, bu esa uning
- * platformadagi xulqi. Ikkalasini aralashtirsak, bal oddiy qator bo'lib
- * ko'zga tashlanmay qolardi.
+ * Nega kartochka emas: u sahifaning O'NG ustunida, o'z ramkasi,
+ * nishoni va chizig'i bilan turardi — bitta son uchun uchta element.
+ * Ostida esa yarim ekran bo'sh maydon qolardi. Son o'sha-o'sha, faqat
+ * endi qolgan ma'lumot bilan bir qatorda o'qiladi.
  *
  * Eski javobda `trust` bo'lmasligi mumkin (keshlangan sahifa) — u
- * holda kartochka umuman chizilmaydi.
+ * holda qator umuman chizilmaydi.
  */
-export function aside(user) {
+function trustValue(user) {
   const trust = user.trust;
   if (!trust?.bits) return "";
-
-  return `
-    <section class="panel trust-card">
-      <h2 class="display h3">${esc(t("profile.trust"))}</h2>
-      <div class="trust-body">
-        ${trustSeal(trust)}
-        ${trustBar(trust)}
-      </div>
-      <p class="field-hint">${esc(t("profile.trustHint", { points: 5 }))}</p>
-    </section>`;
+  const bits = `${trust.bits} ${t("profile.bit")}`;
+  return trust.level_display ? `${bits} · ${trust.level_display}` : bits;
 }
 
 export function render(user) {
-  const phoneSeal = user.is_phone_verified
-    ? `<span class="seal seal-ok">${esc(t("profile.verified"))}</span>`
-    : `<span class="seal seal-warn">${esc(t("profile.notVerified"))}</span>`;
+  const trust = trustValue(user);
 
+  // Telefon yonidagi "Tasdiqlangan" nishoni OLIB TASHLANDI: aynan shu
+  // holat muqovada, ism ostida allaqachon yozilgan. Bir ekranda bir
+  // xil javobni ikki marta ko'rsatish — takror, ma'lumot emas.
   return `
-      <section class="panel info-card">
-        <div class="panel-head">
-          <h2 class="display h3">${esc(t("profile.personalInfo"))}</h2>
-        </div>
+      <section class="info-block">
+        <h2 class="block-title">${esc(t("profile.personalInfo"))}</h2>
 
-        <div class="info-cells">
-          ${cell(t("auth.fullName"), esc(user.full_name || ""))}
-          ${cell(t("auth.username"), esc(user.username), { mono: true })}
-          ${cell(t("auth.phone"), `${esc(user.phone_number)} ${phoneSeal}`, { mono: true })}
-          ${cell(t("profile.role"), esc(roleName(user)))}
-          ${cell(t("profile.birthDate"), user.birth_date ? dateLabel(user.birth_date) : "")}
-          ${cell(t("profile.memberSince"), dateLabel(user.date_joined))}
-          ${cell(t("profile.bio"), esc(user.bio || ""), { wide: true })}
-        </div>
+        <dl class="info-rows">
+          ${row(t("auth.fullName"), esc(user.full_name || ""))}
+          ${row(t("auth.username"), `@${esc(user.username)}`, { mono: true })}
+          ${row(t("auth.phone"), esc(user.phone_number), { mono: true })}
+          ${row(t("profile.role"), esc(roleName(user)))}
+          ${row(t("profile.birthDate"), user.birth_date ? dateLabel(user.birth_date) : "", { mono: true })}
+          ${row(t("profile.memberSince"), dateLabel(user.date_joined), { mono: true })}
+          ${row(t("profile.bio"), esc(user.bio || ""))}
+          ${trust ? row(t("profile.trust"), esc(trust), { mono: true }) : ""}
+        </dl>
 
-        <p class="field-hint">${esc(t("profile.idHint"))}</p>
+        <p class="info-hint">${esc(t("profile.idHint"))}</p>
       </section>`;
 }
 
 /**
  * Tahrirlash oynasi.
  *
- * Eksport qilingan, chunki uni muqovadagi tugma ochadi — mantiq esa
- * shu yerda, ma'lumot bo'limi bilan bir joyda turishi kerak.
+ * Sozlamalardagi "Tahrirlash" satri ochadi. Ichida hisobga tegishli
+ * HAMMA narsa bor:
+ *   · rasm amallari — almashtirish va olib tashlash;
+ *   · o'zgartirsa bo'ladigan maydonlar — ism, tug'ilgan sana, qisqacha;
+ *   · o'zgartirib bo'lmaydigan maydon — telefon raqami.
+ *
+ * Telefon raqami ham TAHRIRLANADI. Ilgari u qulflangan edi va
+ * o'zgartirish uchun administratorga murojaat qilish kerak bo'lardi —
+ * server qoidasi o'zgargach (`account/routes/serializers.py`), qulf
+ * bu yerdan ham olib tashlandi. Format serverda tekshiriladi va xato
+ * bo'lsa maydon ustida ko'rsatiladi.
+ *
+ * @param {object} user
+ * @param {object} actions - {onUpdated, onRemoveAvatar}
  */
-export function openEditor(user, onUpdated) {
+export function openEditor(user, { onUpdated, onRemoveAvatar } = {}) {
   const node = modal.open(`
     <h2 class="display h3">${esc(t("profile.editTitle"))}</h2>
-    <p class="muted small">${esc(t("profile.idHint"))}</p>
 
-    <form class="stack stack-4" id="profile-form" style="margin-top:var(--sp-5)">
+    <div class="edit-photo">
+      <label class="btn btn-outline btn-sm" for="avatar-input">
+        ${icon("camera")} ${esc(t("profile.changePhoto"))}
+        <input type="file" id="avatar-input" accept="image/*" hidden>
+      </label>
+      ${user.avatar
+        ? `<button class="btn btn-ghost btn-sm" type="button" id="editor-remove-avatar">
+             ${icon("trash")} ${esc(t("profile.removePhoto"))}
+           </button>`
+        : ""}
+    </div>
+
+    <form class="stack stack-4" id="profile-form" style="margin-top:var(--sp-4)">
       <div class="form-alert" id="profile-error" hidden></div>
 
       <div class="field">
         <label for="full_name">${esc(t("auth.fullName"))}</label>
         <input class="input" id="full_name" name="full_name" required
                value="${esc(user.full_name || "")}">
+      </div>
+
+      <div class="field">
+        <label for="phone_number">${esc(t("auth.phone"))}</label>
+        <input class="input" id="phone_number" name="phone_number" type="tel"
+               inputmode="tel" placeholder="+998901234567"
+               value="${esc(user.phone_number || "")}">
       </div>
 
       <div class="field">
@@ -157,6 +187,8 @@ export function openEditor(user, onUpdated) {
                placeholder="${esc(t("profile.bioPlaceholder"))}">
       </div>
 
+      <p class="field-hint">${esc(t("profile.idHint"))}</p>
+
       <div class="row row-2" style="margin-top:var(--sp-2)">
         <button class="btn btn-outline" style="flex:1" type="button" data-modal-close>
           ${esc(t("profile.cancel"))}
@@ -166,6 +198,11 @@ export function openEditor(user, onUpdated) {
         </button>
       </div>
     </form>`);
+
+  node.querySelector("#editor-remove-avatar")?.addEventListener("click", () => {
+    modal.close();
+    onRemoveAvatar?.();
+  });
 
   node.querySelector("#profile-form").addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -184,7 +221,12 @@ export function openEditor(user, onUpdated) {
       toast.ok(t("profile.saved"));
       onUpdated?.(fresh);
     } catch (error) {
-      errorBox.textContent = error.fieldError?.("full_name") || error.message;
+      // Xato qaysi maydonga tegishli bo'lsa, o'shanisi ko'rsatiladi.
+      // Ilgari faqat `full_name` qaralardi va telefon formati noto'g'ri
+      // bo'lganda odam umumiy "Xatolik yuz berdi" ni ko'rardi.
+      errorBox.textContent = error.fieldError?.("phone_number")
+        || error.fieldError?.("full_name")
+        || error.message;
       errorBox.hidden = false;
     } finally {
       done();

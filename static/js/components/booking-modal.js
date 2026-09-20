@@ -405,7 +405,8 @@ function restaurantFormHtml() {
 
     <div class="field" style="margin-top:var(--sp-4)">
       <label for="bk-guests">${esc(t("booking.guests"))} (${esc(t("booking.upToPeople", { count: state.room.capacity }))})</label>
-      <input class="input" id="bk-guests" type="number" min="1" max="${state.room.capacity}" value="${state.guests}">
+      <input class="input" id="bk-guests" type="number" inputmode="numeric"
+             min="1" max="${state.room.capacity}" value="${state.guests}">
     </div>
 
     ${menuPickHtml(state.menu, { max: menuLimit() })}
@@ -524,12 +525,13 @@ function venueFormHtml() {
 
     <div class="field" style="margin-top:var(--sp-4)">
       <label for="bk-guests">${esc(t("booking.guests"))}</label>
-      <input class="input" id="bk-guests" type="number" min="1" max="${state.hall.people}" value="${state.guests}">
+      <input class="input" id="bk-guests" type="number" inputmode="numeric"
+             min="1" max="${state.hall.people}" value="${state.guests}">
     </div>
 
     ${menuPickHtml(state.menu, { max: menuLimit() })}
 
-    ${venueTotalHtml()}
+    <div id="bk-total">${venueTotalHtml()}</div>
 
     ${state.dishCount && state.menuIds.length !== state.dishCount ? `
       <p class="form-alert" style="margin-top:var(--sp-4)">
@@ -637,9 +639,43 @@ function bindEvents(container) {
     renderBody();
   });
 
-  container.querySelector("#bk-guests")?.addEventListener("input", (event) => {
-    state.guests = Number(event.target.value) || 1;
-    if (state.type === "venue") renderBody();
+  /* MEHMONLAR SONI.
+
+     Ilgari har bir bosilgan raqamda `renderBody()` chaqirilardi —
+     butun oyna qaytadan chizilar, maydon esa yo'q qilinib, o'rniga
+     yangisi yasalardi. Natijada fokus yo'qolardi va yozilayotgan son
+     `state.guests` dagi qiymatga qaytib ketardi: odam "500" yozmoqchi
+     bo'lsa, "5" dan keyin maydon qaytadan tug'ilib, kursor uchib
+     ketardi. Shuning uchun sonni faqat strelkachalar bilan bittalab
+     oshirish mumkin edi.
+
+     Endi maydonga TEGILMAYDI. Sondan bog'liq yagona narsa — yig'indi
+     qatori, u esa o'z o'rami ichida alohida yangilanadi.
+
+     `|| 0` — `|| 1` emas: maydonni tozalab, yangi son yozmoqchi
+     bo'lgan odamda bo'sh maydon darhol "1" ga aylanmasligi kerak. */
+  const guestsInput = container.querySelector("#bk-guests");
+
+  const refreshTotal = () => {
+    const totalBox = container.querySelector("#bk-total");
+    if (totalBox) totalBox.innerHTML = venueTotalHtml();
+  };
+
+  guestsInput?.addEventListener("input", (event) => {
+    state.guests = Number(event.target.value) || 0;
+    refreshTotal();
+  });
+
+  /* Yozib bo'lgach (maydondan chiqqanda) son chegaraga solinadi:
+     bo'sh yoki noldan kichik bo'lsa — 1, zal sig'imidan ko'p bo'lsa —
+     sig'imning o'zi. Ilgari cheklov faqat serverda edi va odam
+     "Band qilish" ni bosgandan keyin xato ko'rardi. */
+  guestsInput?.addEventListener("change", (event) => {
+    const max = Number(event.target.max) || Infinity;
+    const clamped = Math.min(max, Math.max(1, Number(event.target.value) || 1));
+    state.guests = clamped;
+    event.target.value = String(clamped);
+    refreshTotal();
   });
 
   container.querySelector("#bk-note")?.addEventListener("input", (event) => {

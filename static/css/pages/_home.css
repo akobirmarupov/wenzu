@@ -73,8 +73,6 @@
 }
 
 /* Ikki ustunli blok: karusel + yon lenta */
-.home-split { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: var(--sp-6); align-items: start; }
-@media (max-width: 1000px) { .home-split { grid-template-columns: 1fr; } }
 
 /* Qanday ishlaydi */
 .how-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--sp-6); }

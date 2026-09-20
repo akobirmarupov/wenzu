@@ -37,22 +37,40 @@
 .feedback-kinds .chip { flex: 1 1 auto; min-width: 88px; }
 
 /* -------------------------------------------------------------------
-   Bosh sahifadagi chaqiruv — taomlar ro'yxatidan keyin.
+   Bosh sahifadagi chaqiruv — menyulardan OLDIN.
 
-   Uzuq-yuluq chegara ataylab: u "bu yerga bosish mumkin" deb aytadi,
-   lekin to'ldirilgan tugma kabi e'tiborni tortmaydi. Sahifadagi
-   asosiy amallar (qidirish, bron qilish) ustun bo'lib qolishi kerak.
+   Ilgari chegarasi uzuq-yuluq chiziq, foni esa yo'q edi — "bosilsa
+   ham bo'ladi" degan darajada jimgina turardi va odamlar uni oddiy
+   yozuv deb o'tkazib yuborardi. Endi u TUGMA ko'rinishida: o'z foni,
+   aniq chegarasi va aksent tusidagi nishonchasi bor.
    ------------------------------------------------------------------- */
 .feedback-strip {
   display: flex; align-items: center; gap: var(--sp-4);
   width: 100%; padding: var(--sp-4) var(--sp-5);
-  border: 1px dashed var(--line); border-radius: var(--radius-m);
-  background: none; text-align: left; cursor: pointer;
+  border: 1px solid var(--line); border-radius: var(--radius-m);
+  background: var(--surface); text-align: left; cursor: pointer;
   color: var(--ink-soft);
-  transition: border-color var(--transition), background var(--transition);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--transition), background var(--transition),
+              transform var(--transition), box-shadow var(--transition);
 }
-.feedback-strip:hover { border-color: var(--theme-accent); background: var(--surface); }
-.feedback-strip .ic { font-size: var(--fs-lg); line-height: 1; flex-shrink: 0; }
+.feedback-strip:hover {
+  border-color: var(--theme-accent);
+  background: var(--surface-2);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.feedback-strip:focus-visible { outline: 2px solid var(--theme-accent); outline-offset: 2px; }
+/* Nishoncha — aksent tusidagi kvadrat: tugma ekanligi eng avval shundan
+   bilinadi. */
+.feedback-strip .ic {
+  display: inline-grid; place-items: center;
+  width: 40px; height: 40px;
+  border-radius: var(--radius-s);
+  background: var(--theme-accent-dim);
+  color: var(--on-accent-dim);
+  font-size: var(--fs-lg); line-height: 1; flex-shrink: 0;
+}
 .feedback-strip .text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .feedback-strip .text b { color: var(--ink); font-size: var(--fs-sm); }
 .feedback-strip .text .small { color: var(--ink-faint); }
@@ -64,6 +82,6 @@
 
 @media (max-width: 560px) {
   .feedback-strip { padding: var(--sp-3) var(--sp-4); gap: var(--sp-3); }
-  .feedback-strip .ic { font-size: var(--fs-md); }
+  .feedback-strip .ic { width: 34px; height: 34px; font-size: var(--fs-md); }
   .feedback-strip .text .small { font-size: var(--fs-2xs); }
 }

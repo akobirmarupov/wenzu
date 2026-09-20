@@ -1,25 +1,196 @@
 /* ===================================================================
    Menyu vitrinasi — bosh sahifaning asosiy mazmuni.
 
-   Ikki xil ko'rinish, chunki ikki xil narsa:
+   Ikkalasi ham SEKIN SURILADIGAN tasma:
 
    RESTORAN taomi — rasm muhim (nima yeyishini ko'z bilan tanlaydi):
-     kichik kartochkalar, ikki qator, qatorda to'rtta, sekin almashib
-     turadi.
+     bitta qator, rasmli kartochkalar.
 
-   TO'YXONA taomi — narx va joy muhim (to'y menyusi ro'yxat bo'lib
-     tanlanadi): matn qatori, chapda nomi va narxi, o'ngda rasm.
-     "Bronlarim" ro'yxati bilan bir xil ritm.
+   TO'YXONA taomi — narx va joy muhim: besh qator, ixcham kartochka,
+     qo'shni qatorlar qarama-qarshi yo'nalishda suriladi.
+
+   ===================================================================
+   TASMA QANDAY ISHLAYDI
+   ===================================================================
+   Ro'yxat HTML da ikki marta yoziladi, tasma esa aynan yarmigacha
+   (-50%) suriladi. Oxiriga yetganda u boshlang'ich holat bilan
+   piksel-bapiksel bir xil bo'ladi va qaytishi ko'rinmaydi.
+
+   Tezlik `--mm-dur` orqali keladi (JS hisoblaydi: har bir taomga
+   10 soniya). Bu ATAYLAB sekin — tasma e'tiborni tortish uchun emas,
+   fon bo'lib oqib turish uchun.
    =================================================================== */
 
-/* ---------- restoran taomlari ---------- */
-.dish-wall {
+/* ---------- suriladigan tasma ---------- */
+.menu-marquee {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  /* Chetlarda yumshoq so'nish: kartochka ekran chetida keskin
+     kesilmaydi, asta g'oyib bo'ladi. */
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+          mask-image: linear-gradient(to right, transparent, #000 4%, #000 96%, transparent);
+}
+
+.mm-row { overflow: hidden; }
+
+.mm-track {
+  display: flex;
+  gap: var(--sp-3);
+  /* `max-content` bo'lmasa kartochkalar konteynerga siqilib, tasma
+     o'rniga oddiy qator chiqardi. */
+  width: max-content;
+  animation: mm-slide var(--mm-dur, 60s) linear infinite;
+}
+.mm-row.is-reverse .mm-track { animation-direction: reverse; }
+
+/* Sichqoncha ustiga borganda TO'XTAYDI — odam o'qiyotgan taom
+   qochib ketmasligi kerak. */
+.menu-marquee:hover .mm-track,
+.mm-track:focus-within { animation-play-state: paused; }
+
+@keyframes mm-slide {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* Harakatni kamaytirish so'ralgan bo'lsa tasma umuman qimirlamaydi —
+   u yerda barmoq bilan surib ko'rish mumkin. */
+@media (prefers-reduced-motion: reduce) {
+  .mm-track { animation: none; }
+  .mm-row { overflow-x: auto; scrollbar-width: none; }
+  .mm-row::-webkit-scrollbar { display: none; }
+}
+
+/* Yuklanayotgan payt — tasma o'rnidagi vaqtinchalik to'r. */
+.dish-wall-skeleton {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--sp-3);
 }
-.dish-wall.fading { opacity: 0; }
-.dish-wall { transition: opacity .45s ease; }
+@media (max-width: 640px) {
+  .dish-wall-skeleton { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Sahifa chiziqchalari endi ishlatilmaydi (tasma uzluksiz oqadi),
+   lekin element sarlavha qatorida qolgan — bo'sh bo'lsa joy
+   egallamasin. */
+.wall-dots:empty { display: none; }
+
+/* ===================================================================
+   TO'YXONA DEVORI — olti ustun, vertikal suriladi.
+
+   Nega ustun, qator emas: to'y menyusi restoran taomidan ko'proq —
+   bitta to'yxonada o'nlab dasturxon varianti bor. Gorizontal qator
+   ekranga bir vaqtda to'rt-beshtasini sig'dirardi, tik devor esa
+   yigirmatasini ko'rsatadi va ular ko'z oldidan asta o'tib turadi.
+
+   Devor balandligi QAT'IY: aks holda kartochkalar soniga qarab
+   sahifa har safar boshqa uzunlikda bo'lardi.
+   =================================================================== */
+.menu-wall {
+  display: grid;
+  grid-template-columns: repeat(var(--wall-cols, 6), minmax(0, 1fr));
+  gap: var(--sp-3);
+  height: 480px;
+  overflow: hidden;
+  /* Tepa va pastda yumshoq so'nish — kartochka chetda keskin
+     kesilmaydi, asta paydo bo'lib, asta g'oyib bo'ladi. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 90%, transparent);
+          mask-image: linear-gradient(to bottom, transparent, #000 10%, #000 90%, transparent);
+}
+
+.mw-col { overflow: hidden; }
+
+.mw-track {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  animation: mw-slide var(--mm-dur, 120s) linear infinite;
+}
+.mw-col.is-reverse .mw-track { animation-direction: reverse; }
+
+.menu-wall:hover .mw-track,
+.mw-track:focus-within { animation-play-state: paused; }
+
+@keyframes mw-slide {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mw-track { animation: none; }
+  .mw-col { overflow-y: auto; scrollbar-width: none; }
+  .mw-col::-webkit-scrollbar { display: none; }
+}
+
+/* Ustun kengligi ekranga qarab: 390 px li ekranda oltita ustun har
+   biriga 60 px qoldirardi — u yerga rasm ham, nom ham sig'maydi. */
+/* `--wall-cols` ni JS beradi (`menu-showcase.js`, `wallColumns()`) —
+   bu yerda faqat zaxira qiymat va balandlik turadi.
+
+   Nega CSS emas: ustun soni `grid-template-columns` bilan cheklansa,
+   ortiqcha ustunlar yo'qolmaydi — ular to'rning pastki qatoriga tushib,
+   devorning qat'iy balandligi ostida kesilib qolardi. */
+@media (max-width: 1100px) { .menu-wall { height: 420px; } }
+@media (max-width: 700px)  { .menu-wall { height: 380px; gap: var(--sp-2); } }
+
+/* --- ustundagi kartochka: chapda yozuv, o'ngda rasm ---
+   Restoran kartochkasidan ataylab farq qiladi: to'y dasturxoni narx va
+   joyga qarab tanlanadi, shuning uchun birinchi o'rinda yozuv turadi,
+   rasm esa kichik va o'ng chetda. */
+.feast-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex: none;
+  padding: var(--sp-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  color: var(--ink);
+  transition: border-color var(--transition), background var(--transition);
+}
+.feast-row:hover { border-color: var(--theme-accent); background: var(--surface-2); }
+
+.feast-row .info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.feast-row .info b {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.feast-row .place {
+  font-size: var(--fs-2xs);
+  color: var(--ink-faint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.feast-row .amount {
+  font-size: var(--fs-2xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--theme-accent);
+  white-space: nowrap;
+}
+.feast-row img {
+  flex: none;
+  margin-left: auto;
+  width: 52px;
+  height: 52px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: var(--surface-2);
+}
+
+/* ---------- restoran taomlari ---------- */
+/* Tasma ichida kartochka QAT'IY kenglikda: `1fr` bo'lsa flex uni
+   mazmuniga qarab cho'zib yuborardi va uzun nomli taom qo'shnisidan
+   ikki baravar keng chiqardi. */
+.dish-tile { flex: none; width: 180px; }
 
 .dish-tile {
   position: relative; display: block; overflow: hidden;
@@ -40,37 +211,10 @@
   background: var(--gold-shine); -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 
-@media (max-width: 900px) { .dish-wall { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 640px) { .dish-wall { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .dish-tile { width: 150px; } }
 
 /* Qaysi "sahifa" ko'rsatilayotganini bildiruvchi chiziqchalar */
 .wall-dots { display: flex; gap: var(--sp-1); }
 .wall-dots span { width: 20px; height: 3px; border-radius: 2px; background: var(--line); transition: background var(--transition); }
 .wall-dots span.active { background: var(--gold-shine); }
 
-/* ---------- to'yxona taomlari: matn qatori ---------- */
-.feast-list { display: flex; flex-direction: column; gap: var(--sp-2); }
-.feast-row {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto 88px;
-  align-items: center; gap: var(--sp-4);
-  padding: var(--sp-3); padding-right: var(--sp-3);
-  border: 1px solid var(--line); border-radius: var(--radius-m);
-  background: var(--surface);
-  transition: border-color var(--transition), transform var(--transition);
-}
-.feast-row:hover { border-color: var(--theme-accent); transform: translateX(3px); }
-.feast-row .info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.feast-row .info b { font-size: var(--fs-base); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.feast-row .info .place { font-size: var(--fs-xs); color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.feast-row .amount { text-align: right; display: flex; flex-direction: column; gap: 1px; }
-.feast-row .amount b { font-size: var(--fs-sm); font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap; }
-.feast-row .amount span { font-size: var(--fs-2xs); text-transform: uppercase; letter-spacing: .07em; color: var(--ink-faint); }
-.feast-row img {
-  width: 88px; height: 64px; border-radius: var(--radius-s);
-  object-fit: cover; background: var(--surface-2);
-}
-@media (max-width: 560px) {
-  .feast-row { grid-template-columns: minmax(0, 1fr) 64px; gap: var(--sp-3); }
-  .feast-row .amount { grid-column: 1; text-align: left; flex-direction: row; align-items: baseline; gap: var(--sp-2); }
-  .feast-row img { width: 64px; height: 64px; grid-column: 2; grid-row: 1 / span 2; }
-}

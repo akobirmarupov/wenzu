@@ -10,19 +10,24 @@
  * ularni bog'laydi — shunda bo'lim qo'shish bitta fayl qo'shish demak.
  *
  * ===================================================================
- * NEGA IXCHAM
+ * NEGA TINCH
  * ===================================================================
  * Profil — odam kuniga bir marta ham ochmaydigan sahifa: u yerga
  * aniq bir ish bilan kiradi (rasmni almashtirish, bronga o'tish,
- * chiqish). Shuning uchun sahifa IMKON QADAR PAST bo'lishi kerak —
- * hamma narsa bir ekranga sig'sin, aylantirish shart bo'lmasin.
+ * chiqish). Shuning uchun ekranda KO'RINADIGAN element imkon qadar
+ * kam bo'lishi kerak — har bir ramka, nishon va chip ko'zni bo'ladi.
  *
  * Shu sababli:
- *   · muqova baland emas — ism, nishon va amallar bitta qatorda;
- *   · statistika katta raqamlar bloki emas, kichik chiplar;
- *   · bo'limlar chapdagi baland kartochka emas, gorizontal tasma;
+ *   · muqova kartochka emas — fonsiz, ramkasiz, soyasiz;
+ *   · rol va tasdiq holati nishon emas, oddiy yozuv qatori;
+ *   · statistika to'rtta chip emas, chiziq bilan ajratilgan bitta
+ *     tasma;
+ *   · sahifada YAGONA kartochka bor — "Tez o'tish", chunki u yagona
+ *     bosiladigan taklif;
+ *   · aksent (zumrad) faqat UCH joyda: tasdiq belgisi, "Tahrirlash"
+ *     tugmasi va tez o'tish ikonkasi;
  *   · hisob bilan bog'liq TO'RTALA amal (tahrirlash, rasmni
- *     almashtirish, rasmni o'chirish, chiqish) bitta qatorda, muqova
+ *     almashtirish, rasmni o'chirish, chiqish) bitta qatorda, ism
  *     ostida — har biri alohida joyda turgani foydalanuvchini
  *     "qaysi amal qayerda?" deb qidirishga majbur qilardi.
  */
@@ -38,8 +43,10 @@ import { initTopbar } from "../../ui/topbar.js";
 import { avatarHtml } from "../../ui/avatar.js";
 import { toast } from "../../ui/toast.js";
 import { confirmDialog } from "../../ui/modal.js";
-import { dateLabel } from "../../ui/format.js";
+
 import { icon } from "../../ui/icons.js";
+
+import { openSettingsSheet } from "../../components/settings-sheet.js";
 
 import * as infoSection from "./sections/info.js";
 import * as premiumSection from "./sections/premium.js";
@@ -89,101 +96,60 @@ function sectionsFor(current) {
 /* ---------- 1-qatlam: kim ekanligi ---------- */
 
 /**
- * Rol nishoni.
+ * Tasdiq holati — nishon EMAS, yozuv qatori.
  *
- * Bitta nishon yetarli: odam bir vaqtda ham platforma egasi, ham oddiy
- * foydalanuvchi bo'lib ko'rinsa, qaysi huquqda ekani bilinmaydi.
+ * Ilgari rol ham, tasdiq holati ham oltin/yashil fonli nishon edi va
+ * ikkalasi ism ostida yonma-yon turardi: ikkita rangli tabletka ismdan
+ * ko'ra ko'proq ko'zga tashlanardi. Endi rol — sust yozuv (username
+ * yonida), tasdiq esa yagona rangli belgi, chunki u YAGONA javob
+ * beradigan savol: "bu hisob haqiqiymi?".
  */
-function roleBadge(current) {
-  if (current.is_staff) {
-    return `<span class="seal seal-gold">${icon("shield")} ${esc(t("panel.roleAdmin"))}</span>`;
-  }
-  if (current.business) {
-    return `<span class="seal seal-gold">${icon("gem")} ${esc(infoSection.roleName(current))}</span>`;
-  }
-  return `<span class="seal">${esc(t("profile.roleUser"))}</span>`;
-}
-
-function verifyBadge(current) {
+function verifyLine(current) {
   return current.is_phone_verified
-    ? `<span class="seal seal-ok">${icon("check")} ${esc(t("profile.verified"))}</span>`
-    : `<span class="seal seal-warn">${icon("alert")} ${esc(t("profile.notVerified"))}</span>`;
+    ? `<span class="pid-verify">${icon("check")} ${esc(t("profile.verified"))}</span>`
+    : `<span class="pid-verify is-off">${icon("alert")} ${esc(t("profile.notVerified"))}</span>`;
 }
 
-/**
- * Statistika chiplari.
- *
- * Platforma egasida KO'RSATILMAYDI: u bron qilmaydi va uning profilida
- * to'rtta nol turishi ma'lumot emas, shovqin edi.
- */
-function statsHtml(current) {
-  if (current.is_staff) return "";
-
-  const stats = current.stats || {};
-  const items = [
-    { value: stats.total ?? 0, key: "profile.statBookings" },
-    { value: stats.completed ?? 0, key: "profile.statCompleted" },
-    { value: stats.upcoming ?? 0, key: "profile.statUpcoming" },
-    { value: stats.reviews ?? 0, key: "profile.statReviews" },
-  ];
-
-  return `
-    <div class="pid-stats">
-      ${items.map((item) => `
-        <span class="pid-stat">
-          <b>${esc(String(item.value))}</b>
-          <span>${esc(t(item.key))}</span>
-        </span>`).join("")}
-    </div>`;
-}
+/* Statistika (jami bron, yakunlangan, kutilayotgan, sharh) profilda
+   KO'RSATILMAYDI — u "Bronlarim" sahifasida, aynan o'sha bronlar
+   ro'yxatining tepasida turadi. Ikki joyda ko'rsatish profil
+   muqovasini uzaytirardi va raqamlar bosilmaydigan bezakka
+   aylanardi: odam ularni ko'rib baribir "Bronlarim" ga o'tardi. */
 
 function identityHtml(current) {
-  // Rasm almashtirish `label` ko'rinishida chiziladi: ichida fayl
-  // tanlagich turadi, chunki brauzerning o'z "Choose file" tugmasini
-  // dizaynga moslab bo'lmaydi. Tugma avatar USTIDA emas, amallar
-  // qatorida — doira ustiga qo'yilgan kichik tugma bosh harflarni
-  // yopib qo'yardi va telefonda barmoq uchun ham kichik edi.
+  // ===================================================================
+  // IJTIMOIY TARMOQ TARTIBI
+  // ===================================================================
+  // Chapda doira rasm, o'ngda username va ostida kim ekanligi.
+  // Uch chiziqli menyu esa O'NG YUQORI BURCHAKDA — Instagram'dagidek.
+  //
+  // Nega burchakda: u muqovaning bir qismi emas, butun SAHIFAning
+  // boshqaruvi. Username yonida turganda u ismning davomiday ko'rinib,
+  // ko'z avval unga tushardi.
+  //
+  // "Tahrirlash" tugmasi bu yerdan OLIB TASHLANDI: u sozlamalar
+  // oynasining birinchi satri. Muqovada ikkita boshqaruv turgani
+  // ortiqcha edi — odam profilga kuniga bir marta ham kirmaydi,
+  // tahrirlash esa undan ham kam bo'ladigan ish.
   return `
+    <button class="pid-menu" type="button" data-settings
+            aria-label="${esc(t("profile.settingsTitle"))}">
+      ${icon("menu")}
+    </button>
+
     <div class="pid-main">
       <div class="pid-avatar">
-        ${avatarHtml(current, { size: "lg", ring: true })}
+        ${avatarHtml(current, { size: "lg" })}
       </div>
 
-      <div class="pid-text">
-        <h1 class="display h2">${esc(current.full_name || current.username)}</h1>
-        <p class="pid-meta">
-          <span class="mono">@${esc(current.username)}</span>
-          <span class="dot">·</span>
-          <span class="mono">${esc(current.phone_number)}</span>
-          <span class="dot">·</span>
-          <span>${esc(t("profile.memberSince"))}: ${dateLabel(current.date_joined)}</span>
+      <div class="pid-body">
+        <h1 class="pid-name">@${esc(current.username)}</h1>
+        <p class="pid-bio">
+          <b>${esc(current.full_name || current.username)}</b>
+          <span>${esc(infoSection.roleName(current))}</span>
+          ${verifyLine(current)}
         </p>
-        <div class="pid-badges">${roleBadge(current)}${verifyBadge(current)}</div>
       </div>
-
-    </div>
-
-    ${statsHtml(current)}
-
-    <div class="pid-actions">
-      <button class="btn btn-outline btn-sm" type="button" data-edit-profile>
-        ${icon("edit")} ${esc(t("profile.edit"))}
-      </button>
-
-      <label class="btn btn-ghost btn-sm" for="avatar-input">
-        ${icon("camera")} ${esc(t("profile.changePhoto"))}
-        <input type="file" id="avatar-input" accept="image/*" hidden>
-      </label>
-
-      ${current.avatar
-        ? `<button class="btn btn-ghost btn-sm" type="button" data-remove-avatar>
-             ${icon("trash")} ${esc(t("profile.removePhoto"))}
-           </button>`
-        : ""}
-
-      <button class="btn btn-ghost btn-sm pid-logout" type="button" data-logout>
-        ${icon("logout")} ${esc(t("nav.logout"))}
-      </button>
     </div>`;
 }
 
@@ -249,9 +215,12 @@ function shortcutsHtml(current) {
 
   if (!cards.length) return "";
 
+  // Sahifadagi YAGONA kartochka. Fon, chegara va burchak aynan shu
+  // yerga sarflanadi: bu bosiladigan taklif va taklifdek ko'rinishi
+  // kerak. Qolgan bo'limlar chiziq bilan ajratiladi.
   return `
-    <section class="panel profile-links">
-      <h2 class="display h3">${esc(t("profile.quickLinks"))}</h2>
+    <section class="profile-quick">
+      <h2 class="block-title">${esc(t("profile.quickLinks"))}</h2>
       <div class="link-tiles">
         ${cards.map((card) => `
           <a class="link-tile" href="${card.href}">
@@ -277,20 +246,21 @@ async function paint() {
   const section = sections.find((item) => item.key === activeKey) || sections[0];
   activeKey = section.key;
 
-  // Tartib SHU YERDA yig'iladi, bo'lim ichida emas: asosiy ustun —
-  // bo'limning o'zi, yon ustun — uning qo'shimchasi (`aside`) va qisqa
-  // yo'llar. Shunday qilinmasa yon ustun ostida katta bo'sh maydon
-  // qolardi, chunki qisqa yo'llar butun enni egallab pastda turardi.
+  // BITTA USTUN. Ilgari bu yerda ikki ustunli to'r bor edi: o'ngda
+  // "ishonchlilik" kartochkasi turardi va uning ostida yarim ekran
+  // bo'sh maydon qolardi. Ishonchlilik endi ma'lumot qatorlarining
+  // biri (`info.js`) — u ham oddiy ko'rsatkich, alohida ramka talab
+  // qilmaydi.
   //
-  // Qisqa yo'llar faqat asosiy bo'limda: Premium yoki Boshqaruv
-  // ochilganda ular e'tiborni tortib turmasligi kerak.
-  const side = (section.module.aside?.(user) || "")
-    + (activeKey === "info" ? shortcutsHtml(user) : "");
+  // Qisqa yo'llar faqat asosiy bo'limda va ma'lumotlardan OLDIN:
+  // odam profilga ko'pincha bronlariga yoki paneliga o'tish uchun
+  // kiradi, o'z tug'ilgan sanasini o'qish uchun emas.
+  const lead = activeKey === "info" ? shortcutsHtml(user) : "";
 
   render("#profile-content", `
-    <div class="profile-grid${side ? "" : " is-single"}">
-      <div class="pg-main">${section.module.render(user)}</div>
-      ${side ? `<aside class="pg-side">${side}</aside>` : ""}
+    <div class="profile-stack">
+      ${lead}
+      ${section.module.render(user)}
     </div>`);
 
   section.module.bind?.({
@@ -326,15 +296,15 @@ async function start() {
   await paint();
 
   delegate("#profile-tabs", "[data-section]", (button) => switchTo(button.dataset.section));
-  delegate("#profile-id", "[data-logout]", () => auth.logout());
 
-  // Tahrirlash oynasi YAGONA joydan ochiladi — muqovadagi tugma.
+  // Uch chiziqli menyu — tahrirlash, til, tema, platforma, chiqish.
+  //
   // Tinglovchi bir marta, muqova konteyneriga qo'yiladi: bo'lim qayta
   // chizilganda u yo'qolmaydi va ko'paymaydi ham.
-  delegate("#profile-id", "[data-edit-profile]", () => {
-    infoSection.openEditor(user, (fresh) => {
-      user = fresh;
-      paint();
+  delegate("#profile-id", "[data-settings]", () => {
+    openSettingsSheet(user, {
+      onEdit: openEditor,
+      onLogout: () => auth.logout(),
     });
   });
 
@@ -359,22 +329,35 @@ async function start() {
     }
   });
 
-  delegate("#profile-id", "[data-remove-avatar]", async () => {
-    const ok = await confirmDialog({
-      title: t("profile.removePhoto"),
-      message: t("profile.removePhotoText"),
-      confirmText: t("common.delete"),
-      danger: true,
-    });
-    if (!ok) return;
-    try {
-      const fresh = await api.auth.removeAvatar();
+}
+
+/* ---------- muqovadan ham, sozlamalardan ham chaqiriladigan amallar ---------- */
+
+function openEditor() {
+  infoSection.openEditor(user, {
+    onUpdated: (fresh) => {
       user = fresh;
-      auth.setUser(fresh);
-      render("#profile-id", identityHtml(user));
-      toast.ok(t("profile.photoRemoved"));
-    } catch (error) {
-      toast.fromError(error);
-    }
+      paint();
+    },
+    onRemoveAvatar: removeAvatar,
   });
+}
+
+async function removeAvatar() {
+  const ok = await confirmDialog({
+    title: t("profile.removePhoto"),
+    message: t("profile.removePhotoText"),
+    confirmText: t("common.delete"),
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    const fresh = await api.auth.removeAvatar();
+    user = fresh;
+    auth.setUser(fresh);
+    render("#profile-id", identityHtml(user));
+    toast.ok(t("profile.photoRemoved"));
+  } catch (error) {
+    toast.fromError(error);
+  }
 }

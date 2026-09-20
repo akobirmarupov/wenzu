@@ -24,7 +24,18 @@ export const LANGUAGES = [
 let dictionary = {};
 let current = DEFAULT_LANG;
 
-/** Saqlangan yoki brauzer tili. */
+/**
+ * Saqlangan til, bo'lmasa — O'ZBEKCHA.
+ *
+ * Ilgari saqlangan tanlov bo'lmasa BRAUZER tili olinardi. Amalda bu
+ * shuni anglatardi: telefoni inglizcha sozlangan toshkentlik odam
+ * saytni birinchi marta ochganda inglizcha sahifani ko'rardi va til
+ * almashtirgichni qidirishga majbur bo'lardi.
+ *
+ * Sayt O'zbekiston uchun: birinchi ochilish har doim o'zbekcha.
+ * Boshqa tilni tanlagan odam esa hech narsa yo'qotmaydi — tanlovi
+ * `localStorage` da saqlanadi va keyingi safar o'sha til ochiladi.
+ */
 export function detectLanguage() {
   try {
     let saved = localStorage.getItem(STORAGE_KEY);
@@ -44,8 +55,7 @@ export function detectLanguage() {
   } catch {
     /* localStorage yopiq */
   }
-  const browser = (navigator.language || "").slice(0, 2).toLowerCase();
-  return SUPPORTED.includes(browser) ? browser : DEFAULT_LANG;
+  return DEFAULT_LANG;
 }
 
 export function getLanguage() {

@@ -169,16 +169,27 @@ class UserSerializer(serializers.ModelSerializer):
     vazifasini bajaradi va o'zgarsa, eski bronlar kimga tegishli
     ekani chalkashib ketardi.
 
-    `phone_number` — YARIM ochiq: BIR MARTA yoziladi, keyin qulflanadi.
+    `phone_number` — OCHIQ: foydalanuvchi uni istagan vaqtda
+    o'zgartiradi.
 
-    Sababi ro'yxatdan o'tish oqimida. Google raqam bermaydi, shuning
-    uchun yangi hisobda u bo'sh bo'ladi va birinchi bron paytida
-    so'raladi (`components/phone-gate.js`). Bir marta yozilgach esa
-    o'zgartirib bo'lmaydi: joy egasi o'sha raqamga qo'ng'iroq qiladi
-    va mehmon bronni yuborib, keyin raqamni almashtirib qo'ysa,
-    egasi bog'lana olmasdi.
+    Ilgari u bir marta yozilib, keyin qulflanardi. Sabab shunday
+    yozilgan edi: mehmon bron qilgach raqamni almashtirib qo'ysa, joy
+    egasi bog'lana olmay qoladi. Amalda esa qulf himoya bermasdi:
 
-    Almashtirish kerak bo'lsa — administrator orqali.
+      · raqam TAKROMANISHI mumkin (`models.py`) — ya'ni u identifikator
+        emas, `username` va `google_sub` hisobni aniqlaydi;
+      · SMS bilan TASDIQLANMAYDI (`components/phone-gate.js`) — odam
+        birinchi kiritishdayoq istagan raqamni yozaverardi;
+      · kirish raqam orqali emas, username/parol yoki Google orqali;
+      · joy egasi bronda raqamni JONLI o'qiydi
+        (`reservations/routes/serializers.py`: `source="user.phone_number"`),
+        ya'ni o'zgartirilgan raqamni ko'radi — eskisini emas.
+
+    Ya'ni qulf odamni himoya qilmasdan, raqami o'zgargan har bir
+    foydalanuvchini administratorga yuborardi.
+
+    Format esa TEKSHIRILAVERADI (`validators.validate_phone_number`):
+    cheklov olib tashlandi, tekshiruv emas.
     """
 
     business = serializers.SerializerMethodField()
@@ -207,20 +218,24 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
     def validate_phone_number(self, value):
-        """Raqam faqat BO'SH bo'lsa yoziladi."""
-        if self.instance and self.instance.phone_number:
-            raise serializers.ValidationError(
-                "Raqam allaqachon kiritilgan. O'zgartirish uchun administrator "
-                "bilan bog'laning."
-            )
-        return value
+        """Bo'sh qiymat — raqamni O'CHIRISH degani, bo'sh satr emas.
+
+        Bazada maydon `null=True`: bo'sh satr saqlansa "raqami bor,
+        lekin u bo'sh" degan uchinchi holat paydo bo'lardi va
+        `if user.phone_number` tekshiruvlari ikki xil ishlab qolardi.
+        """
+        return value or None
 
     def update(self, instance, validated_data):
-        # Raqam kiritilgan bo'lsa, eski `is_phone_verified` bayrog'i ham
-        # yoqiladi: admin panelidagi filtr va eski kod shunga qaraydi,
-        # ma'nosi endi "raqami bor" degani.
-        if validated_data.get("phone_number"):
-            instance.is_phone_verified = True
+        # `is_phone_verified` ning ma'nosi — "raqami bor".
+        #
+        # Nomi eski: ilgari SMS tasdiqlash bo'lgan, endi yo'q. Admin
+        # panelidagi filtr va eski kod shu bayroqqa qaraydi, shuning
+        # uchun u raqam bilan birga yangilanadi — raqam o'chirilsa
+        # bayroq ham o'chadi, aks holda raqamsiz hisob "tasdiqlangan"
+        # bo'lib qolardi.
+        if "phone_number" in validated_data:
+            instance.is_phone_verified = bool(validated_data["phone_number"])
         return super().update(instance, validated_data)
 
     def get_business(self, obj) -> dict | None:

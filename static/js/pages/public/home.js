@@ -93,7 +93,7 @@ function renderStats({ restaurants, venues, reviews }) {
     sectionSelector: "#news-section",
   });
   renderDishWall("#dish-wall", "#dish-dots");
-  renderFeastList("#feast-list", { limit: 8 });
+  renderFeastList("#feast-list");
 
   try {
     const [restaurants, venues] = await Promise.all([

@@ -241,6 +241,17 @@ function planCardHtml(businessType, plans, { disabled, foreign, reason }) {
  *                  | rejected (ariza rad etilgan — qayta yuborish ochiq)
  *   pending      — ochiq ariza (bo'lsa tugmalar bloklanadi)
  */
+/**
+ * Tarif kartochkalari.
+ *
+ * Oxirida imkoniyatlar ro'yxatining UMUMIY nusxasi ham chiziladi
+ * (`.price-shared-features`). U faqat TELEFONDA, faqat profil
+ * sahifasida ko'rinadi (`_pricing.css`): u yerda uchala tarif
+ * yonma-yon turadi va har biriga ~110 px qoladi — "Platformada
+ * ko'rinish va qidiruvda chiqish" kabi qator u yerga sig'maydi.
+ * Ro'yxatning o'zi uchala kartochkada AYNAN bir xil, ya'ni uni uch
+ * marta chizishning ma'nosi ham yo'q edi.
+ */
 export function pricingHtml({ plans, status, pending, ownedType = null, trialUsed = false }) {
   if (!plans?.length) return "";
 
@@ -284,6 +295,8 @@ export function pricingHtml({ plans, status, pending, ownedType = null, trialUse
           }))
           .join("")}
       </div>
+
+      <div class="price-shared-features">${featureListHtml()}</div>
     </div>`;
 }
 

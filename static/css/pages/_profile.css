@@ -1,156 +1,197 @@
 /* ===================================================================
    Profil sahifasi.
 
-   Uch qatlam: kim ekanligi → bo'limlar tasmasi → tanlangan bo'lim.
+   BITTA USTUN, uch qatlam: kim ekanligi → bo'limlar tasmasi →
+   tanlangan bo'lim.
 
-   Butun sahifa BITTA o'lcham ritmiga bo'ysunadi:
-     · sarlavha        — .display.h3 (20px), boshqa o'lcham ishlatilmaydi;
-     · yordamchi yozuv — var(--fs-sm) (13.5px);
-     · eng mayda izoh  — var(--fs-xs) (12px);
-     · bloklar orasi   — var(--sp-5), blok ichida var(--sp-4).
-   Shu uchta o'lchamdan tashqari hech narsa yo'q: ilgari bu sahifada
-   sakkizta har xil kattalikdagi yozuv bor edi va ular bir-biriga
-   tekislanmagan ko'rinardi.
+   ===================================================================
+   NEGA RAMKA YO'Q
+   ===================================================================
+   Ilgari sahifada uchta ramka bir-birining ichida turardi: muqova
+   kartochkasi, uning ichida chiplar, yonida "ishonchlilik" kartochkasi,
+   ostida yana "tez o'tish" kartochkasi — har biri o'z chegarasi, o'z
+   soyasi bilan. Ko'z qayerga qarashni bilmasdi.
+
+   Endi ajratish CHIZIQ bilan: `--line-soft` ingichka chiziq va fon
+   kontrasti. Sahifada YAGONA haqiqiy kartochka bor — "Tez o'tish",
+   chunki u yagona bosiladigan taklif va ajralib turishi kerak.
+
+   ===================================================================
+   AKSENT — UCH JOYDA, BOSHQA HECH QAYERDA
+   ===================================================================
+     1. "Tasdiqlangan" belgisi;
+     2. "Tahrirlash" tugmasi (sahifadagi asosiy amal);
+     3. "Tez o'tish" kartochkasidagi ikonka.
+   Qolgan hamma narsa neytral: oq/kulrang yozuv, tinch fon. Oltin bu
+   sahifada ISHLATILMAYDI — rol oddiy yozuv bo'lib qoldi.
+
+   O'lcham ritmi (uchtadan ortiq o'lcham yo'q):
+     · ism             — var(--fs-xl);
+     · bo'lim sarlavhasi va yordamchi yozuv — var(--fs-sm);
+     · qiymat          — var(--fs-base);
+     · eng mayda izoh  — var(--fs-xs).
    =================================================================== */
 .profile-page {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
+  gap: var(--sp-10);
+  /* Bitta ustun, lekin 920 px — 720 px emas.
+     720 px da "Obuna va Premium" bo'limidagi uchta tarif kartochkasi
+     bir qatorga SIG'MASDI: `.price-grid` — `minmax(270px, 1fr)`, ya'ni
+     720 px ga ikkitasi kirib, uchinchisi pastga tushardi. 920 px da
+     har bir kartochkaga 296 px to'g'ri keladi. */
+  max-width: 920px;
+  margin-inline: auto;
+}
+
+/* Sarlavhalar bu sahifada SANS bilan yoziladi.
+   Fraunges (serif) — brend sarlavhasi uchun: bosh sahifa, joy nomi,
+   e'lon. Profil esa o'qiladigan emas, KO'RILADIGAN ekran: bir oilada
+   turgan yozuv tinch ko'rinadi va ism yonidagi yorliq bilan bir xil
+   o'qiladi.
+
+   `_reset.css` dagi `h1, h2, h3...` qoidasi ham, `.display` sinfi ham
+   serifni majburlaydi — shuning uchun ikkalasi ham qayta yoziladi. */
+.profile-page h1,
+.profile-page h2,
+.profile-page h3,
+.profile-page .display {
+  font-family: var(--font-body);
+  letter-spacing: -.02em;
 }
 
 /* ===================================================================
-   1-qatlam: kim ekanligi
+   1-qatlam: kim ekanligi — IJTIMOIY TARMOQ TARTIBI
+   ===================================================================
+   Chapda doira rasm, o'ngda uch qavat:
+     1. username va yonida kichik "Tahrirlash" tabletkasi;
+     2. raqamlar qatori — ramkasiz, fonsiz;
+     3. "bio" qatori: to'liq ism, rol, tasdiq belgisi.
+   Eng ostida — sust matn havolalari (rasm, chiqish).
+
+   Muqova kartochka EMAS: fonsiz, ramkasiz, soyasiz.
    =================================================================== */
 .profile-id {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-l);
-  padding: var(--sp-6);
-  box-shadow: var(--shadow-sm);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  /* Menyu tugmasi uchun o'ng chetda joy: uzun username uning ostiga
+     kirib ketmasligi kerak. */
+  padding-right: var(--ctl-h);
 }
 
 .pid-main {
   display: flex;
   align-items: center;
-  gap: var(--sp-5);
+  gap: var(--sp-10);
 }
 
 .pid-avatar {
   flex: none;
-  /* `inline-block` bo'lganda qatordagi bazaviy chiziq uchun ostida
-     bo'sh joy qolardi va "bottom: 0" ga qo'yilgan kamera tugmasi
-     avatarning O'RTASIGA tushib, bosh harflarni yopib qo'yardi. */
   display: inline-flex;
 }
 
-/* Avatar 64 px dan kattaroq: kamera tugmasi uning chetiga osilib
-   turadi va kichik doirada bosh harflarni yarmigacha yopib qo'yardi.
-   Tugmaning o'zi ham kichraytirildi — u yordamchi amal, avatarning
-   uchdan biri bo'lib turishi shart emas. */
-.pid-avatar .avatar { width: 84px; height: 84px; font-size: 30px; }
-.pid-avatar .avatar-edit {
-  width: 28px; height: 28px;
-  right: -2px; bottom: -2px;
+/* DOIRA. Oltin halqa (`.avatar-ring`) ishlatilmaydi: u rasm atrofida
+   qalin metall chekka bo'lib, e'tiborni odam emas, ramka o'ziga
+   tortardi. Fon ham aksent emas — neytral yuza. */
+.pid-avatar .avatar {
+  width: 104px;
+  height: 104px;
+  font-size: 32px;
+  font-weight: 600;
+  background: linear-gradient(155deg, var(--surface-2) 0%, var(--surface) 100%);
+  color: var(--ink-soft);
+  box-shadow: var(--shadow);
 }
 
-/* `min-width: 0` bo'lmasa uzun ism blokni cho'zib yuboradi. */
-.pid-text {
+/* `min-width: 0` bo'lmasa uzun username blokni cho'zib yuboradi. */
+.pid-body {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--sp-4);
 }
-.pid-text h1 {
+
+.pid-name {
   margin: 0;
-  /* Uzun ism ikki qatorga tushmasin: muqova balandligi barcha
-     foydalanuvchida bir xil qolishi kerak. */
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  line-height: 1.2;
+  min-width: 0;
+  /* Uzun username qatorni buzmasin. */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.pid-meta {
+/* Uch chiziqli menyu — O'NG YUQORI BURCHAKDA.
+
+   Nega burchakda: u muqovaning bir qismi emas, butun SAHIFAning
+   boshqaruvi. Username yonida turganda u ismning davomiday ko'rinib,
+   ko'z avval unga tushardi. Instagram ham shu yo'ldan boradi va odam
+   uni izlab topishi shart emas — burchakdagi uch chiziq allaqachon
+   "qolgani shu yerda" degan ma'noni bildiradi. */
+.pid-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-grid;
+  place-items: center;
+  width: var(--ctl-h-sm);
+  height: var(--ctl-h-sm);
+  border-radius: var(--radius-pill);
+  color: var(--ink-soft);
+  transition: color var(--transition), background var(--transition);
+}
+.pid-menu:hover { color: var(--ink); background: var(--surface-2); }
+.pid-menu:focus-visible { outline: 2px solid var(--theme-accent); outline-offset: 2px; }
+
+/* --- bio qatori --- */
+
+.pid-bio {
   margin: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 2px var(--sp-3);
   font-size: var(--fs-sm);
   color: var(--ink-soft);
 }
-.pid-meta .dot { color: var(--ink-faint); }
-
-.pid-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-top: 2px;
-}
-
-/* --- amallar qatori ---
-   Hisobga tegishli TO'RTALA amal (tahrirlash, rasmni almashtirish,
-   rasmni o'chirish, chiqish) bitta qatorda, muqova ostida turadi.
-
-   Ilgari ular o'ng chetdagi tor ustunda edi va telefonda uchta tugma
-   390 px ga sig'may, uchinchisi ekrandan chiqib ketardi. Chiqish esa
-   butunlay boshqa joyda — sahifa oxiridagi alohida panelda — turardi.
-
-   Endi qator O'RALADI: joy yetmasa tugma pastki qatorga tushadi,
-   hech qachon kesilmaydi. */
-.pid-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-top: var(--sp-4);
-  padding-top: var(--sp-4);
-  border-top: 1px solid var(--line-soft);
-}
-/* Chiqish — qatordagi oxirgi va eng tinch amal: o'ng chetga suriladi
-   va boshqalardan ajralib turadi, chunki u qaytarib bo'lmaydigan
-   harakat (qaytadan kirish kerak bo'ladi). */
-.pid-logout { margin-left: auto; color: var(--ink-soft); }
-.pid-logout:hover { color: var(--danger); }
-
-/* --- statistika chiplari ---
-   Ilgari bu to'rtta ulkan raqam bo'lgan alohida tasma edi va muqovaning
-   yarmini egallardi. Endi ular mayda chiplar: ma'lumot o'sha, joy uch
-   baravar kam. */
-.pid-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--sp-2);
-  margin-top: var(--sp-4);
-  padding-top: var(--sp-4);
-  border-top: 1px solid var(--line-soft);
-}
-.pid-stat {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: var(--radius-pill);
-  background: var(--surface-2);
-  font-size: var(--fs-sm);
-  color: var(--ink-soft);
-}
-.pid-stat b {
-  font-size: var(--fs-md);
-  font-weight: 800;
+.pid-bio b {
+  font-size: var(--fs-base);
+  font-weight: 600;
   color: var(--ink);
-  font-variant-numeric: tabular-nums;
 }
+
+/* Tasdiqlangan — aksentning bir joyi. */
+.pid-verify {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+  color: var(--theme-accent);
+}
+.pid-verify svg { width: 14px; height: 14px; }
+/* Tasdiqlanmagan — ogohlantirish, lekin baqirmaydi. */
+.pid-verify.is-off { color: var(--warn); }
 
 /* ===================================================================
    2-qatlam: bo'limlar tasmasi
    =================================================================== */
+/* Instagram'dagi "grid / tagged" almashtirgichi kabi: yuqorida
+   ajratuvchi chiziq, bandlar MARKAZDA, faol bandning chizig'i esa
+   USTIDA turadi.
+
+   Nega ustida: chiziq shu bilan tasmaning o'z chizig'ini "davom
+   ettiradi" — ya'ni faol band tasmaga osilib turgandek ko'rinadi.
+   Ostiga chizilsa u oddiy havolalar qatoriga o'xshab qolardi. */
 .profile-tabs {
   display: flex;
-  gap: var(--sp-2);
-  padding: 5px;
-  background: var(--surface-2);
-  border: 1px solid var(--line-soft);
-  border-radius: var(--radius-pill);
+  justify-content: center;
+  gap: var(--sp-10);
+  border-top: 1px solid var(--line-soft);
   /* Tor ekranda tasma suriladi — bandlar siqilib, yozuvi kesilmaydi. */
   overflow-x: auto;
   scrollbar-width: none;
@@ -162,152 +203,152 @@
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
-  padding: 9px 16px;
-  border-radius: var(--radius-pill);
+  padding: var(--sp-4) 0 var(--sp-3);
   white-space: nowrap;
   font-size: var(--fs-sm);
-  font-weight: 700;
-  color: var(--ink-soft);
-  transition: background var(--transition), color var(--transition);
+  font-weight: 600;
+  color: var(--ink-faint);
+  /* Chiziq `box-shadow` bilan: `border-top` qo'yilsa faol bo'lmagan
+     bandlar 1 px ga pastroq turib qolardi. */
+  box-shadow: inset 0 1px 0 transparent;
+  transition: color var(--transition), box-shadow var(--transition);
 }
-.profile-tab:hover { color: var(--ink); background: var(--surface); }
+.profile-tab:hover { color: var(--ink-soft); }
 .profile-tab.is-active {
-  background: var(--theme-accent);
-  color: var(--on-accent);
-  box-shadow: var(--shadow-sm);
+  color: var(--ink);
+  box-shadow: inset 0 1px 0 var(--ink);
 }
 
 /* ===================================================================
    3-qatlam: bo'lim tarkibi
    =================================================================== */
-
-/* Ma'lumot va ishonchlilik yonma-yon: ikkinchisi ensiz, chunki unda
-   bitta ko'rsatkich bor. Bitta kartochka qolsa u butun enni egallaydi. */
-.profile-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
-  gap: var(--sp-5);
-  align-items: start;
-}
-/* Yon ustuni yo'q bo'lim (Premium, Boshqaruv) butun enni oladi. */
-.profile-grid.is-single { grid-template-columns: 1fr; }
-
-.pg-main { min-width: 0; }
-.pg-side {
+/* Yon ustun YO'Q — bitta ustun.
+   Ilgari o'ngda "ishonchlilik" kartochkasi turardi va uning ostida
+   yarim ekran bo'sh maydon qolardi. Ishonchlilik endi ma'lumot
+   qatorlarining biri: u ham oddiy ko'rsatkich, alohida ramka talab
+   qilmaydi. */
+.profile-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-5);
-  min-width: 0;
+  gap: var(--sp-10);
 }
 
-/* --- ma'lumot kataklari --- */
-/* Ikki ustun — lekin faqat joy YETSA.
-   Qat'iy ikki ustun planshet kengligida (~820 px) kataklarni shunchalik
-   siqib qo'yardiki, telefon raqami ikki qatorga bo'linib ketardi
-   ("+99877121041 / 8"). `auto-fit` esa joy yetmasa o'zi bitta ustunga
-   tushadi. */
-.info-cells {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: var(--sp-4);
+/* --- tarif kartochkalari ---
+   "Obuna va Premium" bo'limida HAR DOIM uchta ustun: bepul sinov,
+   restoran obunasi, to'yxona obunasi. Boshqa sahifalarda `.price-grid`
+   `auto-fit` bilan ishlaydi va kenglikka qarab moslashadi — bu yerda
+   esa kartochkalar soni QAT'IY uchta (bitta sinov + ikkita biznes
+   turi), shuning uchun ustunlar ham qat'iy.
+
+   `minmax(0, 1fr)` — `1fr` emas: `1fr` ning eng kichik o'lchami
+   `auto`, ya'ni uzun tarif nomi ustunni kengaytirib, uchtasini teng
+   bo'lmagan holga keltirardi. */
+.profile-page .price-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
-.info-cell {
+
+/* --- ma'lumot qatorlari --- */
+.info-block {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  padding-bottom: var(--sp-3);
-  border-bottom: 1px solid var(--line-soft);
+  gap: var(--sp-3);
 }
-/* Uzun matnli maydon (qisqacha ma'lumot) ikkala ustunni egallaydi. */
-.info-cell.is-wide { grid-column: 1 / -1; }
 
-.cell-label {
-  font-size: var(--fs-xs);
-  font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
+/* Bo'lim sarlavhasi — kichik va sust.
+   U yo'l ko'rsatkichi, sarlavha emas: ostidagi ma'lumot undan KATTA
+   va to'qroq bo'lishi kerak. */
+.block-title {
+  margin: 0;
+  font-size: var(--fs-sm);
+  font-weight: 500;
   color: var(--ink-faint);
 }
-.cell-value {
+
+.info-rows {
+  margin: 0;
   display: flex;
-  align-items: center;
-  flex-wrap: wrap;          /* nishon sig'masa pastga tushadi */
-  gap: var(--sp-2);
+  flex-direction: column;
+}
+/* Chapda nomi, o'ngda qiymati. Nom ustuni QAT'IY kenglikda — shunda
+   barcha qiymatlar bitta vertikal chiziqdan boshlanadi va ko'z pastga
+   tushib o'qiydi, chapdan o'ngga sakramaydi. */
+.info-row {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.info-row:last-child { border-bottom: 0; }
+
+/* KATTA HARF YO'Q. Ilgari yorliqlar "TO'LIQ ISM" ko'rinishida, harflar
+   orasi kengaytirilgan holda yozilardi — mayda yozuv bo'lsa ham u
+   qiymatdan ko'proq joy egallab, e'tiborni o'ziga tortardi. */
+.info-row dt {
+  margin: 0;
+  font-size: var(--fs-sm);
+  color: var(--ink-faint);
+}
+.info-row dd {
+  margin: 0;
   font-size: var(--fs-base);
-  font-weight: 600;
   color: var(--ink);
-  /* Uzun matn (qisqacha ma'lumot) katakni kengaytirib yubormasin. */
   overflow-wrap: break-word;
 }
 /* Raqam va username o'rtasidan BO'LINMAYDI: telefon raqami ikkiga
-   bo'linsa uni o'qib bo'lmaydi. Sig'masa butun bo'lak pastga tushadi. */
-.cell-value.mono { overflow-wrap: normal; word-break: keep-all; }
-.cell-value.is-empty { color: var(--ink-faint); font-weight: 600; }
-
-/* Bo'sh maydondagi "Qo'shish" — tugmaga o'xshamaydi, lekin bosiladi. */
-.cell-add {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  align-self: flex-start;
-  font-size: var(--fs-sm);
-  font-weight: 700;
-  color: var(--theme-accent);
-  transition: color var(--transition);
+   bo'linsa uni o'qib bo'lmaydi. */
+.info-row dd.num {
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
-.cell-add:hover { color: var(--theme-accent-dark); }
+.info-row dd.is-empty { color: var(--ink-faint); }
 
-.info-card .field-hint { margin-top: var(--sp-4); }
+.info-hint {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-xs);
+  line-height: 1.6;
+  color: var(--ink-faint);
+}
 
-/* --- ishonchlilik kartochkasi --- */
-.trust-card .trust-body {
+/* --- tez o'tish ---
+   Sahifadagi YAGONA kartochka. Fon, chegara va burchak aynan shu yerga
+   sarflanadi: bu bosiladigan taklif va u taklifdek ko'rinishi kerak. */
+.profile-quick {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;   /* nishon o'z eniga teng bo'lsin, cho'zilmasin */
   gap: var(--sp-3);
-  margin-bottom: var(--sp-3);
 }
-.trust-card .trust-body > * { max-width: 100%; }
-/* Chiziq esa aksincha — to'liq enni egallaydi, u o'lchov. */
-.trust-card .trust-bar,
-.trust-card .progress { width: 100%; }
-
-/* --- qisqa yo'llar --- */
 .link-tiles {
-  display: grid;
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
   gap: var(--sp-3);
 }
-/* Har bir kartochka bir xil balandlikda: ichidagi yozuv bir qatorli
-   yoki ikki qatorli bo'lishidan qat'i nazar qator tekis ko'rinadi. */
 .link-tile {
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
-  min-height: 72px;
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-m);
-  background: var(--surface-2);
+  gap: var(--sp-4);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-l);
+  background: var(--surface);
   color: var(--ink);
-  transition: border-color var(--transition), transform var(--transition),
-              box-shadow var(--transition);
+  transition: border-color var(--transition), background var(--transition);
 }
 .link-tile:hover {
-  border-color: var(--theme-accent);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
+  border-color: var(--line);
+  background: var(--surface-2);
 }
+/* Ikonka — aksentning UCHINCHI joyi. */
 .lt-ic {
   display: inline-grid;
   place-items: center;
   flex: none;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-s);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-m);
   background: var(--theme-accent-dim);
-  color: var(--theme-accent);
+  color: var(--on-accent-dim);
 }
 .lt-text {
   display: flex;
@@ -315,7 +356,7 @@
   gap: 2px;
   min-width: 0;
 }
-.lt-text b { font-size: var(--fs-base); }
+.lt-text b { font-size: var(--fs-base); font-weight: 600; }
 .lt-text span {
   font-size: var(--fs-sm);
   color: var(--ink-soft);
@@ -329,48 +370,106 @@
    Telefon
    =================================================================== */
 @media (max-width: 720px) {
-  .profile-page { gap: var(--sp-4); }
-  .profile-id { padding: var(--sp-4); }
+  .profile-page { gap: var(--sp-8); }
+  .profile-stack { gap: var(--sp-8); }
 
-  /* Rasm va ism YONMA-YON qoladi — ustunga tushirilsa muqova
+  /* Rasm va username YONMA-YON qoladi — ustunga tushirilsa muqova
      behuda uzayib ketardi. Avatar esa kichrayadi. */
-  .pid-main { gap: var(--sp-3); }
-  .pid-avatar .avatar { width: 60px; height: 60px; font-size: 20px; }
-  .pid-text h1 { font-size: var(--fs-lg); }
+  .pid-main { gap: var(--sp-4); align-items: center; }
+  .pid-avatar .avatar { width: 76px; height: 76px; font-size: 24px; }
+  .pid-body { gap: 2px; }
+  /* Menyu burchakda — telefonda avatarning tepasi bilan bir chiziqda. */
+  .profile-id { padding-right: var(--ctl-h-sm); }
+  .pid-name { font-size: var(--fs-lg); }
 
-  /* Ajratuvchi nuqtalar olib tashlanadi: qator ko'chganda ular satr
-     oxirida osilib qolardi ("+998... ·"). */
-  .pid-meta { gap: 2px 10px; font-size: var(--fs-xs); }
-  .pid-meta .dot { display: none; }
+  /* ---------------- TARIFLAR: TELEFONDA HAM UCHTA USTUN ----------------
+     Har bir ustunga ~110 px to'g'ri keladi, shuning uchun kartochka
+     ichidan QAROR uchun kerak bo'lmagan hamma narsa olib tashlanadi:
 
-  .pid-stats { gap: 6px; }
-  .pid-stat { padding: 5px 10px; font-size: var(--fs-xs); }
-  .pid-stat b { font-size: var(--fs-base); }
+       · tushuntirish jumlasi — uchalasida deyarli bir xil;
+       · imkoniyatlar ro'yxati — kartochkadan tashqariga, uchalasi
+         uchun bitta umumiy ro'yxat bo'lib pastga tushadi;
+       · tejash belgisi (`.cut`) — muddat tugmasiga sig'maydi.
 
-  /* Amallar: ikki ustunli to'r. Yonma-yon tizilsa to'rtta tugma
-     390 px ga sig'maydi, bittadan qo'yilsa muqova to'rt qavat
-     bo'lib ketadi. */
-  .pid-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-2);
+     Qoladigani: nomi, narxi va tugmasi. Ya'ni "qaysi biri qancha
+     turadi" degan savolga javob bir qarashda ko'rinadi, tafsilot esa
+     pastda kutib turadi. */
+  .profile-page .price-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    /* `.price-grid` ning o'zi `align-items: start` — kartochkalar
+       mazmuniga qarab har xil balandlikda tugardi. Yonma-yon turgan
+       uchta tarifda bu "biri tugamagan" degan taassurot berardi. */
+    align-items: stretch;
   }
-  .pid-actions .btn { width: 100%; justify-content: center; }
-  .pid-logout { margin-left: 0; }
-
-  /* Bo'limlar tasmasi suriladi. O'ng chetdagi yumshoq soya "yana
-     bor" degan ishora beradi — ilgari uchinchi band shunchaki
-     kesilgandek ko'rinardi. */
-  .profile-tabs {
-    padding: 4px;
-    -webkit-mask-image: linear-gradient(to right, #000 85%, transparent);
-            mask-image: linear-gradient(to right, #000 85%, transparent);
+  .profile-page .price-card { border-radius: var(--radius-m); }
+  /* Kartochka salgina UZUNROQ: ilgari ichki bo'shliq juda kichik edi
+     va uchta kartochka kvadratga yaqin, siqilgan ko'rinardi. Tik
+     shakl esa "tarif" degan tushunchaga tanishroq. */
+  .profile-page .price-card-body {
+    padding: var(--sp-4) var(--sp-2) var(--sp-3);
+    gap: var(--sp-3);
   }
-  .profile-tab { padding: 8px 12px; font-size: var(--fs-xs); }
+  .profile-page .price-card h3 { font-size: var(--fs-xs); line-height: 1.25; }
+  .profile-page .price-card .price-card-body > .small,
+  .profile-page .price-card .plan-variant > .small,
+  .profile-page .price-card .price-save,
+  .profile-page .price-card .plan-toggle .cut,
+  .profile-page .price-card .price-features { display: none; }
 
-  .profile-grid,
-  .info-cells { grid-template-columns: 1fr; }
-  .info-cells { gap: var(--sp-3); }
+  .profile-page .price-amount { gap: 0; }
+  .profile-page .price-amount b { font-size: var(--fs-base); }
+  .profile-page .price-amount span { font-size: 9px; }
 
-  .link-tile { min-height: 64px; }
+  /* Muddat almashtirgichi — ikkita tugma ustma-ust. Yonma-yon
+     turganda ikkalasiga 50 px dan qolib, yozuvi kesilardi. */
+  .profile-page .plan-toggle { flex-direction: column; gap: 2px; padding: 2px; }
+  .profile-page .plan-toggle button {
+    width: 100%;
+    min-height: 24px;
+    padding: 0 var(--sp-1);
+    font-size: 10px;
+  }
+
+  .profile-page .price-card .btn {
+    min-height: 32px;
+    padding: 0 var(--sp-1);
+    font-size: 10.5px;
+    white-space: normal;
+    line-height: 1.15;
+  }
+  .profile-page .price-ribbon { font-size: 8.5px; padding: 2px var(--sp-2); }
+  .profile-page .price-state { font-size: 10px; }
+
+  /* Umumiy ro'yxat — kartochkalar ostida, bitta marta. */
+  .profile-page .price-shared-features {
+    display: block;
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+  }
+
+  .profile-tabs { gap: var(--sp-6); }
+
+  /* Nom va qiymat ustma-ust va ZICH: 170 px li ustun tor ekranda
+     qiymatga joy qoldirmasdi, keng bo'shliq esa yetti qatorni butun
+     ekranga cho'zib yuborardi. */
+  .info-row {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: var(--sp-2) 0;
+  }
+  .info-row dt { font-size: var(--fs-xs); }
+  .info-row dd { font-size: var(--fs-sm); }
+
+  .link-tile { padding: var(--sp-4); }
+  /* Telefonda izoh BIR QATORGA sig'maydi va uch nuqta bilan kesilardi
+     ("holati, de…") — ya'ni jumla umuman o'qilmasdi. Tor ekranda u
+     o'raladi va ikki qatorgacha ko'rinadi. */
+  .lt-text span {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
 }

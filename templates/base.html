@@ -26,13 +26,21 @@
   {# Har bir sahifa o'z modulini shu blokda ulaydi #}
   {% block scripts %}{% endblock %}
 
-  {# Telefonga o'rnatish, oflayn rejim va tashrifdan keyingi sharh
-     so'rovi — HAMMA sahifada bir xil ishlaydi.
+  {% comment %}
+    Telefonga o'rnatish, oflayn rejim va tashrifdan keyingi sharh
+    so'rovi — HAMMA sahifada bir xil ishlaydi.
 
-     Sharh so'rovi shu yerda, chunki u sahifaga bog'liq emas: odam
-     saytning qayeriga kirsa ham, vaqti tugagan broni bo'lsa savol
-     beriladi. Modulning o'zi tekshiradi — kirmagan foydalanuvchida
-     yoki sharh kutayotgan bron bo'lmasa hech narsa qilmaydi. #}
+    Sharh so'rovi shu yerda, chunki u sahifaga bog'liq emas: odam
+    saytning qayeriga kirsa ham, vaqti tugagan broni bo'lsa savol
+    beriladi. Modulning o'zi tekshiradi — kirmagan foydalanuvchida
+    yoki sharh kutayotgan bron bo'lmasa hech narsa qilmaydi.
+
+    IZOH TURI MUHIM: `{# ... #}` faqat BIR QATORLI izoh. Django
+    shablon lekseri uni qator oxiridan narida qidirmaydi, shuning
+    uchun ko'p qatorli `{# #}` umuman izoh deb tanilmay, sahifaning
+    pastida MATN bo'lib chiqib qolardi. Ko'p qatorli izoh uchun
+    faqat `{% comment %}` ishlaydi.
+  {% endcomment %}
   <script type="module">
     import { initPwa } from "{% static 'js/core/pwa.js' %}?v={{ asset_version }}";
     import { initReviewPrompt } from "{% static 'js/components/review-prompt.js' %}?v={{ asset_version }}";

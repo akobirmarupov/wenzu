@@ -168,3 +168,12 @@
 /* Variantlar — faqat tanlangani ko'rinadi */
 .plan-variant { display: none; flex-direction: column; gap: var(--sp-3); }
 .plan-variant.active { display: flex; }
+
+/* ===================================================================
+   Imkoniyatlar ro'yxatining umumiy nusxasi.
+
+   Odatda YASHIRIN: kompyuterda har bir kartochka o'z ro'yxatini
+   ko'rsatadi va ular yonma-yon solishtiriladi. Faqat telefondagi
+   profil sahifasida ochiladi — pastdagi `@media` blokida.
+   =================================================================== */
+.price-shared-features { display: none; }
