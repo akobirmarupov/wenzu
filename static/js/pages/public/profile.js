@@ -135,12 +135,13 @@ function statsHtml(current) {
 }
 
 function identityHtml(current) {
+  // Rasm almashtirish `label` ko'rinishida chiziladi: ichida fayl
+  // tanlagich turadi, chunki brauzerning o'z "Choose file" tugmasini
+  // dizaynga moslab bo'lmaydi. Tugma avatar USTIDA emas, amallar
+  // qatorida — doira ustiga qo'yilgan kichik tugma bosh harflarni
+  // yopib qo'yardi va telefonda barmoq uchun ham kichik edi.
   return `
     <div class="pid-main">
-      <!-- Rasm almashtirish tugmasi avatar USTIDA emas, amallar qatorida.
-           Doira ustiga qo'yilgan kichik tugma bosh harflarni yopib
-           qo'yardi va telefonda barmoq uchun ham kichik edi. Amallar
-           qatorida u qolgan tugmalar bilan bir xil o'lchamda turadi. -->
       <div class="pid-avatar">
         ${avatarHtml(current, { size: "lg", ring: true })}
       </div>
@@ -162,8 +163,6 @@ function identityHtml(current) {
           ${icon("edit")} ${esc(t("profile.edit"))}
         </button>
 
-        <!-- `label` — tugma ko'rinishida, lekin ichida fayl tanlagich:
-             brauzerning o'z "Choose file" tugmasi dizaynga sig'maydi. -->
         <label class="btn btn-ghost btn-sm" for="avatar-input">
           ${icon("camera")} ${esc(t("profile.changePhoto"))}
           <input type="file" id="avatar-input" accept="image/*" hidden>
