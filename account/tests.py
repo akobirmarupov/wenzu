@@ -1,18 +1,3 @@
-"""
-Hisob bilan bog'liq testlar: Google orqali kirish va admin ro'yxati.
-
---- Admin panelidagi "Foydalanuvchilar" jadvali ---
-
-Bu yerda bitta narsa tekshiriladi: javobda IKKI xil raqam bor va ular
-chalkashmasligi kerak —
-  `count` — hozirgi filtrga tushganlar
-  `total` — platformadagi barcha foydalanuvchi
-
-Ilgari faqat `count` qaytardi va admin "biznes egalari" filtrini yoqib
-qo'yib, ekrandagi raqamni platformaning umumiy soni deb o'qishi mumkin
-edi.
-"""
-
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -62,15 +47,6 @@ class AdminUserCountTest(TestCase):
 
 
 class GoogleUsernameTest(TestCase):
-    """
-    Pochtadan username yasash.
-
-    Google pochtasi bizning qoidamizga to'g'ri kelmaydi: nuqta, tire,
-    bosh harf, hatto lotin bo'lmagan harflar uchraydi. Username esa
-    `validate_username` ga bo'ysunishi shart — aks holda hisob
-    yaratilmay, odam kirolmay qolardi.
-    """
-
     def test_dots_and_case_are_cleaned(self):
         from account.services import username_from_email
 
@@ -107,15 +83,6 @@ class GoogleUsernameTest(TestCase):
 
 
 class GoogleAccountLinkTest(TestCase):
-    """
-    Mavjud hisob Google'ga BOG'LANADI, ikkinchisi yaratilmaydi.
-
-    Nega muhim: parol bilan ochilgan eski hisobda bronlar, sharhlar,
-    hatto biznes bo'lishi mumkin. O'sha odam Google bilan kirganda
-    yangi bo'sh hisob berilsa, u o'z ma'lumotini yo'qotgandek his
-    qilardi va qo'llab-quvvatlashga yozardi.
-    """
-
     def setUp(self):
         self.client = APIClient()
         self.existing = User.objects.create_user(
@@ -166,14 +133,6 @@ class GoogleAccountLinkTest(TestCase):
 
 
 class GoogleRedirectFlowTest(TestCase):
-    """
-    Qayta yo'naltirish oqimi — saytdagi ASOSIY kirish yo'li.
-
-    GSI popup oqimi "origin is not allowed" bilan ishlamagach shunga
-    o'tilgan. Bu yerda tekshiriladigan narsa xavfsizlik: `state`
-    solishtiruvi va ochiq yo'naltirish (open redirect) himoyasi.
-    """
-
     def setUp(self):
         self.client = APIClient()
 
@@ -191,11 +150,6 @@ class GoogleRedirectFlowTest(TestCase):
         self.assertIn("google_state", self.client.session)
 
     def test_callback_rejects_a_forged_state(self):
-        """
-        `state` — CSRF himoyasi. Usiz begona odam qurbonni O'Z Google
-        hisobiga kirgizib qo'yishi mumkin edi: keyin qurbon qilgan
-        bronlar hujumchining hisobida paydo bo'lardi.
-        """
         self.client.get("/api/auth/google/start/")
 
         response = self.client.get("/api/auth/google/callback/", {
@@ -211,11 +165,6 @@ class GoogleRedirectFlowTest(TestCase):
         self.assertIn("google_error=cancelled", response["Location"])
 
     def test_external_next_is_ignored(self):
-        """
-        `?next=` faqat ICHKI manzil bo'lishi mumkin. Aks holda havola
-        odamni kirgizib, keyin begona saytga tashlab yuborardi —
-        klassik "open redirect" zaifligi.
-        """
         self.client.get("/api/auth/google/start/", {"next": "https://evil.example/"})
 
         self.assertEqual(self.client.session["google_next"], "/")
@@ -226,10 +175,6 @@ class GoogleRedirectFlowTest(TestCase):
         self.assertEqual(self.client.session["google_next"], "/bronlarim/")
 
     def test_successful_callback_hands_tokens_over_in_the_fragment(self):
-        """
-        Tokenlar URL FRAGMENTIDA qaytadi — u serverga yuborilmaydi,
-        ya'ni kirish jurnallarida va `Referer` sarlavhasida qolmaydi.
-        """
         start = self.client.get("/api/auth/google/start/", {"next": "/profil/"})
         self.assertEqual(start.status_code, 302)
         state = self.client.session["google_state"]

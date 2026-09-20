@@ -1,5 +1,3 @@
-"""Biznes ma'lumoti o'zgarganda ommaviy keshni eskirtirish."""
-
 import logging
 
 from django.db.models.signals import post_delete, post_save
@@ -29,19 +27,6 @@ def invalidate_on_business_change(sender, instance, **kwargs):
 @receiver(post_save, sender=Business)
 @receiver(post_delete, sender=Business)
 def recalculate_ranks_when_the_list_changes(sender, instance, **kwargs):
-    """
-    Joy qo'shilganda, o'chirilganda yoki YASHIRILGANDA o'rinlar jadvali
-    qayta taqsimlanadi.
-
-    Nega kerak: o'rinlar faqat sharh yozilganda hisoblanardi. Ya'ni
-    yangi ochilgan joy birorta sharh kelguncha "o'rinsiz" (rank=0)
-    qolib ketardi, yashiringan joy esa o'z o'rnini band qilib turardi —
-    ro'yxatda raqamlar 1, 2, 4 bo'lib sakrardi.
-
-    Reyting yangilanishida ISHLAMAYDI: `recalculate_business_rating`
-    faqat ball maydonlarini saqlaydi va o'rinni sharh signali o'zi
-    qayta hisoblaydi — ikki marta hisoblashning hojati yo'q.
-    """
     update_fields = kwargs.get("update_fields")
     if update_fields is not None and "is_visible" not in update_fields:
         return
@@ -53,20 +38,6 @@ def recalculate_ranks_when_the_list_changes(sender, instance, **kwargs):
 
 @receiver(post_delete, sender=Business)
 def reset_owner_role_when_business_is_gone(sender, instance, **kwargs):
-    """
-    Biznes o'chirilsa, egasining roli oddiy foydalanuvchiga qaytadi.
-
-    Nega kerak: `role='business'` bo'lgan, lekin biznesi yo'q odam
-    "yarim holatda" qolib ketardi — profilida panel ko'rinmasdi, obuna
-    bo'limi ham nima ko'rsatishni bilmasdi, u esa sababini tushunmasdi.
-
-    Signal ATAYLAB: biznes bir necha yo'ldan o'chirilishi mumkin —
-    admin API, Django adminkasi, `seed_demo --clear`, qo'lda skript.
-    Rolni har birida qo'lda qaytarish bitta joyni unutish demakdir
-    (aynan shunday bo'lgan ham).
-
-    Boshqa biznesi qolgan bo'lsa — rol tegilmaydi.
-    """
     owner = instance.owner
     if owner.role != "business":
         return

@@ -1,14 +1,3 @@
-"""
-Ariza tasdiqlash oqimining ADMIN PANELI tomoni.
-
-Bu yerda tekshiriladigan narsa bitta, lekin muhim: admin arizani QAYSI
-yo'l bilan tasdiqlashidan qat'i nazar natija bir xil bo'lishi kerak —
-obuna ochiladi va joy ommaga chiqadi. Ilgari faqat ro'yxatdagi "amal"
-(action) servisga borardi; shaklni ochib `status` ni qo'lda o'zgartirish
-esa faqat maydonni yozardi va egasi tasdiqlangan ko'rinib turib
-boshqaruv paneliga kira olmasdi.
-"""
-
 import io
 import shutil
 import tempfile
@@ -29,7 +18,6 @@ User = get_user_model()
 
 
 def a_png(name="cover.png"):
-    """Kichik, haqiqiy PNG — `validate_image_file` uni qabul qiladi."""
     buffer = io.BytesIO()
     Image.new("RGB", (12, 12), (200, 120, 60)).save(buffer, format="PNG")
     return SimpleUploadedFile(name, buffer.getvalue(), content_type="image/png")
@@ -54,7 +42,6 @@ class AdminFormApprovalTest(TestCase):
     def _save_through_form(self, status):
         request = RequestFactory().post("/admin/")
         request.user = self.admin
-        # `message_user` sessiya/messages talab qiladi — testda kerak emas.
         request._messages = type("Stub", (), {"add": lambda *a, **kw: None})()
         self.application.status = status
         self.model_admin.save_model(request, self.application, form=None, change=True)
@@ -92,14 +79,6 @@ class AdminFormApprovalTest(TestCase):
 
 @override_settings(MEDIA_ROOT=tempfile.mkdtemp(prefix="feasto-test-media-"))
 class CoverPhotoUploadTest(TestCase):
-    """
-    "Sozlamalar" ekranidagi asosiy rasm — multipart PATCH bilan keladi.
-
-    Frontend matn maydonlarini JSON bilan, faylni esa alohida multipart
-    so'rovda yuboradi. Server ikkalasini ham bir xil endpointda qabul
-    qilishi kerak, aks holda rasm hech qachon saqlanmaydi.
-    """
-
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls._overridden_settings["MEDIA_ROOT"], ignore_errors=True)
@@ -128,10 +107,6 @@ class CoverPhotoUploadTest(TestCase):
         self.assertIn("cover_photo", response.data)
 
     def test_json_patch_does_not_wipe_the_cover(self):
-        """
-        Matn maydonlari alohida so'rovda keladi — ular rasmni
-        o'chirib yubormasligi kerak.
-        """
         self.client.patch(
             "/api/owner/business/", {"cover_photo": a_png()}, format="multipart",
         )
@@ -155,14 +130,6 @@ class CoverPhotoUploadTest(TestCase):
 
 
 class ReapplyAfterRejectionTest(TestCase):
-    """
-    RAD ETILGANDAN KEYIN QAYTA ARIZA.
-
-    Ilgari bu boshi berk ko'cha edi: rad etish joyni o'chirmaydi, "bitta
-    hisobda bitta joy" qoidasi esa o'sha yashirin joyni ko'rib yangi
-    arizani to'sardi. Ya'ni bir marta rad etilgan odam hech qachon qayta
-    urina olmasdi — na o'zi, na admin buni yecha olardi.
-    """
 
     def setUp(self):
         self.client = APIClient()

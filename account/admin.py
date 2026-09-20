@@ -9,13 +9,6 @@ from .models import User
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin, ModelAdmin):
-    """
-    Vazifasi: Django'ning tayyor UserAdmin'i (parolni hash qilish,
-    add/change formalari) bilan Unfold'ning ModelAdmin'ini (dizayn)
-    birlashtiradi — parol xavfsizligi buzilmaydi, faqat ko'rinish
-    Unfold uslubida bo'ladi.
-    """
-
     form = UserChangeForm
     add_form = UserCreationForm
     change_password_form = AdminPasswordChangeForm
@@ -34,13 +27,6 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
         (None, {"fields": ("username", "password")}),
         (_("Shaxsiy ma'lumotlar"), {"fields": ("full_name", "phone_number", "avatar", "bio", "birth_date", "preferred_language")}),
         (_("Rol va tasdiqlanganlik"), {"fields": ("role", "is_phone_verified", "is_confirmed")}),
-        # Bal ADMIN uchun tahrirlanadigan qoldirilgan — ataylab.
-        #
-        # U bekor qilishlardan avtomatik kamayadi, lekin nizoli holat
-        # bo'ladi: mijoz kasal bo'lib qolgan, joy egasi sanani o'zi
-        # ko'chirgan va hokazo. Bunday paytda administrator balni
-        # qaytara olishi kerak, aks holda odam o'zi aybdor bo'lmagan
-        # narsa uchun jazolangan bo'lib qolardi.
         (_("Ishonchlilik"), {
             "fields": ("trust_bits", "cancelled_reservations_count"),
             "description": "1–100 Bit. Har bir bekor qilingan bronda 5 Bit ayiriladi.",
