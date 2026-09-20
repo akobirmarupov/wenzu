@@ -8,7 +8,11 @@ Ishga tushirish:
 import multiprocessing
 import os
 
-bind = os.getenv("GUNICORN_BIND", "0.0.0.0:8000")
+# Unix soket — TCP portdan tezroq va portni tashqariga ochmaydi.
+# Soketni systemd yasaydi (`deploy/feasto.socket`), gunicorn esa unga
+# ulanadi. Ishlab chiqishda `GUNICORN_BIND=127.0.0.1:8000` bilan
+# oddiy portga o'tkazish mumkin.
+bind = os.getenv("GUNICORN_BIND", "unix:/run/feasto/gunicorn.sock")
 
 # Django I/O ga bog'liq (baza, Redis, tashqi API) — CPU emas. Shuning uchun
 # `gthread`: har bir worker bir nechta so'rovni parallel kutib turadi va

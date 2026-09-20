@@ -12,24 +12,11 @@ const STORAGE_KEY = "feasto.theme";
 // Eski nomdagi tanlov — bir marta ko'chiriladi (`config.js` dagi izohga
 // qarang). Usiz nom almashtirilganda hammaning temasi kunduzgiga
 // qaytib qolardi.
-const LEGACY_STORAGE_KEY = "wenzu.theme";
 const MODES = ["system", "light", "dark"];
 
 function read() {
   try {
-    let value = localStorage.getItem(STORAGE_KEY);
-
-    // Eski nomdagi tanlovni bir marta ko'chiramiz. Usiz loyiha nomi
-    // o'zgargan kuni hammaning temasi jimgina kunduzgiga qaytardi va
-    // odam buni o'zi qaytadan tanlashi kerak bo'lardi.
-    if (value === null) {
-      const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
-      if (legacy !== null) {
-        value = legacy;
-        localStorage.setItem(STORAGE_KEY, legacy);
-      }
-      localStorage.removeItem(LEGACY_STORAGE_KEY);
-    }
+    const value = localStorage.getItem(STORAGE_KEY);
     return MODES.includes(value) ? value : "system";
   } catch {
     return "system";

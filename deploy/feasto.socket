@@ -1,0 +1,19 @@
+# ===================================================================
+# Gunicorn soketi — systemd yasaydi va nginx'ga ochadi.
+# Joyi: /etc/systemd/system/feasto.socket
+#
+# Nega soket alohida: ilova qayta ishga tushayotgan paytda ham soket
+# ochiq qoladi va nginx'ning so'rovlari navbatda kutadi. Shunday
+# qilib qayta yuklash paytida foydalanuvchi "502" ko'rmaydi.
+# ===================================================================
+[Unit]
+Description=Feasto gunicorn soketi
+
+[Socket]
+ListenStream=/run/feasto/gunicorn.sock
+SocketUser=feasto
+SocketGroup=www-data
+SocketMode=0660
+
+[Install]
+WantedBy=sockets.target

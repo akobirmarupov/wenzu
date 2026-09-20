@@ -1,0 +1,44 @@
+# ===================================================================
+# Feasto — veb ilova (gunicorn)
+# Joyi: /etc/systemd/system/feasto.service
+# ===================================================================
+[Unit]
+Description=Feasto — gunicorn (Django)
+Requires=feasto.socket
+After=network-online.target postgresql.service redis-server.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=feasto
+Group=www-data
+WorkingDirectory=/srv/feasto
+
+# /run/feasto papkasini systemd o'zi yasaydi va xizmat to'xtaganda
+# tozalaydi. Qo'lda yasalgan papka qayta yuklangandan keyin yo'qolib,
+# nginx "502" bera boshlardi.
+RuntimeDirectory=feasto
+RuntimeDirectoryMode=0750
+
+EnvironmentFile=/srv/feasto/.env
+ExecStart=/srv/feasto/venv/bin/gunicorn config.wsgi:application -c /srv/feasto/gunicorn.conf.py
+ExecReload=/bin/kill -s HUP $MAINPID
+
+# Yiqilsa o'zi ko'tariladi. `RestartSec` — darhol emas, 5 soniyadan
+# keyin: baza ko'tarilishini kutmasdan cheksiz urinish jurnalni
+# to'ldirib yuborardi.
+Restart=always
+RestartSec=5
+
+# --- himoya ---
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/feasto/media /srv/feasto/logs /srv/feasto/staticfiles
+
+# Ko'p foydalanuvchida fayl deskriptorlari tugab qolmasin.
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

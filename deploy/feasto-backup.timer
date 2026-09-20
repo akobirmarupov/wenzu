@@ -1,0 +1,13 @@
+# Joyi: /etc/systemd/system/feasto-backup.timer
+# Yoqish: systemctl enable --now feasto-backup.timer
+[Unit]
+Description=Feasto zaxirasini har kuni ishga tushiradi
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+# Server o'chirilgan bo'lsa, yoqilgach o'tkazib yuborilgan zaxira
+# bajariladi — aks holda o'sha kun zaxirasiz qolardi.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

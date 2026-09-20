@@ -6,7 +6,7 @@
  * shuning uchun har bir amal try/catch ichida va xato bo'lsa sayt
  * ishlashda davom etadi, faqat foydalanuvchi qayta kirishga majbur bo'ladi.
  */
-import { LEGACY_STORAGE_KEYS, STORAGE_KEYS } from "./config.js";
+import { STORAGE_KEYS } from "./config.js";
 
 function read(key) {
   try {
@@ -14,27 +14,6 @@ function read(key) {
   } catch {
     return null;
   }
-}
-
-/**
- * ESKI NOMDAGI SESSIYANI YANGISIGA KO'CHIRADI.
- *
- * Loyiha WENZU'dan Feasto'ga o'tganda kalitlar ham o'zgardi. Ko'chirish
- * bo'lmasa, saytga kirgan har bir odam tizimdan chiqib qolardi va
- * qaytadan kirishga majbur bo'lardi — nom almashtirish uchun juda
- * qimmat narx.
- *
- * Bir marta ishlaydi: ko'chirgach eski kalit o'chiriladi. Yangi kalitda
- * allaqachon qiymat bo'lsa, eskisiga umuman tegilmaydi — yangi kirish
- * eski token bilan bosib ketilmasligi kerak.
- */
-function migrateLegacy() {
-  Object.entries(LEGACY_STORAGE_KEYS).forEach(([name, legacyKey]) => {
-    const legacy = read(legacyKey);
-    if (legacy === null) return;
-    if (read(STORAGE_KEYS[name]) === null) write(STORAGE_KEYS[name], legacy);
-    write(legacyKey, null);
-  });
 }
 
 function write(key, value) {
@@ -46,7 +25,6 @@ function write(key, value) {
   }
 }
 
-migrateLegacy();
 
 export const storage = {
   getAccess: () => read(STORAGE_KEYS.access),

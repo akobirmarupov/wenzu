@@ -1,0 +1,32 @@
+# ===================================================================
+# Feasto — Celery ishchisi (fon vazifalari)
+# Joyi: /etc/systemd/system/feasto-worker.service
+# ===================================================================
+[Unit]
+Description=Feasto — Celery worker
+After=network-online.target redis-server.service postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=feasto
+Group=www-data
+WorkingDirectory=/srv/feasto
+EnvironmentFile=/srv/feasto/.env
+
+# `--concurrency` — vazifalar og'ir emas (bron yakunlash, obuna
+# tekshirish), shuning uchun 4 ta yetarli. Kerak bo'lsa oshiriladi.
+ExecStart=/srv/feasto/venv/bin/celery -A config worker \
+    --loglevel=INFO --concurrency=4 --max-tasks-per-child=200
+
+Restart=always
+RestartSec=10
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/feasto/media /srv/feasto/logs
+
+[Install]
+WantedBy=multi-user.target

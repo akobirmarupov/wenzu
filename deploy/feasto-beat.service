@@ -1,0 +1,40 @@
+# ===================================================================
+# Feasto — Celery beat (jadval bo'yicha vazifalarni ishga tushiradi)
+# Joyi: /etc/systemd/system/feasto-beat.service
+#
+# DIQQAT: beat FAQAT BITTA nusxada ishlashi kerak. Ikkita beat har
+# kungi vazifani ikki marta bajaradi: obuna ikki marta yopiladi,
+# eslatma ikki marta yuboriladi. Bir nechta server bo'lsa, beat
+# ulardan faqat BIRIDA yoqiladi.
+#
+# Beat ishlamasa:
+#   · vaqti o'tgan bronlar "yakunlangan" holatiga o'tmaydi;
+#   · mijozdan sharh so'ralmaydi, ya'ni reyting to'planmaydi;
+#   · muddati tugagan obunalar yopilmaydi.
+# ===================================================================
+[Unit]
+Description=Feasto — Celery beat
+After=network-online.target redis-server.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=feasto
+Group=www-data
+WorkingDirectory=/srv/feasto
+EnvironmentFile=/srv/feasto/.env
+
+ExecStart=/srv/feasto/venv/bin/celery -A config beat \
+    --loglevel=INFO --schedule=/srv/feasto/run/celerybeat-schedule
+
+Restart=always
+RestartSec=10
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/feasto/run /srv/feasto/logs
+
+[Install]
+WantedBy=multi-user.target

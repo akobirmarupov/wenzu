@@ -9,11 +9,11 @@
 <script>
   (function () {
     try {
-      var mode = localStorage.getItem("feasto.theme") || localStorage.getItem("wenzu.theme");
+      var mode = localStorage.getItem("feasto.theme");
       if (mode === "dark" || mode === "light") {
         document.documentElement.setAttribute("data-theme", mode);
       }
-      var lang = localStorage.getItem("feasto.lang") || localStorage.getItem("wenzu.lang");
+      var lang = localStorage.getItem("feasto.lang");
       if (lang) document.documentElement.lang = lang;
 
       // Kirish animatsiyasi — seansda BIR MARTA. Bayroq shu yerda,

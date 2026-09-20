@@ -12,25 +12,6 @@ export const STORAGE_KEYS = {
   user: "feasto.user",
 };
 
-/**
- * ESKI (WENZU davridagi) kalitlar.
- *
- * Loyiha nomi o'zgargani bilan brauzerdagi ma'lumot o'zgarmaydi: odamda
- * hali `wenzu.access` ostida amaldagi tokeni turibdi. Yangi nomga
- * shunchaki o'tib ketsak, saytga kirgan HAR BIR odam tizimdan chiqib
- * qolardi — nom almashtirish uchun juda qimmat narx.
- *
- * Shuning uchun eski kalitlar bir marta O'QILADI va yangisiga
- * ko'chiriladi (`storage.js`, `theme.js`, `i18n.js`). Ko'chirilgach
- * eskisi o'chiriladi, ya'ni bu ro'yxat vaqtinchalik: bir necha oydan
- * keyin uni olib tashlash mumkin.
- */
-export const LEGACY_STORAGE_KEYS = {
-  access: "wenzu.access",
-  refresh: "wenzu.refresh",
-  user: "wenzu.user",
-};
-
 /** Sahifa manzillari — shablonlardagi URL'lar bilan mos bo'lishi shart. */
 export const ROUTES = {
   home: "/",
