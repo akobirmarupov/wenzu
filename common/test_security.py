@@ -182,22 +182,38 @@ class GoogleAuthSecurityTest(TestCase):
         self.assertEqual(len(names), 2, f"Username takrorlanmasin: {names}")
         self.assertIn("ali", names)
 
-    def test_phone_cannot_be_changed_once_set(self):
+    def test_phone_can_be_changed_but_format_is_checked(self):
         """
-        Raqam bir marta yoziladi. Aks holda mehmon bron yuborib, keyin
-        raqamni almashtirib qo'yardi va joy egasi bog'lana olmasdi.
+        Raqamni O'ZGARTIRISH mumkin, lekin formati tekshiriladi.
+
+        Ilgari bu yerda teskari tekshiruv turardi: raqam bir marta
+        yozilib qulflanardi. Qulf himoya bermasdi — raqam takrorlanishi
+        mumkin, SMS bilan tasdiqlanmaydi va kirish uchun ishlatilmaydi
+        (`account/routes/serializers.py` dagi izohga qarang) — lekin
+        raqami o'zgargan har bir odamni administratorga yuborardi.
+
+        Xavfsizlik nuqtai nazaridan muhimi shu: raqam o'zgarsa ham
+        FORMAT tekshiruvi o'z joyida qoladi.
         """
         user = make_user("phoneowner", "+998903333444")
         client = APIClient()
         client.force_authenticate(user=user)
 
-        response = client.patch("/api/auth/me/", {
+        ok = client.patch("/api/auth/me/", {
             "phone_number": "+998904444555",
         }, format="json")
 
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(ok.status_code, 200, ok.data)
         user.refresh_from_db()
-        self.assertEqual(user.phone_number, "+998903333444")
+        self.assertEqual(user.phone_number, "+998904444555")
+
+        bad = client.patch("/api/auth/me/", {
+            "phone_number": "<script>alert(1)</script>",
+        }, format="json")
+
+        self.assertEqual(bad.status_code, 400)
+        user.refresh_from_db()
+        self.assertEqual(user.phone_number, "+998904444555", "Eski raqam saqlansin")
 
 
 class ValidationSecurityTest(TestCase):
